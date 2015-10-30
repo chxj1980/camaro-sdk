@@ -1,0 +1,35 @@
+HKLM
+{
+    NoRemove SYSTEM
+    {
+        NoRemove CurrentControlSet
+        {
+            NoRemove Control
+            {
+                NoRemove NodeInterfaces
+                {
+                    ForceRemove {ffffffff-ffff-ffff-ffff-ffffffffffff} = s 'CMARO Extension Unit Interface'
+                    {
+                        val IID   = b 'ED89558CDE5E8C4858A734C40D747AEA'
+                        val CLSID = b 'BC157549DE99604A7590C4542D298DC2'
+                    }             
+                }
+            }
+        }
+    }
+}
+
+HKCR
+{
+    NoRemove CLSID
+    {
+        ForceRemove {497515BC-99DE-4A60-7590-C4542D298DC2} = s 'DeepGlint CMARO Extension Unit Interface'
+        {
+            InprocServer32 = s '%MODULE%'
+            {
+				val ThreadingModel = s 'Both'
+            }
+        }
+ 
+    }
+}

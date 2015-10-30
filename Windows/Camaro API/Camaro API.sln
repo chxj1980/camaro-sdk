@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StaticAPILib", "StaticAPILib\StaticAPILib.vcxproj", "{23601D8B-5A03-4D11-9243-719B2A911D32}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02} = {6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UVCPlugin", "..\UVCPlugin\UVCPlugin.vcxproj", "{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UVCPluginPS", "..\UVCPlugin\UVCPluginPS.vcxproj", "{6D9857DB-AFAE-482B-AF0E-C6AA4378C923}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02} = {6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ApiTest", "ApiTest\ApiTest.vcxproj", "{6B5E4650-A44D-4B56-A470-044A97B70B5F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{23601D8B-5A03-4D11-9243-719B2A911D32}.Debug|x64.ActiveCfg = Debug|x64
+		{23601D8B-5A03-4D11-9243-719B2A911D32}.Debug|x64.Build.0 = Debug|x64
+		{23601D8B-5A03-4D11-9243-719B2A911D32}.Debug|x86.ActiveCfg = Debug|Win32
+		{23601D8B-5A03-4D11-9243-719B2A911D32}.Debug|x86.Build.0 = Debug|Win32
+		{23601D8B-5A03-4D11-9243-719B2A911D32}.Release|x64.ActiveCfg = Release|x64
+		{23601D8B-5A03-4D11-9243-719B2A911D32}.Release|x64.Build.0 = Release|x64
+		{23601D8B-5A03-4D11-9243-719B2A911D32}.Release|x86.ActiveCfg = Release|Win32
+		{23601D8B-5A03-4D11-9243-719B2A911D32}.Release|x86.Build.0 = Release|Win32
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}.Debug|x64.ActiveCfg = Debug|x64
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}.Debug|x64.Build.0 = Debug|x64
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}.Debug|x86.ActiveCfg = Debug|Win32
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}.Debug|x86.Build.0 = Debug|Win32
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}.Release|x64.ActiveCfg = Release|x64
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}.Release|x64.Build.0 = Release|x64
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}.Release|x86.ActiveCfg = Release|Win32
+		{6BCC7D3D-64DD-4F37-B703-5DE4870CEE02}.Release|x86.Build.0 = Release|Win32
+		{6D9857DB-AFAE-482B-AF0E-C6AA4378C923}.Debug|x64.ActiveCfg = Debug|x64
+		{6D9857DB-AFAE-482B-AF0E-C6AA4378C923}.Debug|x64.Build.0 = Debug|x64
+		{6D9857DB-AFAE-482B-AF0E-C6AA4378C923}.Debug|x86.ActiveCfg = Debug|Win32
+		{6D9857DB-AFAE-482B-AF0E-C6AA4378C923}.Debug|x86.Build.0 = Debug|Win32
+		{6D9857DB-AFAE-482B-AF0E-C6AA4378C923}.Release|x64.ActiveCfg = Release|x64
+		{6D9857DB-AFAE-482B-AF0E-C6AA4378C923}.Release|x64.Build.0 = Release|x64
+		{6D9857DB-AFAE-482B-AF0E-C6AA4378C923}.Release|x86.ActiveCfg = Release|Win32
+		{6D9857DB-AFAE-482B-AF0E-C6AA4378C923}.Release|x86.Build.0 = Release|Win32
+		{6B5E4650-A44D-4B56-A470-044A97B70B5F}.Debug|x64.ActiveCfg = Debug|x64
+		{6B5E4650-A44D-4B56-A470-044A97B70B5F}.Debug|x64.Build.0 = Debug|x64
+		{6B5E4650-A44D-4B56-A470-044A97B70B5F}.Debug|x86.ActiveCfg = Debug|Win32
+		{6B5E4650-A44D-4B56-A470-044A97B70B5F}.Debug|x86.Build.0 = Debug|Win32
+		{6B5E4650-A44D-4B56-A470-044A97B70B5F}.Release|x64.ActiveCfg = Release|x64
+		{6B5E4650-A44D-4B56-A470-044A97B70B5F}.Release|x64.Build.0 = Release|x64
+		{6B5E4650-A44D-4B56-A470-044A97B70B5F}.Release|x86.ActiveCfg = Release|Win32
+		{6B5E4650-A44D-4B56-A470-044A97B70B5F}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
