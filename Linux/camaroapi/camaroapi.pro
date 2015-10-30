@@ -59,9 +59,9 @@ unix {
 }
 
 CONFIG(debug, debug|release) {
-    DESTDIR = debug
+    DESTDIR = $$PWD/build/debug
 } else {
-    DESTDIR = release
+    DESTDIR = $$PWD/build/release
 }
 
 INCLUDEPATH += ../../Common/Include

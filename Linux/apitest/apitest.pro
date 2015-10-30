@@ -35,6 +35,8 @@ CONFIG(debug, debug|release) {
 
 
 
+
+
 INCLUDEPATH += $$PWD/../Include
 DEPENDPATH += $$PWD/../Include
 
