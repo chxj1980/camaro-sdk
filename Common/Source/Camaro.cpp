@@ -1,4 +1,6 @@
+#ifdef _MSC_VER
 #include "stdafx.h"
+#endif
 #include "Camaro.h"
 #include <thread>
 #include <array>
