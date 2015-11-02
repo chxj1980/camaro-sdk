@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "VideoSourceReader.h"
 
 #include <shlwapi.h>

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "MFHelper.h"
 #include <cstdint>
 #include "System.h"

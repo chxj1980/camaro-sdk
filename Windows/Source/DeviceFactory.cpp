@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "GenericVCDevice.h"
 #include "GeneralExtensionFilter.h"
 #include "StandardUVCFilter.h"

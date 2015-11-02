@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "CameraFactory.h"
 #include "StandardUVC.h"
 #include "Camaro.h"
@@ -24,7 +23,9 @@ std::shared_ptr<IVideoStream> CameraFactory<T>::CreateVideoStreamReader(std::sha
 }
 
 template <>
-std::shared_ptr<IVideoStream> CameraFactory<StandardUVC>::CreateInstance(IGenericVCDeviceRef& device)
+template <>
+std::shared_ptr<IVideoStream> CameraFactory<StandardUVC>::
+	CreateInstance<IGenericVCDeviceRef>(IGenericVCDeviceRef& device)
 {
 	auto source = std::dynamic_pointer_cast<IMSource>(device);
 	if (source == nullptr)
@@ -36,7 +37,9 @@ std::shared_ptr<IVideoStream> CameraFactory<StandardUVC>::CreateInstance(IGeneri
 }
 
 template <>
-std::shared_ptr<IVideoStream> CameraFactory<Camaro>::CreateInstance(IGenericVCDeviceRef& device)
+template <>
+std::shared_ptr<IVideoStream> CameraFactory<Camaro>::
+	CreateInstance<IGenericVCDeviceRef>(IGenericVCDeviceRef& device)
 {
 	auto tgDevice = std::dynamic_pointer_cast<ITopGearGeneralDevice>(device);
 	if (tgDevice == nullptr)
@@ -58,7 +61,9 @@ std::shared_ptr<IVideoStream> CameraFactory<Camaro>::CreateInstance(IGenericVCDe
 
 
 template <>
-std::shared_ptr<IVideoStream> CameraComboFactory<CamaroDual>::CreateInstance(std::vector<IGenericVCDeviceRef> &devices)
+template <>
+std::shared_ptr<IVideoStream> CameraFactory<CamaroDual>::
+	CreateInstance<std::vector<IGenericVCDeviceRef>>(std::vector<IGenericVCDeviceRef> &devices)
 {
 	std::shared_ptr<IVideoStream> master;
 	std::shared_ptr<IVideoStream> slave;
@@ -79,14 +84,10 @@ std::shared_ptr<IVideoStream> CameraComboFactory<CamaroDual>::CreateInstance(std
 	return {};
 }
 
-template <class T>
-std::shared_ptr<IVideoStream> CameraFactory<T>::CreateInstance(IGenericVCDeviceRef& device)
+template<class T>
+template<class U>
+std::shared_ptr<IVideoStream> CameraFactory<T>::CreateInstance(U& device)
 {
-	return{};
-}
-
-template <class T>
-std::shared_ptr<IVideoStream> CameraComboFactory<T>::CreateInstance(std::vector<IGenericVCDeviceRef> &devices)
-{
-	return{};
+	throw std::exception("Unimplementation");
+	//return{};
 }

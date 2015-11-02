@@ -11,23 +11,13 @@ namespace TopGear
 		class CameraFactory : public ICameraFactory<T> 
 		{
 		public:
-			static std::shared_ptr<IVideoStream> CreateInstance(IGenericVCDeviceRef &device);
+			template<class U>
+			static std::shared_ptr<IVideoStream> CreateInstance(U &device);
 		private:
 			static std::shared_ptr<IVideoStream> CreateVideoStreamReader(std::shared_ptr<IMSource> &source);
 			CameraFactory() = default;
 		protected:
 			~CameraFactory() = default;
-		};
-
-		template<class T>
-		class CameraComboFactory : public ICameraComboFactory<T>
-		{
-		public:
-			static std::shared_ptr<IVideoStream> CreateInstance(std::vector<IGenericVCDeviceRef> &devices);
-		private:
-			CameraComboFactory() = default;
-		protected:
-			~CameraComboFactory() = default;
 		};
 	}
 }

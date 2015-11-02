@@ -57,8 +57,8 @@ void Loop()
 	}
 }
 
-//#define CAMARO_DUAL 
-#define CAMARO_SOLO
+#define CAMARO_DUAL 
+//#define CAMARO_SOLO
 //#define 	STD_UVC
 
 void main()
@@ -132,10 +132,10 @@ void main()
 	}
 #elif defined CAMARO_DUAL
 	auto devices = TopGear::Win::DeviceFactory<TopGear::Win::DiscernibleVCDevice>::EnumerateDevices();
-	auto dual = TopGear::Win::CameraComboFactory<TopGear::Win::CamaroDual>::CreateInstance(devices);
+	auto dual = TopGear::Win::CameraFactory<TopGear::CamaroDual>::CreateInstance(devices);
 	if (dual)
 	{
-		TopGear::IVideoStream::RegisterFrameCallback(*dual, &OnFrameCB);
+		TopGear::IVideoStream::RegisterFrameCallback(*dual, &FrameDemo::OnFrameMember, &demo);
 		TopGear::VideoFormat format;
 		auto index = dual->GetOptimizedFormatIndex(format);
 		dual->StartStream(index);

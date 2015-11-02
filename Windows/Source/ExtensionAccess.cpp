@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "ExtensionAccess.h"
 #include "System.h"
 

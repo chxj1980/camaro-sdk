@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "GeneralExtensionFilter.h"
 #include "System.h"
 #include <iostream>
