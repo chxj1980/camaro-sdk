@@ -78,6 +78,42 @@ bool MatchPath(std::string path, uint32_t flags)
     return ((info.st_mode & flags) != 0);
 }
 
+bool SearchDir(std::string dir, std::string matchStr, std::string &result)
+{
+    dirent *dirp;
+    DIR *dp = opendir(dir.c_str());
+    if (dp == nullptr)
+    {
+        //cout << "Error(" << errno << ") opening " << dir << endl;
+        result.clear();
+        return false;
+    }
+
+    while ((dirp = readdir(dp)) != nullptr)
+    {
+        if (dirp->d_type != DT_DIR)
+            continue;
+        auto name = std::string(dirp->d_name);
+        if (name=="." || name=="..")
+            continue;
+        if (name==matchStr)
+        {
+            closedir(dp);
+            result = dir;
+            return true;
+        }
+        if (SearchDir(dir+"/"+name,matchStr,result))
+        {
+            closedir(dp);
+            return true;
+        }
+    }
+    closedir(dp);
+    result.clear();
+    return false;
+
+}
+
 std::string GetDescPathFromBusInfo(const std::string busInfo,
                                    const std::string productName)
 {
@@ -104,14 +140,12 @@ std::string GetDescPathFromBusInfo(const std::string busInfo,
         terminalStr = subStr.substr(0,pos);
     }
 
-    std::vector<std::string> dirs;
-    if (GetDirs(BUS_BASE_PATH,dirs)!=0)
-        return {};
-    for(auto d:dirs)
+
+    std::string locationPath;
+
+    if (SearchDir(BUS_BASE_PATH,locationStr,locationPath))
     {
-        auto locationPath = BUS_BASE_PATH + "/" + d + "/" +locationStr;
-        if (!MatchPath(locationPath,S_IFDIR))
-            continue;
+        locationPath += "/" +locationStr;
         std::vector<std::string> busList;
         GetDirs(locationPath,busList,busStr);
         for(auto busName : busList)
@@ -141,6 +175,7 @@ std::string GetDescPathFromBusInfo(const std::string busInfo,
             }
         }
     }
+
     return {};
 }
 
@@ -176,7 +211,9 @@ std::shared_ptr<ExtensionInfo> v4l2Helper::GetXUFromBusInfo(
     {
         candidate.erase(candidate.begin());
         candidate.push_back(byte);
-        if (candidate[1]==CS_INTERFACE && candidate[2]==VC_EXTENSION_UNIT) //Extension Unit Identifiers
+        if (candidate[0]>24 &&
+            candidate[1]==CS_INTERFACE &&
+            candidate[2]==VC_EXTENSION_UNIT) //Extension Unit Identifiers
         {
             payloadSize=candidate[0]-3;
             payload= std::unique_ptr<char[]>(new char[payloadSize]);
