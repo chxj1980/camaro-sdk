@@ -18,16 +18,4 @@ namespace TopGear
 		ICameraFactory() = default;
 		~ICameraFactory() = default;
 	};
-
-    template<class T>
-    class ICameraComboFactory
-    {
-        static_assert(std::is_base_of<CameraComboBase, T>::value,
-            "Class T must derive from CameraComboBase");
-    public:
-        static std::shared_ptr<IVideoStream> CreateInstance(std::vector<IGenericVCDeviceRef> &devices) = delete;
-    protected:
-        ICameraComboFactory() = default;
-        ~ICameraComboFactory() = default;
-    };
 }
