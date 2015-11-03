@@ -80,6 +80,12 @@ bool MatchPath(std::string path, uint32_t flags)
 
 bool SearchDir(std::string dir, std::string matchStr, std::string &result)
 {
+    if (MatchPath(dir+"/"+matchStr, S_IFDIR))
+    {
+        result = dir;
+        return true;
+    }
+
     dirent *dirp;
     DIR *dp = opendir(dir.c_str());
     if (dp == nullptr)
@@ -96,12 +102,6 @@ bool SearchDir(std::string dir, std::string matchStr, std::string &result)
         auto name = std::string(dirp->d_name);
         if (name=="." || name=="..")
             continue;
-        if (name==matchStr)
-        {
-            closedir(dp);
-            result = dir;
-            return true;
-        }
         if (SearchDir(dir+"/"+name,matchStr,result))
         {
             closedir(dp);
@@ -140,9 +140,7 @@ std::string GetDescPathFromBusInfo(const std::string busInfo,
         terminalStr = subStr.substr(0,pos);
     }
 
-
     std::string locationPath;
-
     if (SearchDir(BUS_BASE_PATH,locationStr,locationPath))
     {
         locationPath += "/" +locationStr;
@@ -175,7 +173,6 @@ std::string GetDescPathFromBusInfo(const std::string busInfo,
             }
         }
     }
-
     return {};
 }
 
