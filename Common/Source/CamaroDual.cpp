@@ -1,6 +1,7 @@
 #include "CamaroDual.h"
 #include <thread>
 #include <iostream>
+#include <CameraBase.h>
 
 using namespace TopGear;
 
@@ -88,14 +89,20 @@ std::string CamaroDual::QueryDeviceInfo()
 
 bool CamaroDual::StartStream(int formatIndex)
 {
-	if (masterDC && slaveDC)
+	if (masterDC && slaveDC && formatIndex>=0)
 	{
 		masterDC->SetSensorTrigger(0);
 		masterDC->SetResyncNumber(RESYNC_NUM);
 		slaveDC->SetResyncNumber(RESYNC_NUM);
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
-		videoStreams[0]->StartStream(formatIndex);
-		videoStreams[1]->StartStream(formatIndex);
+		auto camera0 = std::dynamic_pointer_cast<CameraBase>(videoStreams[0]);
+		auto camera1 = std::dynamic_pointer_cast<CameraBase>(videoStreams[1]);
+		if (camera0 == nullptr || camera1 == nullptr)
+			return false;
+		camera0->CameraBase::StartStream(formatIndex);
+		camera1->CameraBase::StartStream(formatIndex);
+		while (!camera0->IsStreaming() || !camera1->IsStreaming())
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		frameWatchThread = std::thread(&CamaroDual::FrameWatcher, this);
 		threadOn = frameWatchThread.joinable();
 		masterDC->SetSensorTrigger(1);

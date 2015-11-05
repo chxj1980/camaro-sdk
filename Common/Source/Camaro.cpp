@@ -209,9 +209,14 @@ bool Camaro::StartStream(int formatIndex)
 {
 	if (formatIndex >= 0)
 	{
+		SetSensorTrigger(0);
+		SetResyncNumber(900);
+		Flip(true, false);
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		pReader->StartStream(formatIndex);
 		while (!pReader->IsStreaming())
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		SetSensorTrigger(1);
 		return true;
 	}
 	return false;
