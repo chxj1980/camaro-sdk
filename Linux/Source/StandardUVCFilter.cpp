@@ -23,6 +23,8 @@ StandardUVCFilter::StandardUVCFilter(int dev)
         GeneralExtensionFilter filter(dev,xu);
         isValid = !filter.IsValid();
     }
+    else
+        isValid = true;
 }
 
 StandardUVCFilter::~StandardUVCFilter()
