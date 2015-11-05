@@ -112,13 +112,8 @@ void main()
 				auto index = camaro->GetOptimizedFormatIndex(format);
 				std::cout << "Auto selected format: " << format.Width << "X" << format.Height << " @ " << format.MaxRate << "fps ";
 				std::cout << std::string(format.PixelFormat, 4) << std::endl;
-				ioControl->SetSensorTrigger(0);
-				ioControl->SetResyncNumber(900);
-				cameraControl->Flip(true, false);
-				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 				//Start streaming with selected format index
 				camaro->StartStream(index);
-				ioControl->SetSensorTrigger(1);
 				break;
 			}
 			else
