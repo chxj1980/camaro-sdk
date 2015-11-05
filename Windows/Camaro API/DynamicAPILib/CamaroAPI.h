@@ -7,10 +7,34 @@
 #include <sys/time.h>
 #endif
 
-#ifdef DYNAMICAPILIB_EXPORTS
-#define DYNAMICAPILIB_API __declspec(dllexport)
+
+
+// Generic helper definitions for shared library support
+#if defined _WIN32 || defined __CYGWIN__
+#define CAMARO_API_IMPORT __declspec(dllimport)
+#define CAMARO_API_EXPORT __declspec(dllexport)
+#define CAMARO_API_LOCAL
 #else
-#define DYNAMICAPILIB_API __declspec(dllimport)
+#if __GNUC__ >= 4
+#define CAMARO_API_IMPORT __attribute__ ((visibility ("default")))
+#define CAMARO_API_EXPORT __attribute__ ((visibility ("default")))
+#define CAMARO_API_LOCAL  __attribute__ ((visibility ("hidden")))
+#else
+#define CAMARO_API_IMPORT
+#define CAMARO_API_EXPORT
+#define CAMARO_API_LOCAL
+#endif
+#endif
+
+#ifdef _USRDLL // defined if compiled as a DLL
+#ifdef CAMAROAPILIB_EXPORTS
+#define CAMARO_API CAMARO_API_EXPORT
+#else
+#define CAMARO_API CAMARO_API_IMPORT
+#endif
+#else
+#define CAMARO_API
+#define CAMARO_API_LOCAL
 #endif
 
 
@@ -56,23 +80,23 @@ extern "C" {
 		CAMERA_TYPE_CAMARO_DUAL,
 	};
 
-	DYNAMICAPILIB_API int EnumerateDevices(VIDEO_DEVICE_TYPE type, HDevice **pList, int *pNum);
-	DYNAMICAPILIB_API void ReleaseDevice(HDevice *phDevice);
-	DYNAMICAPILIB_API void ReleaseDeviceList(HDevice *list, int num);
+	CAMARO_API int EnumerateDevices(VIDEO_DEVICE_TYPE type, HDevice **pList, int *pNum);
+	CAMARO_API void ReleaseDevice(HDevice *phDevice);
+	CAMARO_API void ReleaseDeviceList(HDevice *list, int num);
 
-	DYNAMICAPILIB_API int CreateCamera(CAMERA_TYPE type, HCamera *phCamera, HDevice *pSource, int num);
-	DYNAMICAPILIB_API void ReleaseCamera(HCamera *phCamera);
+	CAMARO_API int CreateCamera(CAMERA_TYPE type, HCamera *phCamera, HDevice *pSource, int num);
+	CAMARO_API void ReleaseCamera(HCamera *phCamera);
 
-	DYNAMICAPILIB_API int StartStream(HCamera camera, int formatIndex);
-	DYNAMICAPILIB_API int StopStream(HCamera camera);
-	DYNAMICAPILIB_API int IsStreaming(HCamera camera);
-	DYNAMICAPILIB_API int GetOptimizedFormatIndex(HCamera camera, VideoFormat *pFormat, const char *fourcc);
-	DYNAMICAPILIB_API int GetMatchedFormatIndex(HCamera camera, const VideoFormat *pFormat);
+	CAMARO_API int StartStream(HCamera camera, int formatIndex);
+	CAMARO_API int StopStream(HCamera camera);
+	CAMARO_API int IsStreaming(HCamera camera);
+	CAMARO_API int GetOptimizedFormatIndex(HCamera camera, VideoFormat *pFormat, const char *fourcc);
+	CAMARO_API int GetMatchedFormatIndex(HCamera camera, const VideoFormat *pFormat);
 
-	DYNAMICAPILIB_API void RegisterFrameCallback(FnFrameCB cb);
-	DYNAMICAPILIB_API void ReleaseVideoFrames(VideoFrame *payload, int num);
-	DYNAMICAPILIB_API void LockBuffer(VideoFrame *payload, unsigned char **ppData);
-	DYNAMICAPILIB_API void UnlockBuffer(VideoFrame *payload);
+	CAMARO_API void RegisterFrameCallback(FnFrameCB cb);
+	CAMARO_API void ReleaseVideoFrames(VideoFrame *payload, int num);
+	CAMARO_API void LockBuffer(VideoFrame *payload, unsigned char **ppData);
+	CAMARO_API void UnlockBuffer(VideoFrame *payload);
 
 #ifdef __cplusplus
 }

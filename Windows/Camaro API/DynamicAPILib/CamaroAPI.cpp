@@ -12,7 +12,7 @@
 
 typedef TopGear::IGenericVCDeviceRef* IGenericVCDeviceRefPtr;
 
-DYNAMICAPILIB_API int EnumerateDevices(VIDEO_DEVICE_TYPE type, HDevice **pList, int *pNum)
+CAMARO_API int EnumerateDevices(VIDEO_DEVICE_TYPE type, HDevice **pList, int *pNum)
 {
 	*pNum = 0;
 	*pList = nullptr;
@@ -42,7 +42,7 @@ DYNAMICAPILIB_API int EnumerateDevices(VIDEO_DEVICE_TYPE type, HDevice **pList, 
 	return 0;
 }
 
-DYNAMICAPILIB_API void ReleaseDevice(HDevice *phDevice)
+CAMARO_API void ReleaseDevice(HDevice *phDevice)
 {
 	if (*phDevice !=nullptr)
 	{
@@ -53,7 +53,7 @@ DYNAMICAPILIB_API void ReleaseDevice(HDevice *phDevice)
 	}
 }
 
-DYNAMICAPILIB_API void ReleaseDeviceList(HDevice *list, int num)
+CAMARO_API void ReleaseDeviceList(HDevice *list, int num)
 {
 	if (list != nullptr)
 	{
@@ -63,7 +63,7 @@ DYNAMICAPILIB_API void ReleaseDeviceList(HDevice *list, int num)
 	}
 }
 
-DYNAMICAPILIB_API int CreateCamera(CAMERA_TYPE type, HCamera *phCamera, HDevice *pSource, int num)
+CAMARO_API int CreateCamera(CAMERA_TYPE type, HCamera *phCamera, HDevice *pSource, int num)
 {
 	*phCamera = nullptr;
 	IGenericVCDeviceRefPtr ptr;
@@ -102,7 +102,7 @@ DYNAMICAPILIB_API int CreateCamera(CAMERA_TYPE type, HCamera *phCamera, HDevice 
 	return 0;
 }
 
-DYNAMICAPILIB_API void ReleaseCamera(HCamera *phCamera)
+CAMARO_API void ReleaseCamera(HCamera *phCamera)
 {
 	if(*phCamera != nullptr)
 	{
@@ -115,7 +115,7 @@ DYNAMICAPILIB_API void ReleaseCamera(HCamera *phCamera)
 
 void OnFrameCB(std::vector<TopGear::IVideoFrameRef> &frames);
 
-DYNAMICAPILIB_API int StartStream(HCamera camera, int formatIndex)
+CAMARO_API int StartStream(HCamera camera, int formatIndex)
 {
 	if (camera == nullptr)
 		return 0;
@@ -124,14 +124,14 @@ DYNAMICAPILIB_API int StartStream(HCamera camera, int formatIndex)
 	return vs->StartStream(formatIndex);
 }
 
-DYNAMICAPILIB_API int StopStream(HCamera camera)
+CAMARO_API int StopStream(HCamera camera)
 {
 	if (camera == nullptr)
 		return 0;
 	auto &vs = *reinterpret_cast<std::shared_ptr<TopGear::IVideoStream> *>(camera);
 	return vs->StopStream();
 }
-DYNAMICAPILIB_API int IsStreaming(HCamera camera)
+CAMARO_API int IsStreaming(HCamera camera)
 {
 	if (camera == nullptr)
 		return 0;
@@ -139,7 +139,7 @@ DYNAMICAPILIB_API int IsStreaming(HCamera camera)
 	return vs->IsStreaming();
 }
 
-DYNAMICAPILIB_API int GetOptimizedFormatIndex(HCamera camera, VideoFormat *pFormat, const char *fourcc)
+CAMARO_API int GetOptimizedFormatIndex(HCamera camera, VideoFormat *pFormat, const char *fourcc)
 {
 	if (camera == nullptr)
 		return 0;
@@ -150,7 +150,7 @@ DYNAMICAPILIB_API int GetOptimizedFormatIndex(HCamera camera, VideoFormat *pForm
 		memcpy(pFormat, &f, sizeof(f));
 	return result;
 }
-DYNAMICAPILIB_API int GetMatchedFormatIndex(HCamera camera, const VideoFormat *pFormat)
+CAMARO_API int GetMatchedFormatIndex(HCamera camera, const VideoFormat *pFormat)
 {
 	if (camera == nullptr)
 		return 0;
@@ -162,7 +162,7 @@ DYNAMICAPILIB_API int GetMatchedFormatIndex(HCamera camera, const VideoFormat *p
 
 FnFrameCB onFrame = nullptr;
 
-DYNAMICAPILIB_API void RegisterFrameCallback(FnFrameCB cb)
+CAMARO_API void RegisterFrameCallback(FnFrameCB cb)
 {
 	onFrame = cb;
 }
@@ -184,7 +184,7 @@ void OnFrameCB(std::vector<TopGear::IVideoFrameRef> &frames)
 	onFrame(vfs, static_cast<int>(frames.size()));
 }
 
-DYNAMICAPILIB_API void ReleaseVideoFrames(VideoFrame *payload, int num)
+CAMARO_API void ReleaseVideoFrames(VideoFrame *payload, int num)
 {
 	for (auto i = 0; i < num; ++i)
 	{
@@ -195,13 +195,13 @@ DYNAMICAPILIB_API void ReleaseVideoFrames(VideoFrame *payload, int num)
 	delete[] payload;
 }
 
-DYNAMICAPILIB_API void LockBuffer(VideoFrame *payload, unsigned char **ppData)
+CAMARO_API void LockBuffer(VideoFrame *payload, unsigned char **ppData)
 {
 	auto pFrame = reinterpret_cast<TopGear::IVideoFrameRef *>(payload->buffer);
 	(*pFrame)->LockBuffer(ppData, &payload->stride);
 }
 
-DYNAMICAPILIB_API void UnlockBuffer(VideoFrame *payload)
+CAMARO_API void UnlockBuffer(VideoFrame *payload)
 {
 	auto pFrame = reinterpret_cast<TopGear::IVideoFrameRef *>(payload->buffer);
 	(*pFrame)->UnlockBuffer();
