@@ -8,6 +8,7 @@
 #include "ICameraControl.h"
 #include "IDeviceControl.h"
 #include "CameraBase.h"
+#include "ILowlevelControl.h"
 
 
 namespace TopGear
@@ -15,7 +16,8 @@ namespace TopGear
 	class Camaro
 		: public CameraBase,
 		public TopGear::ICameraControl,
-		public IDeviceControl
+		public IDeviceControl,
+		public ILowlevelControl
 	{
 	public:
 		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
@@ -28,6 +30,13 @@ namespace TopGear
 		virtual int SetResyncNumber(uint16_t resyncNum) override;
 		virtual int QueryDeviceRole() override;
 		virtual std::string QueryDeviceInfo() override;
+
+		//advanced device controls (on EP0)
+		virtual int SetRegisters(uint16_t regaddr[], uint16_t regval[], int num) override;
+		virtual int GetRegisters(uint16_t regaddr[], uint16_t regval[], int num) override;
+		//single register
+		virtual int SetRegister(uint16_t regaddr, uint16_t regval) override;
+		virtual int GetRegister(uint16_t regaddr, uint16_t &regval) override;
 	protected:
 		enum class ControlCode
 		{
@@ -37,22 +46,6 @@ namespace TopGear
 			RegisterAccess = 4,
 			Resync = 5,
 		};
-
-		//enum class DeviceType
-		//{
-		//	AR0134_OLD,
-		//	AR0134,
-		//	AR0130,
-		//	UNKNOWN_DEV
-		//};
-
-		//advanced device controls (on EP0)
-		virtual int SetRegisters(uint16_t regaddr[], uint16_t regval[], int num);
-		virtual int GetRegisters(uint16_t regaddr[], uint16_t regval[], int num);
-		//single register
-		virtual int SetRegister(uint16_t regaddr, uint16_t regval);
-		virtual int GetRegister(uint16_t regaddr, uint16_t &regval);
-
 		
 		void OnFrame(std::vector<IVideoFrameRef> &frames);
 		std::shared_ptr<IExtensionAccess> extension;
