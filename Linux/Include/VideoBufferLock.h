@@ -21,12 +21,6 @@ namespace TopGear
 		class VideoBufferLock : public IVideoFrame
 		{
 		public:
-			virtual void QueryActualSize(uint32_t& w, uint32_t& h) override
-			{
-				w = width;
-				h = height;
-			}
-
 			virtual uint16_t GetFrameIdx() const override
 			{
 				return 0;

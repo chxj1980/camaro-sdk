@@ -39,7 +39,6 @@ namespace TopGear
 
 		virtual uint16_t GetFrameIdx() const = 0;    //frame index, used to check frame drops
 		virtual timeval GetTimestamp() const = 0;    //timestamp
-		virtual void QueryActualSize(uint32_t &w, uint32_t &h) = 0;
 		virtual uint32_t GetLength() const = 0;                 //length(bytes) of actual frame buffer
 	};
 

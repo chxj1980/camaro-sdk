@@ -72,9 +72,8 @@ void Camaro::OnFrame(std::vector<IVideoFrameRef>& frames)
 		return;
 	auto frame = frames[0];
 	
-	uint32_t w, h;
-	frame->QueryActualSize(w, h);
-	h -= header + footer;
+	uint32_t w = currentFormat.Width;
+	uint32_t h = currentFormat.Height;
 
 	uint8_t *pData;
 	uint32_t stride;
@@ -189,10 +188,37 @@ Camaro::Camaro(std::shared_ptr<IVideoStream>& vs, std::shared_ptr<IExtensionAcce
 {
 	vs->RegisterFrameCallback(std::bind(&Camaro::OnFrame, this, std::placeholders::_1));
 	ObtainExtendedLines();
+	auto formats = pReader->GetAllFormats();
+	if (header != 0 || footer != 0)
+		for (auto &f : formats)
+			f.Height -= header + footer;
 }
 
 Camaro::~Camaro()
 {
+}
+
+int Camaro::GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc)
+{
+	auto hr = pReader->GetOptimizedFormatIndex(format, fourcc);
+	if (header == 0 && footer == 0)
+		return hr;
+	format.Height -= header + footer;
+	return hr;
+}
+
+int Camaro::GetMatchedFormatIndex(const VideoFormat& format) const
+{
+	if ((header == 0 && footer == 0) || format.Height == 0)
+		return pReader->GetMatchedFormatIndex(format);
+	auto amended(format);
+	amended.Height += header + footer;
+	return pReader->GetMatchedFormatIndex(amended);
+}
+
+const std::vector<VideoFormat>& Camaro::GetAllFormats() const
+{
+	return formats;
 }
 
 void Camaro::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
@@ -207,8 +233,9 @@ void Camaro::RegisterFrameCallback(IVideoFrameCallback* pCB)
 
 bool Camaro::StartStream(int formatIndex)
 {
-	if (formatIndex >= 0)
+	if (formatIndex >= 0 && formatIndex<formats.size())
 	{
+		currentFormat = formats[formatIndex];
 		SetSensorTrigger(0);
 		SetResyncNumber(900);
 		Flip(true, false);

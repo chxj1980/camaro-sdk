@@ -8,12 +8,6 @@ namespace TopGear
 		: public IVideoFrame
 	{
 	public:
-		virtual void QueryActualSize(uint32_t& w, uint32_t& h) override
-		{
-			w = actualWidth;
-			h = actualHeight;
-		}
-
 		virtual int LockBuffer(uint8_t** pData, uint32_t* pStride) override
 		{
 			uint8_t *pBuffer;

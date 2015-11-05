@@ -1,8 +1,5 @@
 #pragma once
 
-//#define DEVINFO_AR0134_OLD  "DGFA01"
-//#define DEVINFO_AR0134  "DGFA02"
-//#define DEVINFO_AR0130  "DGFA03"
 #include "IVideoStream.h"
 #include "IExtensionAccess.h"
 #include "ICameraControl.h"
@@ -20,6 +17,9 @@ namespace TopGear
 		public ILowlevelControl
 	{
 	public:
+		virtual int GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc="") override;
+		virtual int GetMatchedFormatIndex(const VideoFormat& format) const override;
+		virtual const std::vector<VideoFormat>& GetAllFormats() const override;
 		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
 		virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
 
@@ -47,6 +47,8 @@ namespace TopGear
 			Resync = 5,
 		};
 		
+		VideoFormat currentFormat;
+
 		void OnFrame(std::vector<IVideoFrameRef> &frames);
 		std::shared_ptr<IExtensionAccess> extension;
 		VideoFrameCallbackFn fnCb = nullptr;
@@ -54,6 +56,7 @@ namespace TopGear
 	private:
 		static const int EMBEDDED_LINES = 2;
 		void ObtainExtendedLines();
+		std::vector<VideoFormat> formats;
 		int header;
 		int footer;
 	public:
