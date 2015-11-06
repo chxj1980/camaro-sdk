@@ -64,7 +64,7 @@ private:
     std::atomic<int> dropcount;
 
     void Init();
-    void onGetVideoFrames(std::vector<TopGear::IVideoFrameRef> &frames);
+    void onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFrameRef> &frames);
     void onDeviceException(int); //override
 signals:
     void onvideoframe(TopGear::IVideoFrameRef vf);

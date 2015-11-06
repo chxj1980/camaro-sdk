@@ -292,7 +292,7 @@ void VideoSourceReader::OnReadWorker()
         auto frame = RequestFrame(index);
         if (frame)
         {
-            if (fnCb || pCbobj))
+            if (fnCb || pCbobj)
             {
                 std::vector<std::shared_ptr<IVideoFrame>> frames;
                 frames.push_back(frame);
