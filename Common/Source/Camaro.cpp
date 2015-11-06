@@ -188,7 +188,7 @@ Camaro::Camaro(std::shared_ptr<IVideoStream>& vs, std::shared_ptr<IExtensionAcce
 {
 	vs->RegisterFrameCallback(std::bind(&Camaro::OnFrame, this, std::placeholders::_1));
 	ObtainExtendedLines();
-	auto formats = pReader->GetAllFormats();
+    formats = pReader->GetAllFormats();
 	if (header != 0 || footer != 0)
 		for (auto &f : formats)
 			f.Height -= header + footer;

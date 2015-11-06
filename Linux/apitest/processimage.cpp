@@ -160,55 +160,55 @@ ProcessImage::ProcessImage(QWidget *parent)
             this, SLOT(handledevexception(int)),
             Qt::QueuedConnection );
 
-//    auto uvcDevices = TopGear::Linux::DeviceFactory<TopGear::Linux::DiscernibleVCDevice>::EnumerateDevices();
-//    for (auto dev : uvcDevices)
-//    {
-//        std::cerr << dev->GetFriendlyName() << std::endl;
-//        std::cerr << dev->GetSymbolicLink() << std::endl;
-//        camera = TopGear::Linux::CameraFactory<TopGear::Camaro>::CreateInstance(dev);
-//        ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camera);
-//        cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camera);
-//        if (camera && ioControl && cameraControl)
-//        {
-//            std::cerr << ioControl->QueryDeviceInfo() << std::endl;
-//            //Register callback function for frame arrival
-//            TopGear::IVideoStream::RegisterFrameCallback(*camera,
-//                                                         &ProcessImage::onGetVideoFrames,this);
-//            //Is master camaro
-//            if (ioControl->QueryDeviceRole() == 0)
-//            {
-//                TopGear::VideoFormat format;
-//                //Get optimized video format
-//                auto index = camera->GetOptimizedFormatIndex(format);
-//                //Start streaming with selected format index
-//                camera->StartStream(index);
-//                break;
-//            }
-//            else
-//                camera.reset();
-//        }
-//    }
-
-    auto devices = TopGear::Linux::DeviceFactory<TopGear::Linux::StandardVCDevice>::EnumerateDevices();
-    for (auto item : devices)
+    auto uvcDevices = TopGear::Linux::DeviceFactory<TopGear::Linux::DiscernibleVCDevice>::EnumerateDevices();
+    for (auto dev : uvcDevices)
     {
-        //Show some basic info about device
-        std::cout << item->GetFriendlyName() << std::endl;
-        std::cout << item->GetSymbolicLink() << std::endl;
-        std::cout << item->GetDeviceInfo() << std::endl;
-        camera = TopGear::Linux::CameraFactory<TopGear::StandardUVC>::CreateInstance(item);
-        if (camera)
+        std::cerr << dev->GetFriendlyName() << std::endl;
+        std::cerr << dev->GetSymbolicLink() << std::endl;
+        camera = TopGear::Linux::CameraFactory<TopGear::Camaro>::CreateInstance(dev);
+        ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camera);
+        cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camera);
+        if (camera && ioControl && cameraControl)
         {
+            std::cerr << ioControl->QueryDeviceInfo() << std::endl;
+            //Register callback function for frame arrival
             TopGear::IVideoStream::RegisterFrameCallback(*camera,
-                   &ProcessImage::onGetVideoFrames,this);
-            //labeldevinfo->setText(QString("devinfo:%1").arg(item->GetDeviceInfo().c_str()));
-            TopGear::VideoFormat format;
-            //Get optimized video format
-            auto index = camera->GetOptimizedFormatIndex(format);
-            camera->StartStream(index);
-            break;
+                                                         &ProcessImage::onGetVideoFrames,this);
+            //Is master camaro
+            if (ioControl->QueryDeviceRole() == 0)
+            {
+                TopGear::VideoFormat format;
+                //Get optimized video format
+                auto index = camera->GetOptimizedFormatIndex(format);
+                //Start streaming with selected format index
+                camera->StartStream(index);
+                break;
+            }
+            else
+                camera.reset();
         }
     }
+
+//    auto devices = TopGear::Linux::DeviceFactory<TopGear::Linux::StandardVCDevice>::EnumerateDevices();
+//    for (auto item : devices)
+//    {
+//        //Show some basic info about device
+//        std::cout << item->GetFriendlyName() << std::endl;
+//        std::cout << item->GetSymbolicLink() << std::endl;
+//        std::cout << item->GetDeviceInfo() << std::endl;
+//        camera = TopGear::Linux::CameraFactory<TopGear::StandardUVC>::CreateInstance(item);
+//        if (camera)
+//        {
+//            TopGear::IVideoStream::RegisterFrameCallback(*camera,
+//                   &ProcessImage::onGetVideoFrames,this);
+//            //labeldevinfo->setText(QString("devinfo:%1").arg(item->GetDeviceInfo().c_str()));
+//            TopGear::VideoFormat format;
+//            //Get optimized video format
+//            auto index = camera->GetOptimizedFormatIndex(format);
+//            camera->StartStream(index);
+//            break;
+//        }
+//    }
 
 
 
