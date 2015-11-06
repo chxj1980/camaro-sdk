@@ -66,7 +66,7 @@ void Camaro::ObtainExtendedLines()
 	footer = enF ? EMBEDDED_LINES : 0;
 }
 
-void Camaro::OnFrame(std::vector<IVideoFrameRef>& frames)
+void Camaro::OnFrame(IVideoStream &parent, std::vector<IVideoFrameRef>& frames)
 {
 	if (frames.size() != 1)
 		return;
@@ -88,9 +88,9 @@ void Camaro::OnFrame(std::vector<IVideoFrameRef>& frames)
 	frames.clear();
 	frames.push_back(ex);
 	if (fnCb)
-		fnCb(frames);
+		fnCb(*this, frames);
 	if (pCbobj)			//deprecated
-		pCbobj->OnFrame(frames);
+		pCbobj->OnFrame(*this, frames);
 }
 
 int Camaro::Flip(bool vertical, bool horizontal)
@@ -186,7 +186,7 @@ int Camaro::SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB)
 Camaro::Camaro(std::shared_ptr<IVideoStream>& vs, std::shared_ptr<IExtensionAccess>& ex)
 	: CameraBase(vs), extension(ex)
 {
-	vs->RegisterFrameCallback(std::bind(&Camaro::OnFrame, this, std::placeholders::_1));
+	vs->RegisterFrameCallback(std::bind(&Camaro::OnFrame, this, std::placeholders::_1, std::placeholders::_2));
 	ObtainExtendedLines();
     formats = pReader->GetAllFormats();
 	if (header != 0 || footer != 0)

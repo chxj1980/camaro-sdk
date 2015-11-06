@@ -15,7 +15,7 @@
 #include "StandardUVC.h"
 // ReSharper restore CppUnusedIncludeDirective
 
-void OnFrameCB(std::vector<TopGear::IVideoFrameRef> &frames)
+void OnFrameCB(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFrameRef> &frames)
 {
 	if (frames.size() == 0)
 		return;
@@ -24,7 +24,6 @@ void OnFrameCB(std::vector<TopGear::IVideoFrameRef> &frames)
 	uint32_t stride;	//Actual stride of frame	
 	uint8_t *pExtra;
 	frame->LockBuffer(&pData, &stride, &pExtra);		//Lock memory
-	auto el = frame->GetExtraLength();
 	std::cout << "FrameIdx: " << int(frame->GetFrameIdx()) << std::endl;
 	//std::cout << static_cast<int>(frame->GetTimestamp().tv_usec) << std::endl;
 	//Do something...
@@ -35,13 +34,13 @@ class FrameDemo //: public TopGear::IVideoFrameCallback
 {
 public:
 	//virtual void OnFrame(std::vector<std::shared_ptr<TopGear::IVideoFrame>> &frames) override
-	static void OnFrameS(std::vector<TopGear::IVideoFrameRef> &frames)
+	static void OnFrameS(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFrameRef> &frames)
 	{
-		OnFrameCB(frames);
+		OnFrameCB(stream, frames);
 	}
-	void OnFrameMember(std::vector<TopGear::IVideoFrameRef> &frames) const
+	void OnFrameMember(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFrameRef> &frames) const
 	{
-		OnFrameCB(frames);
+		OnFrameCB(stream, frames);
 	}
 };
 

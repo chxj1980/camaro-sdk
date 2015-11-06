@@ -1,29 +1,14 @@
 #pragma once
 
-#ifndef _IVIDEOFRAME_H
-#define _IVIDEOFRAME_H
-
-#include <cstdint>
-
 #ifdef _WIN32
 #include <winsock.h>
 #elif defined(__linux__)
 #include <sys/time.h>
 #endif
+#include <cstdint>
 #include <vector>
 #include <memory>
 #include <functional>
-
-#ifndef DEPRECATED
-#ifdef __GNUC__
-#define DEPRECATED(type) type //__attribute__((deprecated))
-#elif defined(_MSC_VER)
-#define DEPRECATED(type) type //__declspec(deprecated) type
-#else
-#pragma message("WARNING: You need to implement DEPRECATED for this compiler")
-#define DEPRECATED(type) type
-#endif
-#endif
 
 namespace TopGear
 {
@@ -45,17 +30,6 @@ namespace TopGear
 	};
 
 	typedef std::shared_ptr<IVideoFrame> IVideoFrameRef;
-	typedef std::function<void(std::vector<IVideoFrameRef> &)> VideoFrameCallbackFn;
-
-    DEPRECATED(class IVideoFrameCallback);
-
-    class IVideoFrameCallback
-    {
-    public:
-        virtual ~IVideoFrameCallback() = default;
-        virtual void OnFrame(std::vector<IVideoFrameRef> &frames) = 0;
-    };
 }
 
-#endif
 

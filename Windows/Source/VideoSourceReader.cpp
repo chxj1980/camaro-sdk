@@ -404,9 +404,9 @@ HRESULT VideoSourceReader::OnReadSample(
 			frames.push_back(vbl);
 			//Invoke callback handler
 			if (pCbobj)
-				pCbobj->OnFrame(frames);
+				pCbobj->OnFrame(*this, frames);
 			else
-				fnCb(frames);
+				fnCb(*this, frames);
 		}
 	}
 	//}

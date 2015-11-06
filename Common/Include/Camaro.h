@@ -51,7 +51,7 @@ namespace TopGear
 		
 		int currentFormatIndex = 0;
 
-		void OnFrame(std::vector<IVideoFrameRef> &frames);
+		void OnFrame(IVideoStream &parent, std::vector<IVideoFrameRef> &frames);
 		std::shared_ptr<IExtensionAccess> extension;
 		VideoFrameCallbackFn fnCb = nullptr;
 		IVideoFrameCallback *pCbobj = nullptr;

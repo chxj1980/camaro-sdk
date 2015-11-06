@@ -2,8 +2,32 @@
 #include "IVideoFrame.h"
 #include "VideoFormat.h"
 
+#ifndef DEPRECATED
+#ifdef __GNUC__
+#define DEPRECATED(type) type //__attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define DEPRECATED(type) type //__declspec(deprecated) type
+#else
+#pragma message("WARNING: You need to implement DEPRECATED for this compiler")
+#define DEPRECATED(type) type
+#endif
+#endif
+
 namespace TopGear
 {
+	class IVideoStream;
+
+	typedef std::function<void(IVideoStream &, std::vector<IVideoFrameRef> &)> VideoFrameCallbackFn;
+
+	DEPRECATED(class IVideoFrameCallback);
+
+	class IVideoFrameCallback
+	{
+	public:
+		virtual ~IVideoFrameCallback() = default;
+		virtual void OnFrame(IVideoStream &sender, std::vector<IVideoFrameRef> &frames) = 0;
+	};
+
 	template<typename testType>
 	struct is_function_pointer
 	{
@@ -33,14 +57,14 @@ namespace TopGear
 		static void RegisterFrameCallback(IVideoStream &stream, Fn&& fn, T *ptr)
 		{
 			static_assert(std::is_member_function_pointer<Fn>::value, "RegisterFrameCallback need a member function as parameter");
-			stream.RegisterFrameCallback(std::bind(fn, ptr, std::placeholders::_1));
+			stream.RegisterFrameCallback(std::bind(fn, ptr, std::placeholders::_1, std::placeholders::_2));
 		}
 
 		template<class Fn>
 		static void RegisterFrameCallback(IVideoStream &stream, Fn fn)
 		{
 			static_assert(is_function_pointer<Fn>::value, "RegisterFrameCallback need a function as parameter");
-			stream.RegisterFrameCallback(std::bind(fn, std::placeholders::_1));
+			stream.RegisterFrameCallback(std::bind(fn, std::placeholders::_1, std::placeholders::_2));
 		}
 	};
 }

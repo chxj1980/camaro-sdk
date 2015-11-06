@@ -1,12 +1,6 @@
 #pragma once
 
 #include "IVideoFrame.h"
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-
-#include <linux/videodev2.h>
-#include <linux/uvcvideo.h>
-#include <linux/usb/video.h>
 
 namespace TopGear
 {
@@ -48,16 +42,6 @@ namespace TopGear
 
 			virtual ~VideoBufferLock()
 			{
-                if (pBuffer)
-                {
-                    v4l2_buffer queue_buf;
-                    std::memset(&queue_buf,0,sizeof(queue_buf));
-                    queue_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                    queue_buf.memory = V4L2_MEMORY_MMAP;
-                    queue_buf.index = bufferIndex;
-                    if (ioctl(handle, VIDIOC_QBUF, &queue_buf)==0)
-                        pBuffer = nullptr;
-                }
 			}
 
 			//-------------------------------------------------------------------

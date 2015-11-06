@@ -292,17 +292,21 @@ void VideoSourceReader::OnReadWorker()
         auto frame = RequestFrame(index);
         if (frame)
         {
-            std::vector<std::shared_ptr<IVideoFrame>> frames;
-            frames.push_back(frame);
-            //Invoke callback handler
-            if (fnCb)
-                fnCb(frames);
-            else if (pCbobj)
-                pCbobj->OnFrame(frames);
-            else
+            if (fnCb || pCbobj))
+            {
+                std::vector<std::shared_ptr<IVideoFrame>> frames;
+                frames.push_back(frame);
+                //Invoke callback handler
+                if (fnCb)
+                    fnCb(*this, frames);
+                if (pCbobj)
+                    pCbobj->OnFrame(*this, frames);
                 ReleaseFrame(index); //Release immediately if no callback
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
         }
+        else
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 

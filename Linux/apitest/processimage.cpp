@@ -235,7 +235,7 @@ void ProcessImage::onDeviceException(int err)
     emit ondevexception(err);
 }
 
-void ProcessImage::onGetVideoFrames(std::vector<TopGear::IVideoFrameRef> &frames)//this is called in sub-thread
+void ProcessImage::onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFrameRef> &frames)//this is called in sub-thread
 {
     if (frames.size()==0)
         return;

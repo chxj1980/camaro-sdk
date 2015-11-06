@@ -23,8 +23,8 @@ namespace TopGear
 		std::thread frameWatchThread;
 		bool threadOn = false;
 		BufferQueue<std::pair<int, IVideoFrameRef>> frameBuffer;
-		void OnMasterFrame(std::vector<IVideoFrameRef> &frames);
-		void OnSlaveFrame(std::vector<IVideoFrameRef> &frames);
+		void OnMasterFrame(IVideoStream &master, std::vector<IVideoFrameRef> &frames);
+		void OnSlaveFrame(IVideoStream &slave, std::vector<IVideoFrameRef> &frames);
 	public:
 		CamaroDual(std::shared_ptr<IVideoStream> &master, std::shared_ptr<IVideoStream> &slave);
 		virtual ~CamaroDual();
