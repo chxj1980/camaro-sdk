@@ -83,8 +83,8 @@ void Camaro::OnFrame(std::vector<IVideoFrameRef>& frames)
 		(pData[5] & 0xf0) | (pData[7] & 0xf0) >> 4;
 	frame->UnlockBuffer();
 
-	auto ex = std::static_pointer_cast<IVideoFrame>(
-		std::make_shared<VideoFrameEx>(frame, header*stride, stride, w, h, index));
+	IVideoFrameRef ex = std::make_shared<VideoFrameEx>(frame, header*stride, stride, w, h, index,
+		(header + h)*stride, footer > 0 ? footer*stride : 0);
 	frames.clear();
 	frames.push_back(ex);
 	if (fnCb)

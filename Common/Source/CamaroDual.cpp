@@ -209,53 +209,6 @@ void CamaroDual::FrameWatcher()
 				break;
 		}
 	}
-
-		//if (framePair[one])		//Frame drop!
-		//{
-		//	droppedIndex = framePair[one]->GetFrameIdx(); //Log dropped frame index
-		//	std::cout<<"Device "<< other << " Frame "<<
-		//		framePair[one]->GetFrameIdx()<<" Dropped"<<std::endl; 
-		//}
-		//framePair[one] = frame.second;
-
-		//if (framePair[0] && framePair[1])
-		//{
-		//	
-		//	if (framePair[0]->GetFrameIdx() != framePair[1]->GetFrameIdx()) //Frame mismatch!
-		//	{
-		//		/*std::cout << "Device " << other << " Frame " <<
-		//			framePair[other]->GetFrameIdx() << " Mismatch" << std::endl;*/
-		//		std::cout << "Mismatch" << std::endl;
-		//		std::cout << " Device 0" << " Frame " << framePair[0]->GetFrameIdx() << std::endl;
-		//		std::cout << " Device 1" << " Frame " << framePair[1]->GetFrameIdx() << std::endl;
-		//		//Discard older one
-		//		if (abs(framePair[0]->GetFrameIdx() - framePair[1]->GetFrameIdx()) == 1)
-		//		{
-		//			if (framePair[0]->GetFrameIdx() < framePair[1]->GetFrameIdx())
-		//				framePair[0].reset();
-		//			else
-		//				framePair[1].reset();
-		//			
-		//		}
-		//		else
-		//		{
-		//			if (framePair[0]->GetFrameIdx() < framePair[1]->GetFrameIdx())
-		//				framePair[1].reset();
-		//			else
-		//				framePair[0].reset();
-		//		}
-		//		continue;
-		//	}
-		//	droppedIndex = -1; //reset state
-		//	auto vector = std::vector<IVideoFrameRef> {framePair[0], framePair[1]};
-		//	if (fnCb)
-		//		fnCb(vector);
-		//	if (pCbobj)		//deprecated
-		//		pCbobj->OnFrame(vector);
-		//	framePair[0].reset();
-		//	framePair[1].reset();
-		//}
-	//}
 }
 
 void CamaroDual::OnMasterFrame(std::vector<IVideoFrameRef>& frames)

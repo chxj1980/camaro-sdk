@@ -21,15 +21,9 @@ namespace TopGear
 		class VideoBufferLock : public IVideoFrame
 		{
 		public:
-			virtual uint16_t GetFrameIdx() const override
-			{
-				return 0;
-			}
-
-			virtual timeval GetTimestamp() const override
-			{
-				return tm;
-			}
+			virtual uint32_t GetExtraLength() const override { return 0; }
+			virtual uint16_t GetFrameIdx() const override { return 0; }
+			virtual timeval GetTimestamp() const override { return tm; }
 
 			virtual uint32_t GetLength() const override
 			{
@@ -79,6 +73,7 @@ namespace TopGear
 			virtual int LockBuffer(
 				uint8_t **ppScanLine0,    // Receives a pointer to the start of scan line 0.
 				uint32_t *pStride          // Receives the actual stride.
+				uint8_t **ppExtra = nullptr
 				) override
 			{
                 *ppScanLine0 = pBuffer;

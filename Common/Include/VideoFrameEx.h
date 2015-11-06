@@ -8,11 +8,20 @@ namespace TopGear
 		: public IVideoFrame
 	{
 	public:
-		virtual int LockBuffer(uint8_t** pData, uint32_t* pStride) override
+		virtual uint32_t GetExtraLength() const override
+		{
+			return extraLen;
+		}
+
+		virtual int LockBuffer(uint8_t** ppData, uint32_t* pStride, uint8_t** ppExtra = nullptr) override
 		{
 			uint8_t *pBuffer;
 			auto result = frame->LockBuffer(&pBuffer, pStride);
-			*pData = pBuffer + offset;
+			*ppData = pBuffer + offset;
+			if (ppExtra)
+			{
+				*ppExtra = extraLen > 0 ? pBuffer + extra : nullptr;
+			}
 			return result;
 		}
 		virtual void UnlockBuffer() override
@@ -33,10 +42,12 @@ namespace TopGear
 		}
 
 		explicit VideoFrameEx(std::shared_ptr<IVideoFrame> &vf,
-			uint32_t headOffset, uint32_t stride, uint32_t width, uint32_t height, uint16_t index
+			uint32_t headOffset, uint32_t stride, uint32_t width, uint32_t height, uint16_t index,
+			uint32_t extraOffset, uint32_t extraSize
 			)
 			: frame(vf), offset(headOffset), actualStride(stride),
-			  actualWidth(width), actualHeight(height), idx(index)
+			  actualWidth(width), actualHeight(height), idx(index),
+			  extra(extraOffset), extraLen(extraSize)
 		{
 		}
 
@@ -50,5 +61,7 @@ namespace TopGear
 		uint32_t actualWidth;
 		uint32_t actualHeight;
 		uint16_t idx;
+		uint32_t extra;
+		uint32_t extraLen;
 	};
 }

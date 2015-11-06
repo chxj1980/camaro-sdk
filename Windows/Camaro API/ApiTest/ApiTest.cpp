@@ -22,7 +22,9 @@ void OnFrameCB(std::vector<TopGear::IVideoFrameRef> &frames)
 	auto frame = frames[0];
 	uint8_t *pData;		//Frame data
 	uint32_t stride;	//Actual stride of frame	
-	frame->LockBuffer(&pData, &stride);		//Lock memory
+	uint8_t *pExtra;
+	frame->LockBuffer(&pData, &stride, &pExtra);		//Lock memory
+	auto el = frame->GetExtraLength();
 	std::cout << "FrameIdx: " << int(frame->GetFrameIdx()) << std::endl;
 	//std::cout << static_cast<int>(frame->GetTimestamp().tv_usec) << std::endl;
 	//Do something...
