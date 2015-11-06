@@ -56,10 +56,11 @@ namespace TopGear
 
 			virtual int LockBuffer(
 				uint8_t **ppScanLine0,    // Receives a pointer to the start of scan line 0.
-				uint32_t *pStride          // Receives the actual stride.
+                uint32_t *pStride,          // Receives the actual stride.
 				uint8_t **ppExtra = nullptr
 				) override
 			{
+                (void)ppExtra;
                 *ppScanLine0 = pBuffer;
                 *pStride = defaultStride;
                 m_bLocked = true;
