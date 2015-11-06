@@ -21,6 +21,12 @@ namespace TopGear
 
 			virtual const std::vector<VideoFormat> &GetAllFormats() const override
 			{ return videoFormats; }
+
+
+            virtual const VideoFormat& GetCurrentFormat() const override
+            {
+                return videoFormats[currentFormatIndex];
+            }
 			
 			virtual bool StartStream(int formatIndex) override;
 			virtual bool StopStream() override;
@@ -47,6 +53,7 @@ namespace TopGear
 			int frameHeight = 0;
         private:
             static const int FRAMEQUEUE_SIZE = 4;
+            int currentFormatIndex = 0;
             std::thread streamThread;
             std::pair<uint8_t *,int> vbuffers[FRAMEQUEUE_SIZE];
             void Initmmap();

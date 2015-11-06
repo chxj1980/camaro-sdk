@@ -291,7 +291,10 @@ void ProcessImage::showvideoframe(TopGear::IVideoFrameRef vf)
     fc.NewFrame();
 
     uint32_t w,h;
-    vf->QueryActualSize(w,h);
+    auto format = camera->GetCurrentFormat();
+    h = format.Height;
+    w = format.Width;
+    //vf->QueryActualSize(w,h);
     std::unique_ptr<uchar[]> prgb(new uchar[w*h*3]);
     unsigned char *pdata;
     uint32_t stride;

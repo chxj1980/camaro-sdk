@@ -241,8 +241,9 @@ int VideoSourceReader::GetOptimizedFormatIndex(VideoFormat& format, const char *
 bool VideoSourceReader::StartStream(int formatIndex)
 {
 	StopStream();
-    if (formatIndex>=(int)videoFormats.size())
+    if (formatIndex<0 || formatIndex>=(int)videoFormats.size())
         return false;
+    currentFormatIndex = formatIndex;
     VideoFormat& format = videoFormats[formatIndex];
     frameHeight = format.Height;
     frameWidth = format.Width;

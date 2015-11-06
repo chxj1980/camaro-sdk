@@ -233,7 +233,7 @@ void Camaro::RegisterFrameCallback(IVideoFrameCallback* pCB)
 
 bool Camaro::StartStream(int formatIndex)
 {
-	if (formatIndex >= 0 && formatIndex<formats.size())
+    if (formatIndex >= 0 && formatIndex<int(formats.size()))
 	{
 		currentFormatIndex = formatIndex;
 		SetSensorTrigger(0);
