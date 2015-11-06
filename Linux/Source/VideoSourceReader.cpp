@@ -180,7 +180,7 @@ void VideoSourceReader::EnumerateFormats()
                 rate = (int)(frameval.discrete.denominator/frameval.discrete.numerator);
                 VideoFormat format = { width,height,rate,0 };
                 memcpy(format.PixelFormat, &fmt.pixelformat, 4);
-                videoFormats.push_back(format);
+                videoFormats.emplace_back(format);
                 frameval.index++;
             }
             fsize.index++;

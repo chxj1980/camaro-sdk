@@ -23,6 +23,7 @@ void OnFrameCB(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFrameRe
 	uint8_t *pData;		//Frame data
 	uint32_t stride;	//Actual stride of frame	
 	uint8_t *pExtra;
+
 	frame->LockBuffer(&pData, &stride, &pExtra);		//Lock memory
 	std::cout << "FrameIdx: " << int(frame->GetFrameIdx()) << std::endl;
 	//std::cout << static_cast<int>(frame->GetTimestamp().tv_usec) << std::endl;
@@ -59,7 +60,7 @@ void Loop()
 }
 
 #define CAMARO_DUAL 
-//#define CAMARO_SOLO
+#define CAMARO_SOLO
 //#define 	STD_UVC
 
 void main()
@@ -103,6 +104,12 @@ void main()
 		auto cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camaro);
 		if (camaro && ioControl && cameraControl)
 		{
+			auto formats = camaro->GetAllFormats();
+			for (auto i = 0; i < formats.size(); ++i)
+			{
+				std::cout << i << ": " << formats[i].Width << "X" << formats[i].Height << " @ " << formats[i].MaxRate << "fps "
+					<< std::string(formats[i].PixelFormat, 4) << std::endl;
+			}
 			//Register callback function for frame arrival
 			TopGear::IVideoStream::RegisterFrameCallback(*camaro, &FrameDemo::OnFrameMember, &demo);
 			//Is master camaro
@@ -141,7 +148,7 @@ void main()
 #endif
 	
 	std::cout << "Exited! " << std::endl;
-	_getch();
+	//_getch();
 	//std::cin.get();
 	TopGear::Win::System::Dispose();
 }

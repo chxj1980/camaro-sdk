@@ -208,15 +208,10 @@ void VideoSourceReader::EnumerateFormats()
 		MFHelper::GetAttributeFrameRate(pType, rate, den);
 		rate /= den;
 		MFHelper::GetAttributeSize(pType, width, height);
-		
-		
 
 		VideoFormat format = { width,height,rate };
 		memcpy(format.PixelFormat, &subtype.Data1, 4);
-
-		std::cout << i << ": " << width << "X" << height << " @ " << rate << "fps " 
-		<< std::string(format.PixelFormat,4)<<std::endl;
-		videoFormats.push_back(format);
+		videoFormats.emplace_back(format);
 		System::SafeRelease(&pType);
 	}
 

@@ -86,7 +86,7 @@ void Camaro::OnFrame(IVideoStream &parent, std::vector<IVideoFrameRef>& frames)
 	IVideoFrameRef ex = std::make_shared<VideoFrameEx>(frame, header*stride, stride, w, h, index,
 		(header + h)*stride, footer > 0 ? footer*stride : 0);
 	frames.clear();
-	frames.push_back(ex);
+	frames.emplace_back(ex);
 	if (fnCb)
 		fnCb(*this, frames);
 	if (pCbobj)			//deprecated
