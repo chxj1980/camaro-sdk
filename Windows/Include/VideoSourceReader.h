@@ -19,6 +19,7 @@ namespace TopGear
 		class VideoSourceReader : public IMFSourceReaderCallback, public IVideoStream
 		{
 		public:
+			
 			static HRESULT CreateInstance(
 				HWND hVideo,
 				HWND hEvent,
@@ -52,6 +53,11 @@ namespace TopGear
 
 			virtual const std::vector<VideoFormat> &GetAllFormats() const override
 			{ return videoFormats; }
+
+			virtual const VideoFormat& GetCurrentFormat() const override
+			{
+				return videoFormats[currentFormatIndex];
+			}
 			
 			virtual bool StartStream(int formatIndex) override;
 			virtual bool StopStream() override;
@@ -59,6 +65,8 @@ namespace TopGear
 			{ return streamOn; }
 			virtual void RegisterFrameCallback(IVideoFrameCallback *pCB) override;
 			virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
+		private:
+			int currentFormatIndex = 0;
 		protected:
 			VideoFrameCallbackFn fnCb = nullptr;
 			IVideoFrameCallback *pCbobj = nullptr;

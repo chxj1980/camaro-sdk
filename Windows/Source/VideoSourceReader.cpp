@@ -281,6 +281,7 @@ bool VideoSourceReader::StartStream(int formatIndex)
 	auto hr = m_pReader->GetNativeMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, formatIndex, &pType);
 	if (SUCCEEDED(hr))
 	{
+		currentFormatIndex = formatIndex;
 		isRunning = true;
 		hr = m_pReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, pType);
 		MFHelper::GetAttributeSize(pType, frameWidth, frameHeight);

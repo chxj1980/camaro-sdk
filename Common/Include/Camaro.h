@@ -20,6 +20,8 @@ namespace TopGear
 		virtual int GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc="") override;
 		virtual int GetMatchedFormatIndex(const VideoFormat& format) const override;
 		virtual const std::vector<VideoFormat>& GetAllFormats() const override;
+		virtual const VideoFormat &GetCurrentFormat() const override { return formats[currentFormatIndex]; }
+
 		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
 		virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
 
@@ -47,7 +49,7 @@ namespace TopGear
 			Resync = 5,
 		};
 		
-		VideoFormat currentFormat;
+		int currentFormatIndex = 0;
 
 		void OnFrame(std::vector<IVideoFrameRef> &frames);
 		std::shared_ptr<IExtensionAccess> extension;

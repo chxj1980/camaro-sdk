@@ -72,8 +72,8 @@ void Camaro::OnFrame(std::vector<IVideoFrameRef>& frames)
 		return;
 	auto frame = frames[0];
 	
-	uint32_t w = currentFormat.Width;
-	uint32_t h = currentFormat.Height;
+	uint32_t w = formats[currentFormatIndex].Width;
+	uint32_t h = formats[currentFormatIndex].Height;
 
 	uint8_t *pData;
 	uint32_t stride;
@@ -235,7 +235,7 @@ bool Camaro::StartStream(int formatIndex)
 {
 	if (formatIndex >= 0 && formatIndex<formats.size())
 	{
-		currentFormat = formats[formatIndex];
+		currentFormatIndex = formatIndex;
 		SetSensorTrigger(0);
 		SetResyncNumber(900);
 		Flip(true, false);

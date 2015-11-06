@@ -24,6 +24,7 @@ namespace TopGear
 		virtual int GetOptimizedFormatIndex(VideoFormat &format, const char *fourcc = "") = 0;
 		virtual int GetMatchedFormatIndex(const VideoFormat &format) const = 0;
 		virtual const std::vector<VideoFormat> &GetAllFormats() const = 0;
+		virtual const VideoFormat &GetCurrentFormat() const = 0;
 
 		virtual void RegisterFrameCallback(const VideoFrameCallbackFn &fn) = 0;
 		DEPRECATED(virtual void RegisterFrameCallback(IVideoFrameCallback *pCB)) = 0;

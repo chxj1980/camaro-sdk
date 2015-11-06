@@ -43,6 +43,7 @@ namespace TopGear
 		virtual int GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc = "") override;
 		virtual int GetMatchedFormatIndex(const VideoFormat& format) const override;
 		virtual const std::vector<VideoFormat>& GetAllFormats() const override;
+		virtual const VideoFormat &GetCurrentFormat() const override;
 	};
 }
 

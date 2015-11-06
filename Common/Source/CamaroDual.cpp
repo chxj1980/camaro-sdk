@@ -144,6 +144,11 @@ const std::vector<VideoFormat>& CamaroDual::GetAllFormats() const
 	return videoStreams[0]->GetAllFormats();
 }
 
+const VideoFormat& CamaroDual::GetCurrentFormat() const
+{
+	return videoStreams[0]->GetCurrentFormat();
+}
+
 void CamaroDual::FrameWatcher()
 {
 	//RESYNC_NUM
