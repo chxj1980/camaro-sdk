@@ -1,8 +1,8 @@
 #pragma once
 #include "IVideoStream.h"
 #include <vector>
-#include "IGenericVCDevice.h"
-#include "CameraComboBase.h"
+//#include "IGenericVCDevice.h"
+//#include "CameraBase.h"
 
 namespace TopGear
 {

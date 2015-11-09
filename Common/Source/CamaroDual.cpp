@@ -149,10 +149,26 @@ const VideoFormat& CamaroDual::GetCurrentFormat() const
 	return videoStreams[0]->GetCurrentFormat();
 }
 
+void CamaroDual::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
+{
+	fnCb = fn;
+}
+
+void CamaroDual::RegisterFrameCallback(IVideoFrameCallback* pCB)
+{
+	fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
+}
+
+void CamaroDual::RegisterProcessor(std::shared_ptr<IProcessor>& p)
+{
+	processor = p;
+
+}
+
 void CamaroDual::FrameWatcher()
 {
 	//RESYNC_NUM
-	int lastIndex = -1;
+	auto lastIndex = -1;
 	auto dropped = 0;
 	std::vector<IVideoFrameRef> frameVector[2];
 	std::pair<int, IVideoFrameRef> frameEx;
@@ -196,9 +212,15 @@ void CamaroDual::FrameWatcher()
 					//std::cout << " Frame " << mFrame->GetFrameIdx() << std::endl;
 					auto vector = std::vector<IVideoFrameRef>{ mFrame, sFrame };
 					if (fnCb)
-						fnCb(*this, vector);
-					if (pCbobj)		//deprecated
-						pCbobj->OnFrame(*this, vector);
+					{
+						if (processor)
+						{
+							auto post = processor->Process(vector);
+							fnCb(*this, post);
+						}
+						else
+							fnCb(*this, vector);
+					}
 					frameVector[1].erase(frameVector[1].begin(), sit + 1);
 					frameVector[0].erase(frameVector[0].begin(), mit + 1);
 					found = true;

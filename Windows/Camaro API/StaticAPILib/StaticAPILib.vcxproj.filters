@@ -36,12 +36,6 @@
     <ClInclude Include="..\..\..\Common\Include\CamaroDual.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Common\Include\CameraBase.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\Common\Include\CameraComboBase.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\Common\Include\ExtensionInfo.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
@@ -122,6 +116,18 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\IExtensionUnit.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\IMultiVideoStream.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\CameraBase.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\CameraSoloBase.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\IProcessor.h">
+      <Filter>Header Files\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

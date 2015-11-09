@@ -1,12 +1,20 @@
 #pragma once
-#include "IVideoStream.h"
-#include "CameraBase.h"
+#include "CameraSoloBase.h"
 
 namespace TopGear
 {
-	class StandardUVC :public CameraBase
+	class StandardUVC :public CameraSoloBase
 	{
 	public:
+		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override
+		{
+			pReader->RegisterFrameCallback(fn);
+		}
+		virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override
+		{
+			pReader->RegisterFrameCallback(pCB);
+		}
+
 		virtual const VideoFormat& GetCurrentFormat() const override
 		{
 			return pReader->GetCurrentFormat();
@@ -26,7 +34,7 @@ namespace TopGear
 		}
 
 		explicit StandardUVC(std::shared_ptr<IVideoStream> &vs)
-			: CameraBase(vs) {}
+			: CameraSoloBase(vs) {}
 		virtual ~StandardUVC() {}
 	};
 }

@@ -375,13 +375,6 @@ HRESULT VideoSourceReader::OnReadSample(
 
 	EnterCriticalSection(&m_critsec);
 
-	//if (FAILED(hrStatus))
-	//{
-	//	hr = hrStatus;
-	//}
-
-	//if (SUCCEEDED(hr))
-	//{
 	if (pSample)
 	{
 		OutputDebugStringW(L"Frame Arrival\n");
@@ -390,7 +383,7 @@ HRESULT VideoSourceReader::OnReadSample(
 		hr = pSample->GetBufferByIndex(0, &pBuffer);
 
 		// Draw the frame.
-		if (SUCCEEDED(hr) && (pCbobj != nullptr || fnCb !=nullptr))
+		if (SUCCEEDED(hr) && fnCb !=nullptr)
 		{
 			std::vector<std::shared_ptr<IVideoFrame>> frames;
 			auto vbl = std::static_pointer_cast<IVideoFrame>(
@@ -398,13 +391,9 @@ HRESULT VideoSourceReader::OnReadSample(
 					pBuffer, timeStamp, defaultStride, frameWidth, frameHeight));
 			frames.push_back(vbl);
 			//Invoke callback handler
-			if (pCbobj)
-				pCbobj->OnFrame(*this, frames);
-			else
-				fnCb(*this, frames);
+			fnCb(*this, frames);
 		}
 	}
-	//}
 
 	// Request the next frame.
 	if (SUCCEEDED(hr) && isRunning)
@@ -454,7 +443,7 @@ STDMETHODIMP VideoSourceReader::OnFlush(DWORD)
 
 void VideoSourceReader::RegisterFrameCallback(IVideoFrameCallback* pCB)
 {
-	pCbobj = pCB;
+	fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
 }
 
 void VideoSourceReader::RegisterFrameCallback(const VideoFrameCallbackFn& fn)

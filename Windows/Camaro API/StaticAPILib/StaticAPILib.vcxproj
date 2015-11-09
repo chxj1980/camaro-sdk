@@ -156,7 +156,7 @@
     <ClInclude Include="..\..\..\Common\Include\Camaro.h" />
     <ClInclude Include="..\..\..\Common\Include\CamaroDual.h" />
     <ClInclude Include="..\..\..\Common\Include\CameraBase.h" />
-    <ClInclude Include="..\..\..\Common\Include\CameraComboBase.h" />
+    <ClInclude Include="..\..\..\Common\Include\CameraSoloBase.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionInfo.h" />
     <ClInclude Include="..\..\..\Common\Include\ICameraControl.h" />
     <ClInclude Include="..\..\..\Common\Include\ICameraFactory.h" />
@@ -166,6 +166,8 @@
     <ClInclude Include="..\..\..\Common\Include\IExtensionLite.h" />
     <ClInclude Include="..\..\..\Common\Include\IGenericVCDevice.h" />
     <ClInclude Include="..\..\..\Common\Include\ILowlevelControl.h" />
+    <ClInclude Include="..\..\..\Common\Include\IMultiVideoStream.h" />
+    <ClInclude Include="..\..\..\Common\Include\IProcessor.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoFrame.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoStream.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardUVC.h" />

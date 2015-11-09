@@ -4,14 +4,14 @@
 #include "IExtensionAccess.h"
 #include "ICameraControl.h"
 #include "IDeviceControl.h"
-#include "CameraBase.h"
+#include "CameraSoloBase.h"
 #include "ILowlevelControl.h"
 
 
 namespace TopGear
 {
 	class Camaro
-		: public CameraBase,
+		: public CameraSoloBase,
 		public TopGear::ICameraControl,
 		public IDeviceControl,
 		public ILowlevelControl
@@ -54,7 +54,6 @@ namespace TopGear
 		void OnFrame(IVideoStream &parent, std::vector<IVideoFrameRef> &frames);
 		std::shared_ptr<IExtensionAccess> extension;
 		VideoFrameCallbackFn fnCb = nullptr;
-		IVideoFrameCallback *pCbobj = nullptr;
 	private:
 		static const int EMBEDDED_LINES = 2;
 		void ObtainExtendedLines();

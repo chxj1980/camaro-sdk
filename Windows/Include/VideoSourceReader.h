@@ -69,7 +69,6 @@ namespace TopGear
 			int currentFormatIndex = 0;
 		protected:
 			VideoFrameCallbackFn fnCb = nullptr;
-			IVideoFrameCallback *pCbobj = nullptr;
 			std::vector<VideoFormat> videoFormats;
 
 			bool IsFormatSupported(const GUID &subtype) const;

@@ -89,8 +89,6 @@ void Camaro::OnFrame(IVideoStream &parent, std::vector<IVideoFrameRef>& frames)
 	frames.emplace_back(ex);
 	if (fnCb)
 		fnCb(*this, frames);
-	if (pCbobj)			//deprecated
-		pCbobj->OnFrame(*this, frames);
 }
 
 int Camaro::Flip(bool vertical, bool horizontal)
@@ -184,7 +182,7 @@ int Camaro::SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB)
 }
 
 Camaro::Camaro(std::shared_ptr<IVideoStream>& vs, std::shared_ptr<IExtensionAccess>& ex)
-	: CameraBase(vs), extension(ex)
+	: CameraSoloBase(vs), extension(ex)
 {
 	vs->RegisterFrameCallback(std::bind(&Camaro::OnFrame, this, std::placeholders::_1, std::placeholders::_2));
 	ObtainExtendedLines();
@@ -228,7 +226,7 @@ void Camaro::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
 
 void Camaro::RegisterFrameCallback(IVideoFrameCallback* pCB)
 {
-	pCbobj = pCB;
+	fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
 }
 
 bool Camaro::StartStream(int formatIndex)

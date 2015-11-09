@@ -1,23 +1,28 @@
 #pragma once
 #include "ICameraControl.h"
 #include "IDeviceControl.h"
-#include "CameraComboBase.h"
+#include "CameraBase.h"
 #include "BufferQueue.h"
+#include "IProcessor.h"
 
 namespace TopGear
 {
 	class CamaroDual :
-		public CameraComboBase,
+		public CameraBase,
+		public IProcessable,
 		public TopGear::ICameraControl,
 		public IDeviceControl
 
 	{
+	public:
+		virtual void RegisterProcessor(std::shared_ptr<IProcessor>& p) override;
 	protected:
 		static const uint16_t RESYNC_NUM = 900;
 		std::shared_ptr<TopGear::ICameraControl> masterCC;
 		std::shared_ptr<TopGear::ICameraControl> slaveCC;
 		std::shared_ptr<IDeviceControl> masterDC;
 		std::shared_ptr<IDeviceControl> slaveDC;
+		std::shared_ptr<IProcessor> processor;
 
 		void FrameWatcher();
 		std::thread frameWatchThread;
@@ -25,6 +30,7 @@ namespace TopGear
 		BufferQueue<std::pair<int, IVideoFrameRef>> frameBuffer;
 		void OnMasterFrame(IVideoStream &master, std::vector<IVideoFrameRef> &frames);
 		void OnSlaveFrame(IVideoStream &slave, std::vector<IVideoFrameRef> &frames);
+		VideoFrameCallbackFn fnCb = nullptr;
 	public:
 		CamaroDual(std::shared_ptr<IVideoStream> &master, std::shared_ptr<IVideoStream> &slave);
 		virtual ~CamaroDual();
@@ -44,6 +50,8 @@ namespace TopGear
 		virtual int GetMatchedFormatIndex(const VideoFormat& format) const override;
 		virtual const std::vector<VideoFormat>& GetAllFormats() const override;
 		virtual const VideoFormat &GetCurrentFormat() const override;
+		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
+		virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
 	};
 }
 
