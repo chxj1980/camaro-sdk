@@ -194,6 +194,7 @@ Camaro::Camaro(std::shared_ptr<IVideoStream>& vs, std::shared_ptr<IExtensionAcce
 
 Camaro::~Camaro()
 {
+	Camaro::StopStream();
 }
 
 int Camaro::GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc)
@@ -238,18 +239,18 @@ bool Camaro::StartStream(int formatIndex)
 		SetResyncNumber(900);
 		Flip(true, false);
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
-		pReader->StartStream(formatIndex);
-		while (!pReader->IsStreaming())
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		SetSensorTrigger(1);
-		return true;
+		if (CameraSoloBase::StartStream(formatIndex))
+		{
+			SetSensorTrigger(1);
+			return true;
+		}
 	}
 	return false;
 }
 
 bool Camaro::StopStream()
 {
-	pReader->StopStream();
+	CameraSoloBase::StopStream();
 	SetSensorTrigger(0);
 	return true;
 }

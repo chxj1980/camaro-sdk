@@ -1,5 +1,7 @@
 #pragma once
 #include "CameraBase.h"
+#include <thread>
+#include <chrono>
 
 namespace TopGear
 {
@@ -15,7 +17,11 @@ namespace TopGear
 	public:
 		virtual bool StartStream(int formatIndex) override
 		{
-			return pReader->StartStream(formatIndex);
+			if (!pReader->StartStream(formatIndex))
+				return false;
+			while (!pReader->IsStreaming())
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			return true;
 		}
 		virtual bool StopStream() override
 		{
@@ -28,7 +34,6 @@ namespace TopGear
 
 		virtual ~CameraSoloBase()
 		{
-			StopStream();
 		}
 	};
 }
