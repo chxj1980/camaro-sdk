@@ -1,61 +1,39 @@
 #include "VideoSourceReader.h"
 
-#include <shlwapi.h>
-#include <mfapi.h>
 #include <string>
-#include <sstream>
+//#include <sstream>
 #include "MFHelper.h"
 #include "System.h"
-#include <iostream>
-#include <functional>
-#include "VideoBufferLock.h"
+//#include <iostream>
 #include <thread>
+
+#include "VideoBufferLock.h"
+#include "VideoSource.h"
 
 using namespace TopGear;
 using namespace Win;
+
 //-------------------------------------------------------------------
 //  CreateInstance
 //
 //  Static class method to create the CPreview object.
 //-------------------------------------------------------------------
 
-HRESULT VideoSourceReader::CreateInstance(
-	HWND hVideo,        // Handle to the video window.
-	HWND hEvent,        // Handle to the window to receive notifications.
-	IMFMediaSource *pSource,
-	VideoSourceReader **ppPlayer // Receives a pointer to the VideoSourceReader object.
-	)
+std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateInstances(IMFMediaSource *pSource)
 {
-	//assert(hVideo != NULL);
-	//assert(hEvent != NULL);
-
-	if (ppPlayer == nullptr)
-	{
-		return E_POINTER;
-	}
-
-	auto pPlayer = new (std::nothrow) VideoSourceReader(hVideo, hEvent);
-
-	// The CPlayer constructor sets the ref count to 1.
-
+	std::shared_ptr<VideoSourceReader> pPlayer(new VideoSourceReader);
 	if (pPlayer == nullptr)
-	{
-		return E_OUTOFMEMORY;
-	}
-
-	//pPlayer->Initialize();
-
+		return{};// E_OUTOFMEMORY
+	std::vector<std::shared_ptr<IVideoStream>> list;
 	auto hr = pPlayer->OpenMediaSource(pSource);
-
 	if (SUCCEEDED(hr))
 	{
-		*ppPlayer = pPlayer;
-		(*ppPlayer)->AddRef();
-		pPlayer->EnumerateFormats();
+		pPlayer->EnumerateStreams();
+		for (auto s : pPlayer->streams)
+			list.emplace_back(std::make_shared<VideoSource>(
+				std::static_pointer_cast<IMultiVideoSource>(pPlayer), s.first));
 	}
-
-	System::SafeRelease(&pPlayer);
-	return hr;
+	return list;
 }
 
 
@@ -63,10 +41,8 @@ HRESULT VideoSourceReader::CreateInstance(
 //  constructor
 //-------------------------------------------------------------------
 
-VideoSourceReader::VideoSourceReader(HWND hVideo, HWND hEvent) :
+VideoSourceReader::VideoSourceReader() :
 	m_nRefCount(1),
-	m_hwndVideo(hVideo),
-	m_hwndEvent(hEvent),
 	m_pReader(nullptr)
 {
 	InitializeCriticalSection(&m_critsec);
@@ -85,23 +61,6 @@ VideoSourceReader::~VideoSourceReader()
 	DeleteCriticalSection(&m_critsec);
 }
 
-
-//-------------------------------------------------------------------
-//  Initialize
-//
-//  Initializes the object.
-//-------------------------------------------------------------------
-
-//HRESULT VideoSourceReader::Initialize()
-//{
-//	auto hr = S_OK;
-
-//	//hr = m_draw.CreateDevice(m_hwndVideo);
-
-//	return hr;
-//}
-
-
 //-------------------------------------------------------------------
 //  CloseDevice
 //
@@ -116,6 +75,35 @@ HRESULT VideoSourceReader::CloseDevice()
 
 	LeaveCriticalSection(&m_critsec);
 	return S_OK;
+}
+
+const std::vector<VideoFormat>& VideoSourceReader::GetAllFormats(uint32_t index)
+{
+	//if (streams.find(index) == streams.end())
+	//	return {};
+	return streams[index].formats;
+}
+
+bool VideoSourceReader::SetCurrentFormat(uint32_t index, int formatIndex)
+{
+	if (streams.find(index) == streams.end())
+		return false;
+	auto &stream = streams[index];
+
+	EnterCriticalSection(&m_critsec);
+
+	IMFMediaType *pType;
+	auto hr = m_pReader->GetNativeMediaType(index, formatIndex, &pType);
+	if (SUCCEEDED(hr))
+	{
+		//stream.currentFormatIndex = formatIndex;
+		hr = m_pReader->SetCurrentMediaType(index, nullptr, pType);
+		MFHelper::GetAttributeSize(pType, stream.frameWidth, stream.frameHeight);
+		MFHelper::GetDefaultStride(pType, stream.defaultStride);
+	}
+	System::SafeRelease(&pType);
+	LeaveCriticalSection(&m_critsec);
+	return SUCCEEDED(hr);
 }
 
 HRESULT VideoSourceReader::OpenMediaSource(IMFMediaSource* pSource)
@@ -157,7 +145,7 @@ HRESULT VideoSourceReader::OpenMediaSource(IMFMediaSource* pSource)
 			pSource,
 			pAttributes,
 			&m_pReader
-			);
+			); 
 	}
 
 	if (FAILED(hr))
@@ -178,19 +166,44 @@ HRESULT VideoSourceReader::OpenMediaSource(IMFMediaSource* pSource)
 	return hr;
 }
 
-void VideoSourceReader::EnumerateFormats()
+void VideoSourceReader::EnumerateStreams()
 {
-	videoFormats.clear();
 	if (m_pReader == nullptr)
 		return;
 
 	EnterCriticalSection(&m_critsec);
 
+	m_pReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, TRUE);
+
+	IMFMediaType *pType;
+	GUID majorType;
+	auto i = 0;
+	while (m_pReader->GetNativeMediaType(i, 0, &pType) == S_OK)
+	{
+		pType->GetMajorType(&majorType);
+		if (IsEqualGUID(majorType, MFMediaType_Video))
+		{
+			streams[i] = StreamState {};
+			EnumerateFormats(i, streams[i].formats);
+		}
+		System::SafeRelease(&pType);
+		i++;
+	}
+
+	LeaveCriticalSection(&m_critsec);
+}
+
+void VideoSourceReader::EnumerateFormats(uint32_t index, std::vector<VideoFormat> &videoFormats) const
+{
+	videoFormats.clear();
+	if (m_pReader == nullptr)
+		return;
+
 	int rate, den, width, height;
 	for (auto i = 0;; i++)
 	{
 		IMFMediaType *pType;
-		auto hr = m_pReader->GetNativeMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, i, &pType);
+		auto hr = m_pReader->GetNativeMediaType(index, i, &pType);
 		if (FAILED(hr))
 		{
 			System::SafeRelease(&pType);
@@ -214,96 +227,48 @@ void VideoSourceReader::EnumerateFormats()
 		videoFormats.emplace_back(format);
 		System::SafeRelease(&pType);
 	}
-
-	LeaveCriticalSection(&m_critsec);
 }
 
-int VideoSourceReader::GetMatchedFormatIndex(const VideoFormat& format) const
+bool VideoSourceReader::StartStream(uint32_t index)
 {
-	if (m_pReader == nullptr)
-		return -1;
-	auto index = -1;
-	for (auto i : videoFormats)
-	{
-		index++;
-		if (format.Width > 0 && format.Width != i.Width)
-			continue;
-		if (format.Height> 0 && format.Height != i.Height)
-			continue;
-		if (format.MaxRate > 0 && format.MaxRate != i.MaxRate)
-			continue;
-		if (strcmp(format.PixelFormat, "")!=0 && strncmp(format.PixelFormat, i.PixelFormat, 4)!=0)
-			continue;
-		return index;
-	}
-	return -1;
-}
+	if (streams.find(index) == streams.end())
+		return false;
 
-
-int VideoSourceReader::GetOptimizedFormatIndex(VideoFormat& format, const char *fourcc)
-{
-	if (m_pReader == nullptr)
-		return -1;
-
-	auto wCurrent = 0, hCurrent = 0, rCurrent = 0;
-	auto index = -1;
-	auto i = -1;
-	for(auto f : videoFormats)
-	{
-		++i;
-		if (strcmp(fourcc, "") != 0 && strncmp(fourcc, f.PixelFormat, 4) != 0)
-			continue;
-		if (f.Height >= hCurrent && f.MaxRate >= rCurrent)
-		{
-			wCurrent = f.Width;
-			hCurrent = f.Height;
-			rCurrent = f.MaxRate;
-			index = i;
-		}
-	}
-	if (index >= 0)
-		format = videoFormats[index];
-	return index;
-}
-
-bool VideoSourceReader::StartStream(int formatIndex)
-{
-	StopStream();
+	StopStream(index);
 
 	EnterCriticalSection(&m_critsec);
 
-	IMFMediaType *pType;
-	auto hr = m_pReader->GetNativeMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, formatIndex, &pType);
-	if (SUCCEEDED(hr))
-	{
-		currentFormatIndex = formatIndex;
-		isRunning = true;
-		hr = m_pReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, pType);
-		MFHelper::GetAttributeSize(pType, frameWidth, frameHeight);
-		MFHelper::GetDefaultStride(pType, defaultStride);
-		//hr = m_pReader->SetStreamSelection(MF_SOURCE_READER_FIRST_VIDEO_STREAM, true);
-
-		////Ask for the first sample.
-		hr = m_pReader->ReadSample(
-			static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
+	streams[index].isRunning = true;
+	auto hr = m_pReader->ReadSample(
+			index,
 			0,
 			nullptr,
 			nullptr,
 			nullptr,
 			nullptr
 			);
-	}
-	System::SafeRelease(&pType);
+	
 	LeaveCriticalSection(&m_critsec);
 	return hr==S_OK;
 }
 
-bool VideoSourceReader::StopStream()
+bool VideoSourceReader::StopStream(uint32_t index)
 {
-	isRunning = false;
-	while (streamOn)
+	if (streams.find(index) == streams.end())
+		return false;
+	EnterCriticalSection(&m_critsec);
+	streams[index].isRunning = false;
+	LeaveCriticalSection(&m_critsec);
+	while (streams[index].streamOn)
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	return true;
+}
+
+bool VideoSourceReader::IsStreaming(uint32_t index)
+{
+	if (streams.find(index) == streams.end())
+		return false;
+	return streams[index].streamOn;
 }
 
 /////////////// IUnknown methods ///////////////
@@ -363,13 +328,15 @@ HRESULT VideoSourceReader::QueryInterface(REFIID riid, void** ppv)
 
 HRESULT VideoSourceReader::OnReadSample(
 	HRESULT hrStatus,
-	DWORD index,
+	DWORD streamIndex,
 	DWORD flags,
 	LONGLONG timeStamp/* llTimestamp */,
 	IMFSample *pSample      // Can be NULL
 	)
 {
 	
+	auto &stream = streams[streamIndex];
+
 	auto hr = S_OK;
 	IMFMediaBuffer *pBuffer = nullptr;
 
@@ -380,38 +347,35 @@ HRESULT VideoSourceReader::OnReadSample(
 		OutputDebugStringW(L"Frame Arrival\n");
 		// Get the video frame buffer from the sample.
 
-		hr = pSample->GetBufferByIndex(0, &pBuffer);
+		hr = pSample->GetBufferByIndex(streamIndex, &pBuffer);
 
 		// Draw the frame.
-		if (SUCCEEDED(hr) && fnCb !=nullptr)
+		if (SUCCEEDED(hr) && stream.fncb !=nullptr)
 		{
-			std::vector<std::shared_ptr<IVideoFrame>> frames;
-			auto vbl = std::static_pointer_cast<IVideoFrame>(
-				std::make_shared<VideoBufferLock>(
-					pBuffer, timeStamp, defaultStride, frameWidth, frameHeight));
-			frames.push_back(vbl);
+			std::shared_ptr<IVideoFrame> frame = std::make_shared<VideoBufferLock>(
+					pBuffer, timeStamp, stream.defaultStride, stream.frameWidth, stream.frameHeight);
 			//Invoke callback handler
-			fnCb(*this, frames);
+			stream.fncb(frame);
 		}
 	}
 
 	// Request the next frame.
-	if (SUCCEEDED(hr) && isRunning)
+	if (SUCCEEDED(hr) && stream.isRunning)
 	{
 		hr = m_pReader->ReadSample(
-			static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
+			streamIndex,
 			0,
 			nullptr,   // actual
 			nullptr,   // flags
 			nullptr,   // timestamp
 			nullptr    // sample
 			);
-		streamOn = true;
+		stream.streamOn = true;
 	}
 	else
 	{
-		isRunning = false;
-		streamOn = false;
+		stream.isRunning = false;
+		stream.streamOn = false;
 	}
 
 	if (FAILED(hr))
@@ -434,74 +398,11 @@ STDMETHODIMP VideoSourceReader::OnFlush(DWORD)
 	return S_OK;
 }
 
-
-//-------------------------------------------------------------------
-// TryMediaType
-//
-// Test a proposed video format.
-//-------------------------------------------------------------------
-
-void VideoSourceReader::RegisterFrameCallback(IVideoFrameCallback* pCB)
+void VideoSourceReader::RegisterReaderCallback(uint32_t index, const ReaderCallbackFn& fn)
 {
-	fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
-}
-
-void VideoSourceReader::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
-{
-	fnCb = fn;
-}
-
-bool VideoSourceReader::IsFormatSupported(const GUID &subtype) const
-{
-	//Do we support this type directly ?
-	return true;
-}
-
-
-//-------------------------------------------------------------------
-//  CheckDeviceLost
-//  Checks whether the current device has been lost.
-//
-//  The application should call this method in response to a
-//  WM_DEVICECHANGE message. (The application must register for 
-//  device notification to receive this message.)
-//-------------------------------------------------------------------
-
-/*HRESULT CPreview::CheckDeviceLost(DEV_BROADCAST_HDR *pHdr, BOOL *pbDeviceLost)
-{
-	DEV_BROADCAST_DEVICEINTERFACE *pDi = NULL;
-
-	if (pbDeviceLost == NULL)
-	{
-		return E_POINTER;
-	}
-
-	*pbDeviceLost = FALSE;
-
-	if (pHdr == NULL)
-	{
-		return S_OK;
-	}
-
-	if (pHdr->dbch_devicetype != DBT_DEVTYP_DEVICEINTERFACE)
-	{
-		return S_OK;
-	}
-
-	pDi = (DEV_BROADCAST_DEVICEINTERFACE*)pHdr;
-
-
+	if (streams.find(index) == streams.end())
+		return;
 	EnterCriticalSection(&m_critsec);
-
-	if (m_pwszSymbolicLink)
-	{
-		if (_wcsicmp(m_pwszSymbolicLink, pDi->dbcc_name) == 0)
-		{
-			*pbDeviceLost = TRUE;
-		}
-	}
-
+	streams[index].fncb = fn;
 	LeaveCriticalSection(&m_critsec);
-
-	return S_OK;
-}*/
+}

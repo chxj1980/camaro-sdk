@@ -61,7 +61,7 @@ void Loop()
 
 #define CAMARO_DUAL 
 #define CAMARO_SOLO
-//#define 	STD_UVC
+#define 	STD_UVC
 
 void main()
 {
@@ -77,7 +77,13 @@ void main()
 		uvc = TopGear::Win::CameraFactory<TopGear::StandardUVC>::CreateInstance(dev);
 		if (uvc)
 		{
-			TopGear::IVideoStream::RegisterFrameCallback(*uvc, &FrameDemo::OnFrame);
+			auto formats = uvc->GetAllFormats();
+			for (auto i = 0; i < formats.size(); ++i)
+			{
+				std::cout << i << ": " << formats[i].Width << "X" << formats[i].Height << " @ " << formats[i].MaxRate << "fps "
+					<< std::string(formats[i].PixelFormat, 4) << std::endl;
+			}
+			TopGear::IVideoStream::RegisterFrameCallback(*uvc, &FrameDemo::OnFrameMember, &demo);
 			TopGear::VideoFormat format;
 			auto index = uvc->GetOptimizedFormatIndex(format);
 			uvc->StartStream(index);

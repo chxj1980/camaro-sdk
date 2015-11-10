@@ -166,6 +166,7 @@
     <ClInclude Include="..\..\..\Common\Include\IExtensionLite.h" />
     <ClInclude Include="..\..\..\Common\Include\IGenericVCDevice.h" />
     <ClInclude Include="..\..\..\Common\Include\ILowlevelControl.h" />
+    <ClInclude Include="..\..\..\Common\Include\IMultiVideoSource.h" />
     <ClInclude Include="..\..\..\Common\Include\IMultiVideoStream.h" />
     <ClInclude Include="..\..\..\Common\Include\IProcessor.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoFrame.h" />
@@ -173,6 +174,7 @@
     <ClInclude Include="..\..\..\Common\Include\StandardUVC.h" />
     <ClInclude Include="..\..\..\Common\Include\VideoFormat.h" />
     <ClInclude Include="..\..\..\Common\Include\VideoFrameEx.h" />
+    <ClInclude Include="..\..\..\Common\Include\VideoSource.h" />
     <ClInclude Include="..\..\Include\CameraFactory.h" />
     <ClInclude Include="..\..\Include\DeviceFactory.h" />
     <ClInclude Include="..\..\Include\ExtensionAccess.h" />
@@ -191,6 +193,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\Source\Camaro.cpp" />
     <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\VideoSource.cpp" />
     <ClCompile Include="..\..\Source\CameraFactory.cpp" />
     <ClCompile Include="..\..\Source\DeviceFactory.cpp" />
     <ClCompile Include="..\..\Source\ExtensionAccess.cpp" />

@@ -1,14 +1,17 @@
 #pragma once
 #include <string>
 #include <functional>
+#include <map>
 
+#include <shlwapi.h>
+#include <mfapi.h>
 #include <mfidl.h>
 #include <Mfreadwrite.h>
 
 #include "IVideoFrame.h"
 #include "IVideoStream.h"
 #include "VideoFormat.h"
-
+#include "IMultiVideoSource.h"
 
 namespace TopGear
 {
@@ -16,16 +19,12 @@ namespace TopGear
 	{
 		const UINT WM_APP_PREVIEW_ERROR = WM_APP + 1;    // wparam = HRESULT
 
-		class VideoSourceReader : public IMFSourceReaderCallback, public IVideoStream
+		class VideoSourceReader : 
+			public IMFSourceReaderCallback,
+			public IMultiVideoSource
 		{
 		public:
-			
-			static HRESULT CreateInstance(
-				HWND hVideo,
-				HWND hEvent,
-				IMFMediaSource *pSource,
-				VideoSourceReader **ppPlayer
-				);
+			static std::vector<std::shared_ptr<IVideoStream>> CreateInstances(IMFMediaSource *pSource);
 
 			// IUnknown methods
 			STDMETHODIMP QueryInterface(REFIID iid, void** ppv) override;
@@ -48,57 +47,49 @@ namespace TopGear
 			//HRESULT       ResizeVideo(WORD width, WORD height);
 			//HRESULT       CheckDeviceLost(DEV_BROADCAST_HDR *pHdr, BOOL *pbDeviceLost);
 
-			virtual int GetOptimizedFormatIndex(VideoFormat &format, const char *fourcc = "") override;
-			virtual int GetMatchedFormatIndex(const VideoFormat &format) const override;
+			virtual const std::vector<VideoFormat> &GetAllFormats(uint32_t index) override;
+			virtual bool SetCurrentFormat(uint32_t index, int formatIndex) override;
+			virtual bool StartStream(uint32_t index) override;
+			virtual bool StopStream(uint32_t index) override;
+			virtual bool IsStreaming(uint32_t index) override;
+			virtual void RegisterReaderCallback(uint32_t index, const ReaderCallbackFn& fn) override;
 
-			virtual const std::vector<VideoFormat> &GetAllFormats() const override
-			{ return videoFormats; }
-
-			virtual const VideoFormat& GetCurrentFormat() const override
-			{
-				return videoFormats[currentFormatIndex];
-			}
-			
-			virtual bool StartStream(int formatIndex) override;
-			virtual bool StopStream() override;
-			virtual bool IsStreaming() const override
-			{ return streamOn; }
-			virtual void RegisterFrameCallback(IVideoFrameCallback *pCB) override;
-			virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
-		private:
-			int currentFormatIndex = 0;
-		protected:
-			VideoFrameCallbackFn fnCb = nullptr;
-			std::vector<VideoFormat> videoFormats;
-
-			bool IsFormatSupported(const GUID &subtype) const;
-			HRESULT OpenMediaSource(IMFMediaSource *pSource);
-			void EnumerateFormats();
-			// Constructor is private. Use static CreateInstance method to create.
-			VideoSourceReader(HWND hVideo, HWND hEvent);
-
-			// Destructor is private. Caller should call Release.
 			virtual ~VideoSourceReader();
+		protected:
+			struct StreamState
+			{
+				std::vector<VideoFormat> formats;
+				ReaderCallbackFn fncb = nullptr;
+				long defaultStride = 0;
+				int frameWidth = 0;
+				int frameHeight = 0;
+				bool isRunning = false;
+				bool streamOn = false;
+			};
+
+			std::map<uint32_t, StreamState> streams;
+
+			//bool IsFormatSupported(const GUID &subtype) const;
+			HRESULT OpenMediaSource(IMFMediaSource *pSource);
+
+			void EnumerateStreams();
+			void EnumerateFormats(uint32_t index, std::vector<VideoFormat> &videoFormats) const;
+			// Constructor is private. Use static CreateInstance method to create.
+			VideoSourceReader();
+			
 
 			void NotifyError(HRESULT hr) const
 			{
-				PostMessage(m_hwndEvent, WM_APP_PREVIEW_ERROR, static_cast<WPARAM>(hr), 0L);
+				//PostMessage(m_hwndEvent, WM_APP_PREVIEW_ERROR, static_cast<WPARAM>(hr), 0L);
 			}
 
 			long                    m_nRefCount;        // Reference count.
 			CRITICAL_SECTION        m_critsec;
 
-			HWND                    m_hwndVideo;        // Video window.
-			HWND                    m_hwndEvent;        // Application window to receive events. 
+			//HWND                    m_hwndVideo;        // Video window.
+			//HWND                    m_hwndEvent;        // Application window to receive events. 
 
 			IMFSourceReader         *m_pReader;
-
-			bool isRunning = false;
-			bool streamOn = false;
-			long defaultStride = 0;
-			int frameWidth = 0;
-			int frameHeight = 0;
-			
 		};
 	}
 }

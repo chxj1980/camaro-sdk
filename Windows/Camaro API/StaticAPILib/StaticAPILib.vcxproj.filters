@@ -129,6 +129,12 @@
     <ClInclude Include="..\..\..\Common\Include\IProcessor.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\IMultiVideoSource.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\VideoSource.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\Source\Camaro.cpp">
@@ -160,6 +166,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\VideoSourceReader.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Common\Source\VideoSource.cpp">
+      <Filter>Source Files\Common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

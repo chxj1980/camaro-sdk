@@ -13,13 +13,15 @@ using namespace Win;
 template <class T>
 std::shared_ptr<IVideoStream> CameraFactory<T>::CreateVideoStreamReader(std::shared_ptr<IMSource> &source)
 {
-	VideoSourceReader *pReader;
-	auto hr = VideoSourceReader::CreateInstance(nullptr, nullptr, source->GetSource(), &pReader);
-	if (hr != S_OK)
-		return {};
-	auto vs = std::shared_ptr<IVideoStream>(pReader,
-		[](IVideoStream *p) { System::SafeRelease(&p); });
-	return vs;
+	//VideoSourceReader *pReader;
+	auto list = VideoSourceReader::CreateInstances(source->GetSource());
+	//if (hr != S_OK)
+	//	return {};
+	//auto vs = std::shared_ptr<IVideoStream>(pReader,
+	//	[](IVideoStream *p) { System::SafeRelease(&p); });
+	if (list.size() == 0)
+		return{};
+	return list[0];
 }
 
 template <>
