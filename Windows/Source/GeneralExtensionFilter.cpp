@@ -124,8 +124,16 @@ bool GeneralExtensionFilter::ObtainInfo()
 	pInfo = ExtensionInfo::Parse(info.get(), ulSize);
 	if (pInfo == nullptr)
 		return false;
-	for (auto i = 1; i <= pInfo->NumControls; ++i)
-		if (pXu->get_PropertySize(i, &ulSize) == S_OK)
-			controlLens[i] = ulSize;
+	auto count = 0;
+	for (auto i = 0; i < pInfo->ControlSize<<3; ++i)
+	{
+		// ReSharper disable once CppRedundantParentheses
+		if ((pInfo->Controls[i >> 3] & 1 << (i & 0x7)) == 0)
+			continue;
+		if (pXu->get_PropertySize(i+1, &ulSize) == S_OK)
+			controlLens[i+1] = ulSize;
+		if (++count >= pInfo->NumControls)
+			break;
+	}
 	return true;
 }
