@@ -258,6 +258,14 @@ bool VideoSourceReader::StartStream(int formatIndex)
     fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
     ioctl(handle, VIDIOC_S_FMT, &fmt);
 
+    //Set frame rate
+    v4l2_streamparm param;
+    param.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    //ioctl(handle, VIDIOC_G_PARM, &param);
+    param.parm.capture.timeperframe.denominator = format.MaxRate;
+    param.parm.capture.timeperframe.numerator = 1;
+    ioctl(handle, VIDIOC_S_PARM, &param);
+
     Initmmap();
     defaultStride = vbuffers[0].second / frameHeight;
     isRunning = true;
