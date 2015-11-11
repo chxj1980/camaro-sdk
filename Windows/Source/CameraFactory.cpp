@@ -10,32 +10,18 @@
 using namespace TopGear;
 using namespace Win;
 
-template <class T>
-std::shared_ptr<IVideoStream> CameraFactory<T>::CreateVideoStreamReader(std::shared_ptr<IMSource> &source)
-{
-	//VideoSourceReader *pReader;
-	auto list = VideoSourceReader::CreateInstances(source->GetSource());
-	//if (hr != S_OK)
-	//	return {};
-	//auto vs = std::shared_ptr<IVideoStream>(pReader,
-	//	[](IVideoStream *p) { System::SafeRelease(&p); });
-	if (list.size() == 0)
-		return{};
-	return list[0];
-}
-
 template <>
 template <>
 std::shared_ptr<IVideoStream> CameraFactory<StandardUVC>::
 	CreateInstance<IGenericVCDeviceRef>(IGenericVCDeviceRef& device)
 {
-	auto source = std::dynamic_pointer_cast<IMSource>(device);
+	auto source = std::dynamic_pointer_cast<ISource>(device);
 	if (source == nullptr)
 		return {};
-	auto vs = CreateVideoStreamReader(source);
-	if (vs == nullptr)
-		return {};
-	return std::make_shared<StandardUVC>(vs);
+	auto list = VideoSourceReader::CreateInstances(source);
+	if (list.size() == 0)
+		return{};
+	return std::make_shared<StandardUVC>(list[0]);
 }
 
 template <>
@@ -46,19 +32,19 @@ std::shared_ptr<IVideoStream> CameraFactory<Camaro>::
 	auto tgDevice = std::dynamic_pointer_cast<ITopGearGeneralDevice>(device);
 	if (tgDevice == nullptr)
 		return {};
-	auto source = std::dynamic_pointer_cast<IMSource>(tgDevice);
-	if (source == nullptr)
-		return {};
 
-	auto vs = CreateVideoStreamReader(source);
-	if (vs == nullptr)
-		return {};
+	auto source = std::dynamic_pointer_cast<ISource>(device);
+	if (source == nullptr)
+		return{};
+	auto list = VideoSourceReader::CreateInstances(source);
+	if (list.size() == 0)
+		return{};
 
 	auto validator = tgDevice->GetValidator();
 	auto ex = std::static_pointer_cast<IExtensionAccess>(
 		std::make_shared<ExtensionAccess>(validator));
 	
-	return std::make_shared<Camaro>(vs, ex);
+	return std::make_shared<Camaro>(list[0], ex);
 }
 
 

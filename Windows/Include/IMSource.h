@@ -1,6 +1,7 @@
 #pragma once
 #include <utility>
 #include <mfidl.h>
+#include "ISource.h"
 
 namespace TopGear
 {
@@ -8,7 +9,7 @@ namespace TopGear
 	{
 		typedef std::pair<IMFActivate *, IMFMediaSource *> SourcePair;
 
-		class IMSource
+		class IMSource : public ISource
 		{
 		public:
 			virtual ~IMSource() = default;

@@ -12,6 +12,7 @@
 #include "IVideoStream.h"
 #include "VideoFormat.h"
 #include "IMultiVideoSource.h"
+#include "ISource.h"
 
 namespace TopGear
 {
@@ -24,7 +25,7 @@ namespace TopGear
 			public IMultiVideoSource
 		{
 		public:
-			static std::vector<std::shared_ptr<IVideoStream>> CreateInstances(IMFMediaSource *pSource);
+			static std::vector<std::shared_ptr<IVideoStream>> CreateInstances(std::shared_ptr<ISource> &pSource);
 
 			// IUnknown methods
 			STDMETHODIMP QueryInterface(REFIID iid, void** ppv) override;

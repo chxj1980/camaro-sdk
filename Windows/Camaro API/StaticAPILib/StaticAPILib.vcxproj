@@ -169,6 +169,7 @@
     <ClInclude Include="..\..\..\Common\Include\IMultiVideoSource.h" />
     <ClInclude Include="..\..\..\Common\Include\IMultiVideoStream.h" />
     <ClInclude Include="..\..\..\Common\Include\IProcessor.h" />
+    <ClInclude Include="..\..\..\Common\Include\ISource.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoFrame.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoStream.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardUVC.h" />

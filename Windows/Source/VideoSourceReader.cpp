@@ -19,13 +19,17 @@ using namespace Win;
 //  Static class method to create the CPreview object.
 //-------------------------------------------------------------------
 
-std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateInstances(IMFMediaSource *pSource)
+std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateInstances(std::shared_ptr<ISource> &pSource)
 {
 	std::shared_ptr<VideoSourceReader> pPlayer(new VideoSourceReader);
 	if (pPlayer == nullptr)
 		return{};// E_OUTOFMEMORY
+	
+	auto msource = std::dynamic_pointer_cast<IMSource>(pSource);
+	if (msource==nullptr)
+		return{};
 	std::vector<std::shared_ptr<IVideoStream>> list;
-	auto hr = pPlayer->OpenMediaSource(pSource);
+	auto hr = pPlayer->OpenMediaSource(msource->GetSource());
 	if (SUCCEEDED(hr))
 	{
 		pPlayer->EnumerateStreams();
