@@ -1,6 +1,6 @@
 #pragma once
 #include "IExtensionAccess.h"
-#include "IExtensionUnit.h"
+//#include "IExtensionUnit.h"
 #include "IMExtensionLite.h"
 
 namespace TopGear
@@ -15,7 +15,7 @@ namespace TopGear
 			explicit ExtensionAccess(std::shared_ptr<IMExtensionLite> &validator);
 			virtual ~ExtensionAccess();
 		private:
-			IExtensionUnit *pXu;
+			std::shared_ptr<ExtensionUnit> pXu;
 			std::shared_ptr<IMExtensionLite> extensionAgent;
 		};
 	}

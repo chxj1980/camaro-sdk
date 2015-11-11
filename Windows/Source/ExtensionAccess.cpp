@@ -7,7 +7,7 @@ using namespace Win;
 ExtensionAccess::ExtensionAccess(std::shared_ptr<IMExtensionLite> &validator) 
 	: extensionAgent(validator)
 {
-	pXu = extensionAgent->GetExtensionUnit(true);
+	pXu = extensionAgent->GetExtensionUnit();
 }
 
 std::unique_ptr<uint8_t[]> ExtensionAccess::GetProperty(int index, int& len)
@@ -35,5 +35,5 @@ int ExtensionAccess::SetProperty(int index, const uint8_t* data, size_t size)
 
 ExtensionAccess::~ExtensionAccess()
 {
-	System::SafeRelease(&pXu);
+	//System::SafeRelease(&pXu);
 }

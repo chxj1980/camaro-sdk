@@ -61,7 +61,7 @@ void Loop()
 
 #define CAMARO_DUAL 
 #define CAMARO_SOLO
-#define 	STD_UVC
+//#define 	STD_UVC
 
 void main()
 {

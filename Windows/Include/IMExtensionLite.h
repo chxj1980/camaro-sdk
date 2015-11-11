@@ -1,6 +1,6 @@
 #pragma once
-#include "IExtensionUnit.h"
 #include "IExtensionLite.h"
+#include "ExtensionUnit.h"
 
 namespace TopGear
 {
@@ -10,7 +10,7 @@ namespace TopGear
 		{
 		public:
 			virtual ~IMExtensionLite() = default;
-			virtual IExtensionUnit *GetExtensionUnit(bool addRef = false) const = 0;
+			virtual std::shared_ptr<ExtensionUnit> GetExtensionUnit() const = 0;
 		};
 	}
 }

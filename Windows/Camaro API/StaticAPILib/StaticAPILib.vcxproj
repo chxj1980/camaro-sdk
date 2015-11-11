@@ -181,7 +181,6 @@
     <ClInclude Include="..\..\Include\ExtensionAccess.h" />
     <ClInclude Include="..\..\Include\GeneralExtensionFilter.h" />
     <ClInclude Include="..\..\Include\GenericVCDevice.h" />
-    <ClInclude Include="..\..\Include\IExtensionUnit.h" />
     <ClInclude Include="..\..\Include\IMExtensionLite.h" />
     <ClInclude Include="..\..\Include\IMSource.h" />
     <ClInclude Include="..\..\Include\MFHelper.h" />
@@ -189,6 +188,7 @@
     <ClInclude Include="..\..\Include\System.h" />
     <ClInclude Include="..\..\Include\VideoBufferLock.h" />
     <ClInclude Include="..\..\Include\VideoSourceReader.h" />
+    <ClInclude Include="..\..\Include\ExtensionUnit.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -203,6 +203,7 @@
     <ClCompile Include="..\..\Source\MFHelper.cpp" />
     <ClCompile Include="..\..\Source\StandardUVCFilter.cpp" />
     <ClCompile Include="..\..\Source\VideoSourceReader.cpp" />
+    <ClCompile Include="..\..\Source\ExtensionUnit.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

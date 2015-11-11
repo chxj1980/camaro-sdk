@@ -9,6 +9,9 @@
 
 #include "VideoBufferLock.h"
 #include "VideoSource.h"
+#include <ks.h>
+#include <ksmedia.h>
+#include <ksproxy.h>
 
 using namespace TopGear;
 using namespace Win;
@@ -28,6 +31,14 @@ std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateInstances(st
 	auto msource = std::dynamic_pointer_cast<IMSource>(pSource);
 	if (msource==nullptr)
 		return{};
+
+	IKsControl *pIKsControl;
+
+	auto r = msource->GetSource()->QueryInterface(IID_PPV_ARGS(&pIKsControl));
+
+	//auto r = msource->GetSource()->QueryInterface(__uuidof(IKsControl),
+	//	reinterpret_cast<void **>(&pIKsControl));
+
 	std::vector<std::shared_ptr<IVideoStream>> list;
 	auto hr = pPlayer->OpenMediaSource(msource->GetSource());
 	if (SUCCEEDED(hr))
