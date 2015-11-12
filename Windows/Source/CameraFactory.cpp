@@ -19,7 +19,7 @@ std::shared_ptr<IVideoStream> CameraFactory<StandardUVC>::
 	auto source = std::dynamic_pointer_cast<ISource>(device);
 	if (source == nullptr)
 		return {};
-	auto list = VideoSourceReader::CreateInstances(source);
+	auto list = VideoSourceReader::CreateVideoStreams(source);
 	if (list.size() == 0)
 		return{};
 	return std::make_shared<StandardUVC>(list[0]);
@@ -37,7 +37,7 @@ std::shared_ptr<IVideoStream> CameraFactory<Camaro>::
 	auto source = std::dynamic_pointer_cast<ISource>(device);
 	if (source == nullptr)
 		return{};
-	auto list = VideoSourceReader::CreateInstances(source);
+	auto list = VideoSourceReader::CreateVideoStreams(source);
 	if (list.size() == 0)
 		return{};
 

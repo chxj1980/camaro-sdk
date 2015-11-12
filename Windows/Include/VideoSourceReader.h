@@ -25,7 +25,7 @@ namespace TopGear
 			public IMultiVideoSource
 		{
 		public:
-			static std::vector<std::shared_ptr<IVideoStream>> CreateInstances(std::shared_ptr<ISource> &pSource);
+			static std::vector<std::shared_ptr<IVideoStream>> CreateVideoStreams(std::shared_ptr<ISource> &pSource);
 
 			// IUnknown methods
 			STDMETHODIMP QueryInterface(REFIID iid, void** ppv) override;

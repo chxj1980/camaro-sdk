@@ -19,10 +19,9 @@ using namespace Win;
 //-------------------------------------------------------------------
 //  CreateInstance
 //
-//  Static class method to create the CPreview object.
 //-------------------------------------------------------------------
 
-std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateInstances(std::shared_ptr<ISource> &pSource)
+std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<ISource> &pSource)
 {
 	std::shared_ptr<VideoSourceReader> pPlayer(new VideoSourceReader);
 	if (pPlayer == nullptr)

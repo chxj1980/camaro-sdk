@@ -62,7 +62,7 @@ void Loop()
 }
 
 #define CAMARO_DUAL 
-#define CAMARO_SOLO
+//#define CAMARO_SOLO
 //#define 	STD_UVC
 
 void main()
@@ -142,7 +142,7 @@ void main()
 		camaro->StopStream();
 	}
 #elif defined CAMARO_DUAL
-	auto devices = TopGear::Win::DeviceFactory<TopGear::Win::DiscernibleVCDevice>::EnumerateDevices();
+	auto devices = TopGear::Win::DeviceFactory<TopGear::Win::ExtensionVCDevice<TopGear::Win::DGExtensionFilter>>::EnumerateDevices();
 	auto dual = TopGear::Win::CameraFactory<TopGear::CamaroDual>::CreateInstance(devices);
 	if (dual)
 	{
