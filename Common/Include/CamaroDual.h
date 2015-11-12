@@ -15,7 +15,8 @@ namespace TopGear
 
 	{
 	public:
-		virtual void RegisterProcessor(std::shared_ptr<IProcessor>& p) override;
+		virtual void Notify(std::vector<IVideoFrameRef>& payload) override;
+		virtual void Register(std::shared_ptr<IProcessor>& p) override;
 	protected:
 		static const uint16_t RESYNC_NUM = 900;
 		std::shared_ptr<TopGear::ICameraControl> masterCC;

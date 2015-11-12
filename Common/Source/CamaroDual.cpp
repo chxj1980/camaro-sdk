@@ -159,10 +159,15 @@ void CamaroDual::RegisterFrameCallback(IVideoFrameCallback* pCB)
 	fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
 }
 
-void CamaroDual::RegisterProcessor(std::shared_ptr<IProcessor>& p)
+void CamaroDual::Notify(std::vector<IVideoFrameRef>& payload)
+{
+	if (fnCb)
+		fnCb(*this, payload);
+}
+
+void CamaroDual::Register(std::shared_ptr<IProcessor>& p)
 {
 	processor = p;
-
 }
 
 void CamaroDual::FrameWatcher()
@@ -214,10 +219,7 @@ void CamaroDual::FrameWatcher()
 					if (fnCb)
 					{
 						if (processor)
-						{
-							auto post = processor->Process(vector);
-							fnCb(*this, post);
-						}
+							processor->Process(*this, vector);
 						else
 							fnCb(*this, vector);
 					}

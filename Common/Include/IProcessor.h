@@ -4,17 +4,20 @@
 
 namespace TopGear
 {
+	class IProcessable;
+
 	class IProcessor
 	{
 	public:
 		virtual ~IProcessor() = default;
-		virtual std::vector<IVideoFrameRef> Process(std::vector<IVideoFrameRef> &source) = 0;
+		virtual bool Process(IProcessable &sender, std::vector<IVideoFrameRef> &source) = 0;
 	};
 
 	class IProcessable
 	{
 	public:
 		virtual ~IProcessable() = default;
-		virtual void RegisterProcessor(std::shared_ptr<IProcessor> &processor) = 0;
+		virtual void Register(std::shared_ptr<IProcessor> &processor) = 0;
+		virtual void Notify(std::vector<IVideoFrameRef> &payload) = 0;
 	};
 }

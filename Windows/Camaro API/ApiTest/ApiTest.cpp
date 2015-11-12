@@ -14,6 +14,7 @@
 #include "CamaroDual.h"
 #include "StandardUVC.h"
 #include <DGExtensionFilter.h>
+#include <EtronExtensionFilter.h>
 
 // ReSharper restore CppUnusedIncludeDirective
 
@@ -62,7 +63,7 @@ void Loop()
 }
 
 #define CAMARO_DUAL 
-//#define CAMARO_SOLO
+#define CAMARO_SOLO
 //#define 	STD_UVC
 
 void main()
