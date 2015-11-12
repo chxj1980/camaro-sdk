@@ -158,6 +158,7 @@
     <ClInclude Include="..\..\..\Common\Include\CameraBase.h" />
     <ClInclude Include="..\..\..\Common\Include\CameraSoloBase.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionInfo.h" />
+    <ClInclude Include="..\..\..\Common\Include\ExtensionRepository.h" />
     <ClInclude Include="..\..\..\Common\Include\ICameraControl.h" />
     <ClInclude Include="..\..\..\Common\Include\ICameraFactory.h" />
     <ClInclude Include="..\..\..\Common\Include\IDeviceControl.h" />
@@ -178,10 +179,12 @@
     <ClInclude Include="..\..\..\Common\Include\VideoSource.h" />
     <ClInclude Include="..\..\Include\CameraFactory.h" />
     <ClInclude Include="..\..\Include\DeviceFactory.h" />
+    <ClInclude Include="..\..\Include\DGExtensionFilter.h" />
+    <ClInclude Include="..\..\Include\EtronExtensionFilter.h" />
     <ClInclude Include="..\..\Include\ExtensionAccess.h" />
-    <ClInclude Include="..\..\Include\GeneralExtensionFilter.h" />
+    <ClInclude Include="..\..\Include\ExtensionFilterBase.h" />
+    <ClInclude Include="..\..\Include\ExtensionVCDevice.h" />
     <ClInclude Include="..\..\Include\GenericVCDevice.h" />
-    <ClInclude Include="..\..\Include\IMExtensionLite.h" />
     <ClInclude Include="..\..\Include\IMSource.h" />
     <ClInclude Include="..\..\Include\MFHelper.h" />
     <ClInclude Include="..\..\Include\StandardUVCFilter.h" />
@@ -194,11 +197,13 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\Source\Camaro.cpp" />
     <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
     <ClCompile Include="..\..\..\Common\Source\VideoSource.cpp" />
     <ClCompile Include="..\..\Source\CameraFactory.cpp" />
     <ClCompile Include="..\..\Source\DeviceFactory.cpp" />
+    <ClCompile Include="..\..\Source\DGExtensionFilter.cpp" />
     <ClCompile Include="..\..\Source\ExtensionAccess.cpp" />
-    <ClCompile Include="..\..\Source\GeneralExtensionFilter.cpp" />
+    <ClCompile Include="..\..\Source\ExtensionFilterBase.cpp" />
     <ClCompile Include="..\..\Source\GenericVCDevice.cpp" />
     <ClCompile Include="..\..\Source\MFHelper.cpp" />
     <ClCompile Include="..\..\Source\StandardUVCFilter.cpp" />

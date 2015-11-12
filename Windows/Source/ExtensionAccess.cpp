@@ -1,10 +1,9 @@
 #include "ExtensionAccess.h"
-#include "System.h"
 
 using namespace TopGear;
 using namespace Win;
 
-ExtensionAccess::ExtensionAccess(std::shared_ptr<IMExtensionLite> &validator) 
+ExtensionAccess::ExtensionAccess(std::shared_ptr<ExtensionFilterBase> &validator)
 	: extensionAgent(validator)
 {
 	pXu = extensionAgent->GetExtensionUnit();
@@ -35,5 +34,4 @@ int ExtensionAccess::SetProperty(int index, const uint8_t* data, size_t size)
 
 ExtensionAccess::~ExtensionAccess()
 {
-	//System::SafeRelease(&pXu);
 }

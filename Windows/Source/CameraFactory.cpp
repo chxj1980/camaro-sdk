@@ -3,9 +3,10 @@
 #include "Camaro.h"
 #include "GenericVCDevice.h"
 #include "ExtensionAccess.h"
-#include "System.h"
+//#include "System.h"
 #include "VideoSourceReader.h"
 #include "CamaroDual.h"
+#include "ExtensionVCDevice.h"
 
 using namespace TopGear;
 using namespace Win;
@@ -29,7 +30,7 @@ template <>
 std::shared_ptr<IVideoStream> CameraFactory<Camaro>::
 	CreateInstance<IGenericVCDeviceRef>(IGenericVCDeviceRef& device)
 {
-	auto tgDevice = std::dynamic_pointer_cast<ITopGearGeneralDevice>(device);
+	auto tgDevice = std::dynamic_pointer_cast<IExtensionDevice>(device);
 	if (tgDevice == nullptr)
 		return {};
 

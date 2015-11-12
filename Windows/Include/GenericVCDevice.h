@@ -2,7 +2,6 @@
 #include <vector>
 #include <mfidl.h>
 #include "IGenericVCDevice.h"
-#include "IMExtensionLite.h"
 #include "IMSource.h"
 
 namespace TopGear
@@ -36,49 +35,6 @@ namespace TopGear
 			{
 			}
 			virtual ~StandardVCDevice() override {}
-		};
-
-		typedef IDiscernibleVCDevice<IMExtensionLite> ITopGearGeneralDevice;
-
-		class DiscernibleVCDevice : public IDiscernibleVCDevice<IMExtensionLite>, public IMSource
-		{
-		public:
-			virtual IMFActivate* GetActivator() override
-			{
-				return source? source->GetActivator() : nullptr;
-			}
-			virtual IMFMediaSource* GetSource() override
-			{
-				return source ? source->GetSource() : nullptr;
-			}
-			virtual std::string GetSymbolicLink() override
-			{
-				return genericDevice->GetSymbolicLink();
-			}
-			virtual std::string GetFriendlyName() override
-			{
-				return genericDevice->GetFriendlyName();
-			}
-			virtual std::string GetDeviceInfo() override
-			{
-				return validator->GetDeviceInfo();
-			}
-
-			virtual const std::shared_ptr<IMExtensionLite>& GetValidator() const override
-			{
-				return validator;
-			}
-
-			DiscernibleVCDevice(std::shared_ptr<IGenericVCDevice> &device, std::shared_ptr<IMExtensionLite> &lite)
-				: genericDevice(device), validator(lite)
-			{
-				source = std::dynamic_pointer_cast<IMSource>(genericDevice);
-			}
-			virtual ~DiscernibleVCDevice() {}
-		protected:
-			std::shared_ptr<IGenericVCDevice> genericDevice;
-			std::shared_ptr<IMSource> source;
-			std::shared_ptr<IMExtensionLite> validator;
 		};
 	}
 }

@@ -1,16 +1,24 @@
 #include "StandardUVCFilter.h"
-#include "GeneralExtensionFilter.h"
-//#include "System.h"
+#include "ExtensionFilterBase.h"
+#include "ExtensionRepository.h"
 
 using namespace TopGear::Win;
 
 StandardUVCFilter::StandardUVCFilter(IUnknown* pBase)
+	:isValid(true)
 {
-	//IExtensionUnit *pXu = nullptr;
-	auto filter = GeneralExtensionFilter(pBase);
-	isValid = !filter.IsValid();
-	//isValid = FAILED(GeneralExtensionFilter::CreateExtensionUnit(pBase, &pXu));
-	//System::SafeRelease(&pXu);
+	std::shared_ptr<ExtensionUnit> xu;
+	GUID g;
+	for (auto &xucode : ExtensionRepository::Inventory)
+	{
+		std::memcpy(&g, xucode.data(), sizeof(GUID));
+		xu = ExtensionUnit::CreateXU(pBase, g);
+		if (xu)
+		{
+			isValid = false;
+			break;
+		}
+	}
 }
 
 StandardUVCFilter::~StandardUVCFilter()

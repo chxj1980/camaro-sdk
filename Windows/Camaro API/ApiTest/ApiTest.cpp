@@ -13,6 +13,8 @@
 #include "Camaro.h"
 #include "CamaroDual.h"
 #include "StandardUVC.h"
+#include <DGExtensionFilter.h>
+
 // ReSharper restore CppUnusedIncludeDirective
 
 void OnFrameCB(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFrameRef> &frames)
@@ -96,7 +98,7 @@ void main()
 		uvc->StopStream();
 	}
 #elif defined CAMARO_SOLO
-	auto devices = TopGear::Win::DeviceFactory<TopGear::Win::DiscernibleVCDevice>::EnumerateDevices();
+	auto devices = TopGear::Win::DeviceFactory<TopGear::Win::ExtensionVCDevice<TopGear::Win::DGExtensionFilter>>::EnumerateDevices();
 	std::shared_ptr<TopGear::IVideoStream> camaro;
 	for (auto item : devices)
 	{
