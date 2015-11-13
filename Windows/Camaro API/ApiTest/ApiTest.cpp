@@ -158,7 +158,7 @@ void main()
 	std::cout << "Exited! " << std::endl;
 	//_getch();
 	//std::cin.get();
-	//TopGear::Win::System::Dispose();
+	TopGear::DeepCamAPI::Instance().Dispose();
 }
 
 

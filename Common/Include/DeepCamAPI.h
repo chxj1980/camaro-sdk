@@ -52,6 +52,7 @@ namespace TopGear
 		Etron3D,
 	};
 
+	// ReSharper disable CppFunctionIsNotImplemented
 
 	class DEEPCAM_API DeepCamAPI
 	{
@@ -65,8 +66,11 @@ namespace TopGear
 		template<class T>
 		std::shared_ptr<T> QueryInterface(std::shared_ptr<IVideoStream> &vs) const;
 		
+		void Dispose();
+
 		~DeepCamAPI();
 	private:
 		DeepCamAPI();
 	};
+	// ReSharper restore CppFunctionIsNotImplemented
 }

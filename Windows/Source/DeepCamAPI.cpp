@@ -13,6 +13,17 @@
 using namespace TopGear;
 using namespace Win;
 
+//class system_deleter 
+//{  // a deleter class
+//public:
+//	template <class T>
+//	void operator()(T* p)
+//	{
+//		delete p;
+//		System::Dispose();
+//	}
+//};
+
 class DeepCamAPIInternal
 {
 	friend class DeepCamAPI;
@@ -46,10 +57,12 @@ class DeepCamAPIInternal
 
 std::unique_ptr<DeepCamAPI> DeepCamAPIInternal::Instance;
 
+
+
 DeepCamAPI &DeepCamAPI::Instance()
 {
 	if (DeepCamAPIInternal::Instance == nullptr)
-		DeepCamAPIInternal::Instance.reset(new DeepCamAPI);
+		DeepCamAPIInternal::Instance = std::unique_ptr<DeepCamAPI>(new DeepCamAPI);
 	return *DeepCamAPIInternal::Instance;
 }
 
@@ -58,9 +71,14 @@ DeepCamAPI::DeepCamAPI()
 	System::Initialize();
 }
 
-DeepCamAPI::~DeepCamAPI()
+void DeepCamAPI::Dispose()
 {
 	System::Dispose();
+}
+
+DeepCamAPI::~DeepCamAPI()
+{
+
 }
 
 std::vector<IGenericVCDeviceRef> DeepCamAPI::EnumerateDevices(DeviceType type) const
@@ -87,49 +105,37 @@ std::vector<IGenericVCDeviceRef> DeepCamAPI::EnumerateDevices(DeviceType type) c
 }
 
 template<>
-std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera<IGenericVCDeviceRef>(Camera camera, IGenericVCDeviceRef & source)
+DEEPCAM_API std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera<IGenericVCDeviceRef>(Camera camera, IGenericVCDeviceRef & source)
 {
 	return DeepCamAPIInternal::CreateCamera(camera, source);
 }
 
 template<>
-std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera<std::vector<IGenericVCDeviceRef>>(Camera camera, std::vector<IGenericVCDeviceRef> & source)
-{
-	return DeepCamAPIInternal::CreateCamera(camera, source);
-}
-
-template<class U>
-std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera(Camera camera, U & source)
+DEEPCAM_API std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera<std::vector<IGenericVCDeviceRef>>(Camera camera, std::vector<IGenericVCDeviceRef> & source)
 {
 	return DeepCamAPIInternal::CreateCamera(camera, source);
 }
 
 template<>
-std::shared_ptr<TopGear::ICameraControl> DeepCamAPI::QueryInterface<TopGear::ICameraControl>(std::shared_ptr<IVideoStream> &vs) const
+DEEPCAM_API std::shared_ptr<TopGear::ICameraControl> DeepCamAPI::QueryInterface<TopGear::ICameraControl>(std::shared_ptr<IVideoStream> &vs) const
 {
 	return std::dynamic_pointer_cast<TopGear::ICameraControl>(vs);
 }
 
 template<>
-std::shared_ptr<IDeviceControl> DeepCamAPI::QueryInterface<IDeviceControl>(std::shared_ptr<IVideoStream> &vs) const
+DEEPCAM_API std::shared_ptr<IDeviceControl> DeepCamAPI::QueryInterface<IDeviceControl>(std::shared_ptr<IVideoStream> &vs) const
 {
 	return std::dynamic_pointer_cast<IDeviceControl>(vs);
 }
 
 template<>
-std::shared_ptr<ILowlevelControl> DeepCamAPI::QueryInterface<ILowlevelControl>(std::shared_ptr<IVideoStream> &vs) const
+DEEPCAM_API std::shared_ptr<ILowlevelControl> DeepCamAPI::QueryInterface<ILowlevelControl>(std::shared_ptr<IVideoStream> &vs) const
 {
 	return std::dynamic_pointer_cast<ILowlevelControl>(vs);
 }
 
 template<>
-std::shared_ptr<IMultiVideoStream> DeepCamAPI::QueryInterface<IMultiVideoStream>(std::shared_ptr<IVideoStream> &vs) const
+DEEPCAM_API std::shared_ptr<IMultiVideoStream> DeepCamAPI::QueryInterface<IMultiVideoStream>(std::shared_ptr<IVideoStream> &vs) const
 {
 	return std::dynamic_pointer_cast<IMultiVideoStream>(vs);
-}
-
-template <class T>
-std::shared_ptr<T> DeepCamAPI::QueryInterface(std::shared_ptr<IVideoStream>& vs) const
-{
-	return{};
 }
