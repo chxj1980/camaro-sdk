@@ -6,9 +6,7 @@
 #include <sys/time.h>
 #endif
 #include <cstdint>
-#include <vector>
 #include <memory>
-#include <functional>
 
 namespace TopGear
 {

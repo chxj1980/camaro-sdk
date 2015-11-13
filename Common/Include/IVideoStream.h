@@ -12,6 +12,8 @@
 #define DEPRECATED(type) type
 #endif
 #endif
+#include <vector>
+#include <functional>
 
 namespace TopGear
 {
