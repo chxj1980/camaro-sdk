@@ -4,6 +4,7 @@
 #include "IGenericVCDevice.h"
 #include "IDeviceFactory.h"
 #include "ExtensionVCDevice.h"
+#include "GenericVCDevice.h"
 
 namespace TopGear
 {

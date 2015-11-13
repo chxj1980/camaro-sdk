@@ -1,9 +1,7 @@
 #include "GenericVCDevice.h"
-#include "ExtensionFilterBase.h"
 #include "StandardUVCFilter.h"
 #include "MFHelper.h"
 #include "DeviceFactory.h"
-#include <DGExtensionFilter.h>
 
 using namespace TopGear;
 using namespace Win;

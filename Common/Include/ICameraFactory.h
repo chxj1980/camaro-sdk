@@ -14,8 +14,9 @@ namespace TopGear
 	public:
 		template<class U>
 		static std::shared_ptr<IVideoStream> CreateInstance(U &device) = delete;
+		~ICameraFactory() = default;
 	protected:
 		ICameraFactory() = default;
-		~ICameraFactory() = default;
+		
 	};
 }

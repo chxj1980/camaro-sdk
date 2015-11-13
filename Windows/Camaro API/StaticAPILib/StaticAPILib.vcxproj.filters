@@ -147,6 +147,9 @@
     <ClInclude Include="..\..\Include\ExtensionVCDevice.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\DeepCamAPI.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\Source\Camaro.cpp">
@@ -154,9 +157,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp">
       <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Source\CameraFactory.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\DeviceFactory.cpp">
       <Filter>Source Files</Filter>
@@ -190,6 +190,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp">
       <Filter>Source Files\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\DeepCamAPI.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

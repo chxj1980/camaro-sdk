@@ -6,15 +6,14 @@
 #include <thread>
 #include <conio.h>
 
-#include "GenericVCDevice.h"
-#include "System.h"
-#include "DeviceFactory.h"
-#include "CameraFactory.h"
-#include "Camaro.h"
-#include "CamaroDual.h"
-#include "StandardUVC.h"
-#include <DGExtensionFilter.h>
-#include <EtronExtensionFilter.h>
+#include "DeepCamAPI.h"
+#include "IVideoStream.h"
+#include "IVideoFrame.h"
+#include "ICameraControl.h"
+#include "ILowlevelControl.h"
+#include "IDeviceControl.h"
+#include "IMultiVideoStream.h"
+#include "VideoFormat.h"
 
 // ReSharper restore CppUnusedIncludeDirective
 
@@ -63,21 +62,21 @@ void Loop()
 }
 
 #define CAMARO_DUAL 
-#define CAMARO_SOLO
+//#define CAMARO_SOLO
 //#define 	STD_UVC
 
 void main()
 {
 	FrameDemo demo;
-	TopGear::Win::System::Initialize();
+	auto deepcam = TopGear::DeepCamAPI::Instance();
 #ifdef STD_UVC
-	auto uvcDevices = TopGear::Win::DeviceFactory<TopGear::Win::StandardVCDevice>::EnumerateDevices();
+	auto uvcDevices = deepcam.EnumerateDevices(TopGear::DeviceType::Standard);
 	std::shared_ptr<TopGear::IVideoStream> uvc;
 	for (auto dev : uvcDevices)
 	{
 		std::cout << dev->GetFriendlyName() << std::endl;
 		std::cout << dev->GetSymbolicLink() << std::endl;
-		uvc = TopGear::Win::CameraFactory<TopGear::StandardUVC>::CreateInstance(dev);
+		uvc = deepcam.CreateCamera(TopGear::Camera::StandardUVC, dev);
 		if (uvc)
 		{
 			auto formats = uvc->GetAllFormats();
@@ -99,7 +98,7 @@ void main()
 		uvc->StopStream();
 	}
 #elif defined CAMARO_SOLO
-	auto devices = TopGear::Win::DeviceFactory<TopGear::Win::ExtensionVCDevice<TopGear::Win::DGExtensionFilter>>::EnumerateDevices();
+	auto devices = deepcam.EnumerateDevices(TopGear::DeviceType::DeepGlint);
 	std::shared_ptr<TopGear::IVideoStream> camaro;
 	for (auto item : devices)
 	{
@@ -108,9 +107,9 @@ void main()
 		std::cout << item->GetSymbolicLink() << std::endl;
 		std::cout << item->GetDeviceInfo() << std::endl;
 		//Create a Camaro instance 
-		camaro = TopGear::Win::CameraFactory<TopGear::Camaro>::CreateInstance(item);
-		auto ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camaro);
-		auto cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camaro);
+		camaro = deepcam.CreateCamera(TopGear::Camera::Camaro, item);
+		auto ioControl = deepcam.QueryInterface<TopGear::IDeviceControl>(camaro);
+		auto cameraControl = deepcam.QueryInterface<TopGear::ICameraControl>(camaro);
 		if (camaro && ioControl && cameraControl)
 		{
 			auto formats = camaro->GetAllFormats();
@@ -143,8 +142,8 @@ void main()
 		camaro->StopStream();
 	}
 #elif defined CAMARO_DUAL
-	auto devices = TopGear::Win::DeviceFactory<TopGear::Win::ExtensionVCDevice<TopGear::Win::DGExtensionFilter>>::EnumerateDevices();
-	auto dual = TopGear::Win::CameraFactory<TopGear::CamaroDual>::CreateInstance(devices);
+	auto devices = deepcam.EnumerateDevices(TopGear::DeviceType::DeepGlint);
+	auto dual = deepcam.CreateCamera(TopGear::Camera::CamaroDual, devices);
 	if (dual)
 	{
 		TopGear::IVideoStream::RegisterFrameCallback(*dual, &FrameDemo::OnFrameMember, &demo);
@@ -159,7 +158,7 @@ void main()
 	std::cout << "Exited! " << std::endl;
 	//_getch();
 	//std::cin.get();
-	TopGear::Win::System::Dispose();
+	//TopGear::Win::System::Dispose();
 }
 
 
