@@ -127,3 +127,9 @@ std::shared_ptr<IMultiVideoStream> DeepCamAPI::QueryInterface<IMultiVideoStream>
 {
 	return std::dynamic_pointer_cast<IMultiVideoStream>(vs);
 }
+
+template <class T>
+std::shared_ptr<T> DeepCamAPI::QueryInterface(std::shared_ptr<IVideoStream>& vs) const
+{
+	return{};
+}

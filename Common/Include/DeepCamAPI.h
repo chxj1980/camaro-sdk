@@ -24,9 +24,9 @@
 
 #ifdef _USRDLL // defined if compiled as a DLL
 #ifdef DEEPCAMAPILIB_EXPORTS
-#define DEEPCAM_API CAMARO_API_EXPORT
+#define DEEPCAM_API DEEPCAM_API_EXPORT
 #else
-#define DEEPCAM_API CAMARO_API_IMPORT
+#define DEEPCAM_API DEEPCAM_API_IMPORT
 #endif
 #else
 #define DEEPCAM_API
