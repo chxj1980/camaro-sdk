@@ -1,4 +1,5 @@
 #pragma once
+
 #include <mfapi.h>
 
 namespace TopGear
@@ -10,14 +11,21 @@ namespace TopGear
 		public:
 			static void Initialize()
 			{
+				if (inited)
+					return;
 				CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 				MFStartup(MF_VERSION, MFSTARTUP_LITE);
+				inited = true;
 			}
 
 			static void Dispose()
 			{
-				MFShutdown();
-				CoUninitialize();
+				if (inited)
+				{
+					MFShutdown();
+					CoUninitialize();
+					inited = false;
+				}
 			}
 
 			template<typename T>
@@ -36,6 +44,7 @@ namespace TopGear
 			~System() {}
 		private:
 			System() {}
+			static bool inited;
 		};
 	}
 }

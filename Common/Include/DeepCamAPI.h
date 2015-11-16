@@ -65,9 +65,6 @@ namespace TopGear
 
 		template<class T>
 		std::shared_ptr<T> QueryInterface(std::shared_ptr<IVideoStream> &vs) const;
-		
-		void Dispose();
-
 		~DeepCamAPI();
 	private:
 		DeepCamAPI();

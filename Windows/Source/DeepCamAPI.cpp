@@ -13,16 +13,7 @@
 using namespace TopGear;
 using namespace Win;
 
-//class system_deleter 
-//{  // a deleter class
-//public:
-//	template <class T>
-//	void operator()(T* p)
-//	{
-//		delete p;
-//		System::Dispose();
-//	}
-//};
+bool System::inited = false;
 
 class DeepCamAPIInternal
 {
@@ -57,8 +48,6 @@ class DeepCamAPIInternal
 
 std::unique_ptr<DeepCamAPI> DeepCamAPIInternal::Instance;
 
-
-
 DeepCamAPI &DeepCamAPI::Instance()
 {
 	if (DeepCamAPIInternal::Instance == nullptr)
@@ -71,14 +60,9 @@ DeepCamAPI::DeepCamAPI()
 	System::Initialize();
 }
 
-void DeepCamAPI::Dispose()
-{
-	System::Dispose();
-}
-
 DeepCamAPI::~DeepCamAPI()
 {
-
+	System::Dispose();
 }
 
 std::vector<IGenericVCDeviceRef> DeepCamAPI::EnumerateDevices(DeviceType type) const

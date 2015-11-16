@@ -163,7 +163,7 @@ void main()
 	std::cout << "Exited! " << std::endl;
 	//_getch();
 	//std::cin.get();
-	TopGear::DeepCamAPI::Instance().Dispose();
+	//TopGear::DeepCamAPI::Instance().Dispose();
 }
 
 
