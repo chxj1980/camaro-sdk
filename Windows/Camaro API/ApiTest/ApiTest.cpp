@@ -17,7 +17,7 @@
 
 // ReSharper restore CppUnusedIncludeDirective
 
-void OnFrameCB(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFrameRef> &frames)
+void OnFrameCB(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFramePtr> &frames)
 {
 	if (frames.size() == 0)
 		return;
@@ -37,11 +37,11 @@ class FrameDemo //: public TopGear::IVideoFrameCallback
 {
 public:
 	//virtual void OnFrame(std::vector<std::shared_ptr<TopGear::IVideoFrame>> &frames) override
-	static void OnFrameS(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFrameRef> &frames)
+	static void OnFrameS(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFramePtr> &frames)
 	{
 		OnFrameCB(stream, frames);
 	}
-	void OnFrameMember(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFrameRef> &frames) const
+	void OnFrameMember(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFramePtr> &frames) const
 	{
 		OnFrameCB(stream, frames);
 	}
@@ -61,7 +61,7 @@ void Loop()
 	}
 }
 
-#define CAMARO_DUAL 
+//#define CAMARO_DUAL 
 //#define CAMARO_SOLO
 //#define 	STD_UVC
 

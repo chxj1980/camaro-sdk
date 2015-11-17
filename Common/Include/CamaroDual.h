@@ -15,7 +15,7 @@ namespace TopGear
 
 	{
 	public:
-		virtual void Notify(std::vector<IVideoFrameRef>& payload) override;
+		virtual void Notify(std::vector<IVideoFramePtr>& payload) override;
 		virtual void Register(std::shared_ptr<IProcessor>& p) override;
 	protected:
 		static const uint16_t RESYNC_NUM = 900;
@@ -28,9 +28,9 @@ namespace TopGear
 		void FrameWatcher();
 		std::thread frameWatchThread;
 		bool threadOn = false;
-		BufferQueue<std::pair<int, IVideoFrameRef>> frameBuffer;
-		void OnMasterFrame(IVideoStream &master, std::vector<IVideoFrameRef> &frames);
-		void OnSlaveFrame(IVideoStream &slave, std::vector<IVideoFrameRef> &frames);
+		BufferQueue<std::pair<int, IVideoFramePtr>> frameBuffer;
+		void OnMasterFrame(IVideoStream &master, std::vector<IVideoFramePtr> &frames);
+		void OnSlaveFrame(IVideoStream &slave, std::vector<IVideoFramePtr> &frames);
 		VideoFrameCallbackFn fnCb = nullptr;
 	public:
 		CamaroDual(std::shared_ptr<IVideoStream> &master, std::shared_ptr<IVideoStream> &slave);
@@ -44,13 +44,14 @@ namespace TopGear
 		virtual int SetResyncNumber(uint16_t resyncNum) override;
 		virtual int QueryDeviceRole() override;
 		virtual std::string QueryDeviceInfo() override;
-		virtual bool StartStream(int formatIndex) override;
+		virtual bool StartStream() override;
 		virtual bool StopStream() override;
 		virtual bool IsStreaming() const override;
 		virtual int GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc = "") override;
 		virtual int GetMatchedFormatIndex(const VideoFormat& format) const override;
 		virtual const std::vector<VideoFormat>& GetAllFormats() const override;
 		virtual const VideoFormat &GetCurrentFormat() const override;
+		virtual bool SetCurrentFormat(uint32_t formatIndex) override;
 		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
 		virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
 	};

@@ -3,16 +3,16 @@
 #include <functional>
 #include "VideoFormat.h"
 #include "IVideoFrame.h"
-#include "ISource.h"
+#include "IGenericVCDevice.h"
 
 namespace TopGear
 {
 	class IMultiVideoSource
 	{
 	public:
-		static std::vector<std::shared_ptr<IVideoStream>> CreateVideoStreams(std::shared_ptr<ISource> &pSource) = delete;
+		static std::vector<std::shared_ptr<IVideoStream>> CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &pSource) = delete;
 
-		typedef std::function<void(IVideoFrameRef &)> ReaderCallbackFn;
+		typedef std::function<void(IVideoFramePtr &)> ReaderCallbackFn;
 
 
 		virtual ~IMultiVideoSource() = default;

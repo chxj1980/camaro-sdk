@@ -1,6 +1,5 @@
 #pragma once
 
-#include "IVideoStream.h"
 #include "IExtensionAccess.h"
 #include "ICameraControl.h"
 #include "IDeviceControl.h"
@@ -20,12 +19,14 @@ namespace TopGear
 		virtual int GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc="") override;
 		virtual int GetMatchedFormatIndex(const VideoFormat& format) const override;
 		virtual const std::vector<VideoFormat>& GetAllFormats() const override;
-		virtual const VideoFormat &GetCurrentFormat() const override { return formats[currentFormatIndex]; }
+
+		virtual const VideoFormat &GetCurrentFormat() const override;
+		virtual bool SetCurrentFormat(uint32_t formatIndex) override;	
 
 		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
 		virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
 
-		virtual bool StartStream(int formatIndex) override;
+		virtual bool StartStream() override;
 		virtual bool StopStream() override;
 
 		virtual int SetSensorTrigger(uint8_t level) override;
@@ -48,16 +49,15 @@ namespace TopGear
 			RegisterAccess = 4,
 			Resync = 5,
 		};
-		
-		int currentFormatIndex = 0;
 
-		void OnFrame(IVideoStream &parent, std::vector<IVideoFrameRef> &frames);
+		void OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr> &frames);
 		std::shared_ptr<IExtensionAccess> extension;
 		VideoFrameCallbackFn fnCb = nullptr;
+		std::vector<VideoFormat> formats;
+		int currentFormatIndex = -1;
 	private:
 		static const int EMBEDDED_LINES = 2;
 		void ObtainExtendedLines();
-		std::vector<VideoFormat> formats;
 		int header;
 		int footer;
 	public:

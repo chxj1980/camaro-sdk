@@ -1,6 +1,6 @@
 #pragma once
-#include "IGenericVCDevice.h"
 #include "ExtensionInfo.h"
+#include "IValidation.h"
 
 namespace TopGear
 {

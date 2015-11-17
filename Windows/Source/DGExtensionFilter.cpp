@@ -5,8 +5,8 @@ using namespace TopGear;
 using namespace Win;
 
 
-DGExtensionFilter::DGExtensionFilter(IUnknown *pBase)
-	: ExtensionFilterBase(pBase, ExtensionRepository::DGXuCode)
+DGExtensionFilter::DGExtensionFilter(std::shared_ptr<IGenericVCDevice> &device)
+	: ExtensionFilterBase(device, ExtensionRepository::DGXuCode)
 {
 	
 }

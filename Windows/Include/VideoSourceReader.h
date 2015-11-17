@@ -12,7 +12,6 @@
 #include "IVideoStream.h"
 #include "VideoFormat.h"
 #include "IMultiVideoSource.h"
-#include "ISource.h"
 
 namespace TopGear
 {
@@ -25,8 +24,8 @@ namespace TopGear
 			public IMultiVideoSource
 		{
 		public:
-			static std::vector<std::shared_ptr<IVideoStream>> CreateVideoStreams(std::shared_ptr<ISource> &pSource);
-
+			static std::vector<std::shared_ptr<IVideoStream>> CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &pSource);
+			static std::shared_ptr<IVideoStream> CreateVideoStream(std::shared_ptr<IGenericVCDevice> &pSource);
 			// IUnknown methods
 			STDMETHODIMP QueryInterface(REFIID iid, void** ppv) override;
 			STDMETHODIMP_(ULONG) AddRef() override;
@@ -73,7 +72,7 @@ namespace TopGear
 			//bool IsFormatSupported(const GUID &subtype) const;
 			HRESULT OpenMediaSource(IMFMediaSource *pSource);
 
-			void EnumerateStreams();
+			void EnumerateStreams(bool onlyFirst = false);
 			void EnumerateFormats(uint32_t index, std::vector<VideoFormat> &videoFormats) const;
 			// Constructor is private. Use static CreateInstance method to create.
 			VideoSourceReader();

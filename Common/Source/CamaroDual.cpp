@@ -87,9 +87,9 @@ std::string CamaroDual::QueryDeviceInfo()
 	return "";
 }
 
-bool CamaroDual::StartStream(int formatIndex)
+bool CamaroDual::StartStream()
 {
-	if (masterDC && slaveDC && formatIndex>=0)
+	if (masterDC && slaveDC)
 	{
 		masterDC->SetSensorTrigger(0);
 		masterDC->SetResyncNumber(RESYNC_NUM);
@@ -99,8 +99,8 @@ bool CamaroDual::StartStream(int formatIndex)
 		auto camera1 = std::dynamic_pointer_cast<CameraSoloBase>(videoStreams[1]);
 		if (camera0 == nullptr || camera1 == nullptr)
 			return false;
-		camera0->CameraSoloBase::StartStream(formatIndex);
-		camera1->CameraSoloBase::StartStream(formatIndex);
+		camera0->CameraSoloBase::StartStream();
+		camera1->CameraSoloBase::StartStream();
 		while (!camera0->IsStreaming() || !camera1->IsStreaming())
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		frameWatchThread = std::thread(&CamaroDual::FrameWatcher, this);
@@ -149,6 +149,12 @@ const VideoFormat& CamaroDual::GetCurrentFormat() const
 	return videoStreams[0]->GetCurrentFormat();
 }
 
+bool CamaroDual::SetCurrentFormat(uint32_t formatIndex)
+{
+	return videoStreams[0]->SetCurrentFormat(formatIndex) &&
+		   videoStreams[1]->SetCurrentFormat(formatIndex);
+}
+
 void CamaroDual::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
 {
 	fnCb = fn;
@@ -159,7 +165,7 @@ void CamaroDual::RegisterFrameCallback(IVideoFrameCallback* pCB)
 	fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
 }
 
-void CamaroDual::Notify(std::vector<IVideoFrameRef>& payload)
+void CamaroDual::Notify(std::vector<IVideoFramePtr>& payload)
 {
 	if (fnCb)
 		fnCb(*this, payload);
@@ -175,8 +181,8 @@ void CamaroDual::FrameWatcher()
 	//RESYNC_NUM
 	auto lastIndex = -1;
 	auto dropped = 0;
-	std::vector<IVideoFrameRef> frameVector[2];
-	std::pair<int, IVideoFrameRef> frameEx;
+	std::vector<IVideoFramePtr> frameVector[2];
+	std::pair<int, IVideoFramePtr> frameEx;
 	while (true)
 	{
 		if (!frameBuffer.Pop(frameEx))
@@ -215,7 +221,7 @@ void CamaroDual::FrameWatcher()
 						}
 					}
 					//std::cout << " Frame " << mFrame->GetFrameIdx() << std::endl;
-					auto vector = std::vector<IVideoFrameRef>{ mFrame, sFrame };
+					auto vector = std::vector<IVideoFramePtr>{ mFrame, sFrame };
 					if (fnCb)
 					{
 						if (processor)
@@ -235,18 +241,18 @@ void CamaroDual::FrameWatcher()
 	}
 }
 
-void CamaroDual::OnMasterFrame(IVideoStream &master, std::vector<IVideoFrameRef>& frames)
+void CamaroDual::OnMasterFrame(IVideoStream &master, std::vector<IVideoFramePtr>& frames)
 {
 	if (frames.size() != 1)
 		return;
 	if (threadOn)
-		frameBuffer.Push(make_pair(0, frames[0]));
+		frameBuffer.Push(std::make_pair(0, frames[0]));
 }
 
-void CamaroDual::OnSlaveFrame(IVideoStream &slave, std::vector<IVideoFrameRef>& frames)
+void CamaroDual::OnSlaveFrame(IVideoStream &slave, std::vector<IVideoFramePtr>& frames)
 {
 	if (frames.size() != 1)
 		return;
 	if (threadOn)
-		frameBuffer.Push(make_pair(1, frames[0]));
+		frameBuffer.Push(std::make_pair(1, frames[0]));
 }

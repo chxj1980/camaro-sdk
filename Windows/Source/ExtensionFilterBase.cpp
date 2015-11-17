@@ -1,15 +1,20 @@
 #include "ExtensionFilterBase.h"
 #include <iostream>
 #include <ks.h>
+#include "IMSource.h"
 
 using namespace TopGear;
 using namespace Win;
 
-ExtensionFilterBase::ExtensionFilterBase(IUnknown* pBase, const std::array<uint8_t, 16> &xucode)
+ExtensionFilterBase::ExtensionFilterBase(std::shared_ptr<IGenericVCDevice> &device, const std::array<uint8_t, 16> &xucode)
 {
+	auto source = std::dynamic_pointer_cast<IMSource>(device);
+	if (source == nullptr)
+		return;
+	IUnknown* pUnk = source->GetSource();
 	GUID g;
 	std::memcpy(&g, xucode.data(), sizeof(GUID));
-	pXu = ExtensionUnit::CreateXU(pBase, g);
+	pXu = ExtensionUnit::CreateXU(pUnk, g);
 	if (pXu)
 		ObtainInfo();
 }
@@ -24,41 +29,6 @@ uint32_t ExtensionFilterBase::GetLen(int index) const
 		return 0;
 	return controlLens[index];
 }
-
-//HRESULT ExtensionFilterBase::CreateExtensionUnit(IUnknown* pUnkOuter, const GUID &code)
-//{
-//	//IKsTopologyInfo *pKsTopologyInfo;
-//	auto hr = S_OK;
-//	try
-//	{
-//		// pUnkOuter is the unknown associated with the base filter
-//		//hr = pUnkOuter->QueryInterface(__uuidof(IKsTopologyInfo),
-//		//	reinterpret_cast<void **>(&pKsTopologyInfo));
-//		//if (FAILED(hr))
-//		//	throw std::system_error(hr, std::generic_category(), "Unable to obtain IKsTopologyInfo");
-//		//DWORD dwExtensionNode;
-//		//hr = FindExtensionNode(pKsTopologyInfo, dwExtensionNode);
-//		//if (hr != S_OK)
-//		//	throw std::system_error(hr, std::generic_category(), "Unable to find extension node");
-//		//Create extension unit instance by node Id
-//		//hr = pKsTopologyInfo->CreateNodeInstance(dwExtensionNode,
-//		//	__uuidof(IExtensionUnit),
-//		//	reinterpret_cast<void **>(&pExtensionUnit));
-//		pXu = ExtensionUnit::CreateXU(pUnkOuter, code);
-//		if (pXu == nullptr)
-//		{
-//			hr = ERROR_SET_NOT_FOUND;
-//			throw std::system_error(hr, std::generic_category(), "Unable to create extension node instance");
-//		}
-//		//System::SafeRelease(&pKsTopologyInfo);
-//	}
-//	catch (const std::system_error &)
-//	{
-//		//std::cerr << e.what() << std::endl;
-//		//System::SafeRelease(&pKsTopologyInfo);
-//	}
-//	return hr;
-//}
 
 bool ExtensionFilterBase::ObtainInfo()
 {

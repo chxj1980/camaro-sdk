@@ -165,6 +165,7 @@
     <ClInclude Include="..\..\..\Common\Include\ICameraFactory.h" />
     <ClInclude Include="..\..\..\Common\Include\IDeviceControl.h" />
     <ClInclude Include="..\..\..\Common\Include\IDeviceFactory.h" />
+    <ClInclude Include="..\..\..\Common\Include\IDiscernible.h" />
     <ClInclude Include="..\..\..\Common\Include\IExtensionAccess.h" />
     <ClInclude Include="..\..\..\Common\Include\IExtensionLite.h" />
     <ClInclude Include="..\..\..\Common\Include\IGenericVCDevice.h" />
@@ -173,12 +174,13 @@
     <ClInclude Include="..\..\..\Common\Include\IMultiVideoStream.h" />
     <ClInclude Include="..\..\..\Common\Include\IProcessor.h" />
     <ClInclude Include="..\..\..\Common\Include\ISource.h" />
+    <ClInclude Include="..\..\..\Common\Include\IValidation.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoFrame.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoStream.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardUVC.h" />
     <ClInclude Include="..\..\..\Common\Include\VideoFormat.h" />
     <ClInclude Include="..\..\..\Common\Include\VideoFrameEx.h" />
-    <ClInclude Include="..\..\..\Common\Include\VideoSource.h" />
+    <ClInclude Include="..\..\..\Common\Include\VideoSourceProxy.h" />
     <ClInclude Include="..\..\Include\CameraFactory.h" />
     <ClInclude Include="..\..\Include\DeviceFactory.h" />
     <ClInclude Include="..\..\Include\DGExtensionFilter.h" />
@@ -190,7 +192,9 @@
     <ClInclude Include="..\..\Include\GenericVCDevice.h" />
     <ClInclude Include="..\..\Include\IMSource.h" />
     <ClInclude Include="..\..\Include\MFHelper.h" />
+    <ClInclude Include="..\..\Include\SourceDecorator.h" />
     <ClInclude Include="..\..\Include\StandardUVCFilter.h" />
+    <ClInclude Include="..\..\Include\StandardVCDevice.h" />
     <ClInclude Include="..\..\Include\System.h" />
     <ClInclude Include="..\..\Include\VideoBufferLock.h" />
     <ClInclude Include="..\..\Include\VideoSourceReader.h" />
@@ -201,7 +205,7 @@
     <ClCompile Include="..\..\..\Common\Source\Camaro.cpp" />
     <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp" />
     <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
-    <ClCompile Include="..\..\..\Common\Source\VideoSource.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp" />
     <ClCompile Include="..\..\Source\DeepCamAPI.cpp" />
     <ClCompile Include="..\..\Source\DeviceFactory.cpp" />
     <ClCompile Include="..\..\Source\DGExtensionFilter.cpp" />

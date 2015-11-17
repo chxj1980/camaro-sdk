@@ -96,9 +96,6 @@
     <ClInclude Include="..\..\Include\MFHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\StandardUVCFilter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\System.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -123,12 +120,6 @@
     <ClInclude Include="..\..\..\Common\Include\IMultiVideoSource.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Common\Include\VideoSource.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\Common\Include\ISource.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\ExtensionUnit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -144,10 +135,28 @@
     <ClInclude Include="..\..\Include\EtronExtensionFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\ExtensionVCDevice.h">
+    <ClInclude Include="..\..\..\Common\Include\DeepCamAPI.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Common\Include\DeepCamAPI.h">
+    <ClInclude Include="..\..\Include\StandardUVCFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\IDiscernible.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\IValidation.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\StandardVCDevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\SourceDecorator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\ExtensionVCDevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\VideoSourceProxy.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
   </ItemGroup>
@@ -170,14 +179,8 @@
     <ClCompile Include="..\..\Source\MFHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\StandardUVCFilter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\VideoSourceReader.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Common\Source\VideoSource.cpp">
-      <Filter>Source Files\Common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Source\ExtensionUnit.cpp">
       <Filter>Source Files</Filter>
@@ -193,6 +196,12 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\DeepCamAPI.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\StandardUVCFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp">
+      <Filter>Source Files\Common</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -37,8 +37,7 @@ std::string GenericVCDevice::GetFriendlyName()
 }
 
 GenericVCDevice::GenericVCDevice(IMFActivate *pAct, IMFMediaSource *pSrc)
-	: pActivate(pAct),
-	pSource(pSrc)
+	: pActivate(pAct), pSource(pSrc)
 {
 }
 

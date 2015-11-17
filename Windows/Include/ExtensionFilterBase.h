@@ -14,7 +14,7 @@ namespace TopGear
 		class ExtensionFilterBase : public IExtensionLite
 		{
 		public:
-			explicit ExtensionFilterBase(IUnknown *pBase, const std::array<uint8_t, 16> &xucode);
+			ExtensionFilterBase(std::shared_ptr<IGenericVCDevice> &device, const std::array<uint8_t, 16> &xucode);
 			virtual ~ExtensionFilterBase();
 
 			virtual std::shared_ptr<ExtensionUnit> GetExtensionUnit() const { return pXu; }

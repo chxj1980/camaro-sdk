@@ -1,17 +1,15 @@
 #pragma once
 #include <vector>
 #include <mfidl.h>
-#include "IGenericVCDevice.h"
 #include "IMSource.h"
 
 namespace TopGear
 {
 	namespace Win
 	{
-		class GenericVCDevice : public IGenericVCDevice, public IMSource
+		class GenericVCDevice : public IMSource
 		{
 		public:
-			//static std::vector<IGenericVCDeviceRef> EnumerateDevices();
 			virtual IMFActivate* GetActivator() override { return pActivate; }
 			virtual IMFMediaSource* GetSource() override { return pSource; }
 			virtual std::string GetSymbolicLink() override;
@@ -26,15 +24,6 @@ namespace TopGear
 			IMFMediaSource *pSource;
 			std::string symbolicLink;
 			std::string name;
-		};
-
-		class StandardVCDevice final : GenericVCDevice
-		{
-			StandardVCDevice(IMFActivate* pAct, IMFMediaSource* pSrc)
-				: GenericVCDevice(pAct, pSrc)
-			{
-			}
-			virtual ~StandardVCDevice() override {}
 		};
 	}
 }

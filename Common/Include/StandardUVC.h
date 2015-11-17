@@ -6,6 +6,11 @@ namespace TopGear
 	class StandardUVC :public CameraSoloBase
 	{
 	public:
+		virtual bool SetCurrentFormat(uint32_t formatIndex) override
+		{
+			return pReader->SetCurrentFormat(formatIndex);
+		}
+
 		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override
 		{
 			pReader->RegisterFrameCallback(fn);

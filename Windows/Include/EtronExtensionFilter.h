@@ -10,8 +10,8 @@ namespace TopGear
 		class EtronExtensionFilter : public ExtensionFilterBase
 		{
 		public:
-			explicit EtronExtensionFilter(IUnknown *pBase)
-				: ExtensionFilterBase(pBase, ExtensionRepository::EtronXuCode)
+			explicit EtronExtensionFilter(std::shared_ptr<IGenericVCDevice> &device)
+				: ExtensionFilterBase(device, ExtensionRepository::EtronXuCode)
 			{}
 			virtual ~EtronExtensionFilter() {}
 			virtual std::string GetDeviceInfo() override { return{}; }

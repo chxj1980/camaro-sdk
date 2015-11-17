@@ -9,7 +9,7 @@ namespace TopGear
 		class DGExtensionFilter : public ExtensionFilterBase
 		{
 		public:
-			explicit DGExtensionFilter(IUnknown *pBase);
+			explicit DGExtensionFilter(std::shared_ptr<IGenericVCDevice> &device);
 			virtual ~DGExtensionFilter() {}
 			virtual std::string GetDeviceInfo() override;
 		private:

@@ -36,14 +36,6 @@
 
 namespace TopGear
 {
-	enum class DeviceType
-	{
-		Generic,
-		Standard,
-		DeepGlint,
-		Etron,
-	};
-
 	enum class Camera
 	{
 		StandardUVC,
@@ -58,10 +50,8 @@ namespace TopGear
 	{
 	public:
 		static DeepCamAPI &Instance();
-		std::vector<IGenericVCDeviceRef> EnumerateDevices(DeviceType type) const;
 
-		template<class U>
-		std::shared_ptr<IVideoStream> CreateCamera(Camera camera, U &source);
+		std::shared_ptr<IVideoStream> CreateCamera(Camera camera);
 
 		template<class T>
 		std::shared_ptr<T> QueryInterface(std::shared_ptr<IVideoStream> &vs) const;

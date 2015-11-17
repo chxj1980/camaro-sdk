@@ -8,10 +8,10 @@
 #include <thread>
 
 #include "VideoBufferLock.h"
-#include "VideoSource.h"
-#include <ks.h>
-#include <ksmedia.h>
-#include <ksproxy.h>
+#include "VideoSourceProxy.h"
+//#include <ks.h>
+//#include <ksmedia.h>
+//#include <ksproxy.h>
 
 using namespace TopGear;
 using namespace Win;
@@ -21,7 +21,7 @@ using namespace Win;
 //
 //-------------------------------------------------------------------
 
-std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<ISource> &pSource)
+std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &pSource)
 {
 	std::shared_ptr<VideoSourceReader> pPlayer(new VideoSourceReader);
 	if (pPlayer == nullptr)
@@ -31,9 +31,8 @@ std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams
 	if (msource==nullptr)
 		return{};
 
-	IKsControl *pIKsControl;
-
-	auto r = msource->GetSource()->QueryInterface(IID_PPV_ARGS(&pIKsControl));
+	//IKsControl *pIKsControl;
+	//auto r = msource->GetSource()->QueryInterface(IID_PPV_ARGS(&pIKsControl));
 
 	//auto r = msource->GetSource()->QueryInterface(__uuidof(IKsControl),
 	//	reinterpret_cast<void **>(&pIKsControl));
@@ -44,10 +43,36 @@ std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams
 	{
 		pPlayer->EnumerateStreams();
 		for (auto s : pPlayer->streams)
-			list.emplace_back(std::make_shared<VideoSource>(
+			list.emplace_back(std::make_shared<VideoSourceProxy>(
 				std::static_pointer_cast<IMultiVideoSource>(pPlayer), s.first));
 	}
 	return list;
+}
+
+std::shared_ptr<IVideoStream> VideoSourceReader::CreateVideoStream(std::shared_ptr<IGenericVCDevice> &pSource)
+{
+	std::shared_ptr<VideoSourceReader> pPlayer(new VideoSourceReader);
+	if (pPlayer == nullptr)
+		return{};// E_OUTOFMEMORY
+
+	auto msource = std::dynamic_pointer_cast<IMSource>(pSource);
+	if (msource == nullptr)
+		return{};
+	auto hr = pPlayer->OpenMediaSource(msource->GetSource());
+	
+	std::shared_ptr<IVideoStream> reader;
+	if (SUCCEEDED(hr))
+	{
+		pPlayer->EnumerateStreams(true);
+		for (auto s : pPlayer->streams)
+		{
+			reader = std::make_shared<VideoSourceProxy>(
+				std::static_pointer_cast<IMultiVideoSource>(pPlayer),
+				s.first);
+			break;
+		}
+	}
+	return reader;
 }
 
 
@@ -180,7 +205,7 @@ HRESULT VideoSourceReader::OpenMediaSource(IMFMediaSource* pSource)
 	return hr;
 }
 
-void VideoSourceReader::EnumerateStreams()
+void VideoSourceReader::EnumerateStreams(bool onlyFirst)
 {
 	if (m_pReader == nullptr)
 		return;
@@ -199,6 +224,8 @@ void VideoSourceReader::EnumerateStreams()
 		{
 			streams[i] = StreamState {};
 			EnumerateFormats(i, streams[i].formats);
+			if (onlyFirst)
+				break;
 		}
 		System::SafeRelease(&pType);
 		i++;

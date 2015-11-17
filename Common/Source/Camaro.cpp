@@ -66,7 +66,7 @@ void Camaro::ObtainExtendedLines()
 	footer = enF ? EMBEDDED_LINES : 0;
 }
 
-void Camaro::OnFrame(IVideoStream &parent, std::vector<IVideoFrameRef>& frames)
+void Camaro::OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr>& frames)
 {
 	if (frames.size() != 1)
 		return;
@@ -83,7 +83,7 @@ void Camaro::OnFrame(IVideoStream &parent, std::vector<IVideoFrameRef>& frames)
 		(pData[5] & 0xf0) | (pData[7] & 0xf0) >> 4;
 	frame->UnlockBuffer();
 
-	IVideoFrameRef ex = std::make_shared<VideoFrameEx>(frame, header*stride, stride, w, h, index,
+	IVideoFramePtr ex = std::make_shared<VideoFrameEx>(frame, header*stride, stride, w, h, index,
 		(header + h)*stride, footer > 0 ? footer*stride : 0);
 	frames.clear();
 	frames.emplace_back(ex);
@@ -220,6 +220,20 @@ const std::vector<VideoFormat>& Camaro::GetAllFormats() const
 	return formats;
 }
 
+const VideoFormat &Camaro::GetCurrentFormat() const
+{
+	if (currentFormatIndex < 0)
+		return VideoFormatNull;
+	return formats[currentFormatIndex];
+}
+bool Camaro::SetCurrentFormat(uint32_t formatIndex)
+{
+	if (!pReader->SetCurrentFormat(formatIndex))
+		return false;
+	currentFormatIndex = formatIndex;
+	return true;
+}
+
 void Camaro::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
 {
 	fnCb = fn;
@@ -230,20 +244,19 @@ void Camaro::RegisterFrameCallback(IVideoFrameCallback* pCB)
 	fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
 }
 
-bool Camaro::StartStream(int formatIndex)
+bool Camaro::StartStream()
 {
-    if (formatIndex >= 0 && formatIndex<int(formats.size()))
+	if (currentFormatIndex < 0)
+		return false;
+
+	SetSensorTrigger(0);
+	SetResyncNumber(900);
+	Flip(true, false);
+	std::this_thread::sleep_for(std::chrono::milliseconds(50));
+	if (CameraSoloBase::StartStream())
 	{
-		currentFormatIndex = formatIndex;
-		SetSensorTrigger(0);
-		SetResyncNumber(900);
-		Flip(true, false);
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
-		if (CameraSoloBase::StartStream(formatIndex))
-		{
-			SetSensorTrigger(1);
-			return true;
-		}
+		SetSensorTrigger(1);
+		return true;
 	}
 	return false;
 }

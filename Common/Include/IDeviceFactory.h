@@ -10,7 +10,7 @@ namespace TopGear
 		static_assert(std::is_base_of<IGenericVCDevice, T>::value,
 			"Class T must derive from IGenericVCDevice");
 	public:
-		static std::vector<IGenericVCDeviceRef> EnumerateDevices() = delete;
+		static std::vector<IGenericVCDevicePtr> EnumerateDevices() = delete;
 	protected:
 		IDeviceFactory() = default;
 		~IDeviceFactory() = default;

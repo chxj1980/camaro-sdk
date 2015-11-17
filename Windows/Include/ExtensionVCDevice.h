@@ -1,38 +1,21 @@
 #pragma once
 #include "IGenericVCDevice.h"
 #include "ExtensionFilterBase.h"
-#include "IMSource.h"
+#include "IDiscernible.h"
+#include "SourceDecorator.h"
 
 namespace TopGear
 {
 	namespace Win
 	{
-		typedef IDiscernibleVCDevice<ExtensionFilterBase> IExtensionDevice;
-
 		template<class T>
-		class ExtensionVCDevice : public IExtensionDevice, public IMSource
+		class ExtensionVCDevice : public SourceDecorator, public IDiscernible<ExtensionFilterBase>
 		{
 			static_assert(std::is_base_of<ExtensionFilterBase, T>::value, "Class T must derive from ExtensionFilterBase");
 		public:
-			virtual IMFActivate* GetActivator() override
-			{
-				return source ? source->GetActivator() : nullptr;
-			}
-			virtual IMFMediaSource* GetSource() override
-			{
-				return source ? source->GetSource() : nullptr;
-			}
-			virtual std::string GetSymbolicLink() override
-			{
-				return genericDevice->GetSymbolicLink();
-			}
-			virtual std::string GetFriendlyName() override
-			{
-				return genericDevice->GetFriendlyName();
-			}
 			virtual std::string GetDeviceInfo() override
 			{
-				return validator->GetDeviceInfo();
+				return validator ? validator->GetDeviceInfo() : "";
 			}
 
 			virtual const std::shared_ptr<ExtensionFilterBase>& GetValidator() const override
@@ -41,15 +24,13 @@ namespace TopGear
 			}
 
 			explicit ExtensionVCDevice(std::shared_ptr<IGenericVCDevice> &device)
-				: genericDevice(device)
+				: SourceDecorator(device)
 			{
-				source = std::dynamic_pointer_cast<IMSource>(genericDevice);
-				validator = std::make_shared<T>(source->GetSource());
+				if (source != nullptr)
+					validator = std::make_shared<T>(device);
 			}
 			virtual ~ExtensionVCDevice() {}
 		protected:
-			std::shared_ptr<IGenericVCDevice> genericDevice;
-			std::shared_ptr<IMSource> source;
 			std::shared_ptr<ExtensionFilterBase> validator;
 		};
 	}

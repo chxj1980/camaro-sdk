@@ -19,7 +19,7 @@ namespace TopGear
 {
 	class IVideoStream;
 
-	typedef std::function<void(IVideoStream &, std::vector<IVideoFrameRef> &)> VideoFrameCallbackFn;
+	typedef std::function<void(IVideoStream &, std::vector<IVideoFramePtr> &)> VideoFrameCallbackFn;
 
 	DEPRECATED(class IVideoFrameCallback);
 
@@ -27,7 +27,7 @@ namespace TopGear
 	{
 	public:
 		virtual ~IVideoFrameCallback() = default;
-		virtual void OnFrame(IVideoStream &sender, std::vector<IVideoFrameRef> &frames) = 0;
+		virtual void OnFrame(IVideoStream &sender, std::vector<IVideoFramePtr> &frames) = 0;
 	};
 
 	template<typename testType>
@@ -39,11 +39,13 @@ namespace TopGear
 			false;
 	};
 
+	static VideoFormat VideoFormatNull;
+
 	class IVideoStream
 	{
 	public:
 		virtual ~IVideoStream() = default;
-		virtual bool StartStream(int formatIndex) = 0;
+		virtual bool StartStream() = 0;
 		virtual bool StopStream() = 0;
 		virtual bool IsStreaming() const = 0;
 
@@ -51,7 +53,7 @@ namespace TopGear
 		virtual int GetMatchedFormatIndex(const VideoFormat &format) const = 0;
 		virtual const std::vector<VideoFormat> &GetAllFormats() const = 0;
 		virtual const VideoFormat &GetCurrentFormat() const = 0;
-
+		virtual bool SetCurrentFormat(uint32_t formatIndex) = 0;
 		virtual void RegisterFrameCallback(const VideoFrameCallbackFn &fn) = 0;
 		DEPRECATED(virtual void RegisterFrameCallback(IVideoFrameCallback *pCB)) = 0;
 

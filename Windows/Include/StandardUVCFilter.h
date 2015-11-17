@@ -1,6 +1,6 @@
 #pragma once
 #include "IGenericVCDevice.h"
-#include <unknwn.h>
+#include "IValidation.h"
 
 namespace TopGear
 {
@@ -10,8 +10,7 @@ namespace TopGear
 		{
 		public:
 			virtual bool IsValid() const override { return isValid; }
-			explicit StandardUVCFilter(IUnknown *pBase);
-			virtual ~StandardUVCFilter();
+			explicit StandardUVCFilter(std::shared_ptr<IGenericVCDevice> &device);
 		private:
 			bool isValid;
 		};

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ICameraFactory.h"
-#include "IMSource.h"
 #include "IVideoStream.h"
 #include "StandardUVC.h"
 #include "Camaro.h"
@@ -29,45 +28,39 @@ namespace TopGear
 		template <>
 		template <>
 		inline std::shared_ptr<IVideoStream> CameraFactory<StandardUVC>::
-			CreateInstance<IGenericVCDeviceRef>(IGenericVCDeviceRef& device)
+			CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
 		{
-			auto source = std::dynamic_pointer_cast<ISource>(device);
-			if (source == nullptr)
+			auto reader = VideoSourceReader::CreateVideoStream(device);
+			if (reader == nullptr)
 				return{};
-			auto list = VideoSourceReader::CreateVideoStreams(source);
-			if (list.size() == 0)
-				return{};
-			return std::make_shared<StandardUVC>(list[0]);
+			return std::make_shared<StandardUVC>(reader);
 		}
 
 		template <>
 		template <>
 		inline std::shared_ptr<IVideoStream> CameraFactory<Camaro>::
-			CreateInstance<IGenericVCDeviceRef>(IGenericVCDeviceRef& device)
+			CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
 		{
-			auto tgDevice = std::dynamic_pointer_cast<IExtensionDevice>(device);
+			auto tgDevice = std::dynamic_pointer_cast<IDiscernible<ExtensionFilterBase>>(device);
 			if (tgDevice == nullptr)
 				return{};
 
-			auto source = std::dynamic_pointer_cast<ISource>(device);
-			if (source == nullptr)
-				return{};
-			auto list = VideoSourceReader::CreateVideoStreams(source);
-			if (list.size() == 0)
+			auto reader = VideoSourceReader::CreateVideoStream(device);
+			if (reader == nullptr)
 				return{};
 
 			auto validator = tgDevice->GetValidator();
 			auto ex = std::static_pointer_cast<IExtensionAccess>(
 				std::make_shared<ExtensionAccess>(validator));
 
-			return std::make_shared<Camaro>(list[0], ex);
+			return std::make_shared<Camaro>(reader, ex);
 		}
 
 
 		template <>
 		template <>
 		inline std::shared_ptr<IVideoStream> CameraFactory<CamaroDual>::
-			CreateInstance<std::vector<IGenericVCDeviceRef>>(std::vector<IGenericVCDeviceRef> &devices)
+			CreateInstance<std::vector<IGenericVCDevicePtr>>(std::vector<IGenericVCDevicePtr> &devices)
 		{
 			std::shared_ptr<IVideoStream> master;
 			std::shared_ptr<IVideoStream> slave;

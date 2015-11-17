@@ -27,7 +27,7 @@ namespace TopGear
 		virtual uint32_t GetExtraLength() const = 0;      //length(bytes) of extra data
 	};
 
-	typedef std::shared_ptr<IVideoFrame> IVideoFrameRef;
+	typedef std::shared_ptr<IVideoFrame> IVideoFramePtr;
 }
 
 
