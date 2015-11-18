@@ -9,6 +9,7 @@
 
 #include "VideoBufferLock.h"
 #include "VideoSourceProxy.h"
+#include "MSource.h"
 //#include <ks.h>
 //#include <ksmedia.h>
 //#include <ksproxy.h>
@@ -27,18 +28,12 @@ std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams
 	if (pPlayer == nullptr)
 		return{};// E_OUTOFMEMORY
 	
-	auto msource = std::dynamic_pointer_cast<IMSource>(pSource);
+	auto msource = std::dynamic_pointer_cast<MSource>(pSource->GetSource());
 	if (msource==nullptr)
 		return{};
 
-	//IKsControl *pIKsControl;
-	//auto r = msource->GetSource()->QueryInterface(IID_PPV_ARGS(&pIKsControl));
-
-	//auto r = msource->GetSource()->QueryInterface(__uuidof(IKsControl),
-	//	reinterpret_cast<void **>(&pIKsControl));
-
 	std::vector<std::shared_ptr<IVideoStream>> list;
-	auto hr = pPlayer->OpenMediaSource(msource->GetSource());
+	auto hr = pPlayer->OpenMediaSource(msource->GetMediaSource());
 	if (SUCCEEDED(hr))
 	{
 		pPlayer->EnumerateStreams();
@@ -55,10 +50,10 @@ std::shared_ptr<IVideoStream> VideoSourceReader::CreateVideoStream(std::shared_p
 	if (pPlayer == nullptr)
 		return{};// E_OUTOFMEMORY
 
-	auto msource = std::dynamic_pointer_cast<IMSource>(pSource);
+	auto msource = std::dynamic_pointer_cast<MSource>(pSource->GetSource());
 	if (msource == nullptr)
 		return{};
-	auto hr = pPlayer->OpenMediaSource(msource->GetSource());
+	auto hr = pPlayer->OpenMediaSource(msource->GetMediaSource());
 	
 	std::shared_ptr<IVideoStream> reader;
 	if (SUCCEEDED(hr))

@@ -16,6 +16,9 @@ using namespace Win;
 
 bool System::inited = false;
 
+template<typename T>
+const std::chrono::milliseconds DeviceFactory<T>::InitialTime = std::chrono::milliseconds(100);
+
 enum class DeviceType
 {
 	Generic,

@@ -5,6 +5,7 @@
 #include <thread>
 
 
+
 using namespace TopGear;
 using namespace Win;
 
@@ -68,6 +69,24 @@ HRESULT MFHelper::EnumVideoDeviceSources(std::vector<SourcePair>& sources, std::
 		sources.clear();
 		throw;
 	}
+	return hr;
+}
+
+HRESULT MFHelper::GetAllocatedString(IMFActivate* pActivate, const GUID& guidCode, std::string &val)
+{
+	WCHAR *pwsz;
+	UINT32 cch;
+	auto hr = pActivate->GetAllocatedString(guidCode, &pwsz, &cch);
+	if (SUCCEEDED(hr))
+	{
+		std::wstring wstr(pwsz, cch);
+		val = std::string(wstr.begin(), wstr.end());
+	}
+	else
+	{
+		val.clear();
+	}
+	CoTaskMemFree(pwsz);
 	return hr;
 }
 

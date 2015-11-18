@@ -1,48 +1,39 @@
 #include "GenericVCDevice.h"
-#include "System.h"
+#include <mfidl.h>
+#include "MFHelper.h"
+#include "MSource.h"
 
 using namespace TopGear;
 using namespace Win;
 
-bool GenericVCDevice::GetAllocatedString(const GUID& guidCode, std::string &val) const
-{
-	WCHAR *pwsz;
-	UINT32 cch;
-	auto hr = pActivate->GetAllocatedString(guidCode, &pwsz, &cch);
-	if (SUCCEEDED(hr))
-	{
-		std::wstring wstr(pwsz, cch);
-		val = std::string(wstr.begin(), wstr.end());
-	}
-	else
-	{
-		val.clear();
-	}
-	CoTaskMemFree(pwsz);
-	return SUCCEEDED(hr);
-}
 
 std::string GenericVCDevice::GetSymbolicLink()
 {
 	if (symbolicLink.empty())
-		GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, symbolicLink);
+	{
+		auto activator = std::dynamic_pointer_cast<MSource>(source);
+		if (activator!=nullptr)
+			MFHelper::GetAllocatedString(activator->GetActivator(), MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, symbolicLink);
+	}
 	return symbolicLink;
 }
 
 std::string GenericVCDevice::GetFriendlyName()
 {
 	if (name.empty())
-		GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, name);
+	{
+		auto activator = std::dynamic_pointer_cast<MSource>(source);
+		if (activator != nullptr)
+			MFHelper::GetAllocatedString(activator->GetActivator(), MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, name);
+	}
 	return name;
 }
 
-GenericVCDevice::GenericVCDevice(IMFActivate *pAct, IMFMediaSource *pSrc)
-	: pActivate(pAct), pSource(pSrc)
+GenericVCDevice::GenericVCDevice(std::shared_ptr<ISource> &vsource)
+	: source(vsource)
 {
 }
 
 GenericVCDevice::~GenericVCDevice()
 {
-	System::SafeRelease(&pActivate);
-	System::SafeRelease(&pSource);
 }

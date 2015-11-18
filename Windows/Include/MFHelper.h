@@ -1,19 +1,21 @@
 #pragma once
 
 #include <mfapi.h>
+#include <mfidl.h>
 #include <vector>
 #include <chrono>
-#include "IMSource.h"
-
 
 namespace TopGear
 {
 	namespace Win
 	{
+		typedef std::pair<IMFActivate *, IMFMediaSource *> SourcePair;
+
 		class MFHelper
 		{
 		public:
 			static HRESULT EnumVideoDeviceSources(std::vector<SourcePair> &sources, std::chrono::milliseconds initialTime);
+			static HRESULT GetAllocatedString(IMFActivate* pActivate, const GUID& guidCode, std::string &val);
 			static HRESULT GetDefaultStride(IMFMediaType *pType, LONG &Stride);
 			static RECT CorrectAspectRatio(const RECT& src, const MFRatio& srcPAR);
 			static RECT LetterBoxRect(const RECT& rcSrc, const RECT& rcDst);

@@ -3,7 +3,6 @@
 #include "ExtensionInfo.h"
 #include <vidcap.h>
 #include "IExtensionLite.h"
-#include <string>
 #include <array>
 #include "ExtensionUnit.h"
 

@@ -7,6 +7,7 @@
 #include "GenericVCDevice.h"
 #include "StandardVCDevice.h"
 #include "MFHelper.h"
+#include "MSource.h"
 
 namespace TopGear
 {
@@ -32,10 +33,10 @@ namespace TopGear
 			{
 				std::vector<SourcePair> inventory;
 				MFHelper::EnumVideoDeviceSources(inventory, InitialTime);
-				for (auto source : inventory)
+				for (auto &sp : inventory)
 				{
-					IGenericVCDevicePtr pDevice = std::make_shared<GenericVCDevice>(source.first, source.second);
-					devices.push_back(pDevice);
+					std::shared_ptr<ISource> source = std::make_shared<MSource>(sp);
+					devices.emplace_back(std::make_shared<GenericVCDevice>(source));
 				}
 			}
 			catch (const std::exception&)

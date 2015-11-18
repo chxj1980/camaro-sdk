@@ -1,7 +1,7 @@
 #include "StandardUVCFilter.h"
-#include "ExtensionFilterBase.h"
 #include "ExtensionRepository.h"
-#include "IMSource.h"
+#include "MSource.h"
+#include "ExtensionUnit.h"
 
 using namespace TopGear;
 using namespace Win;
@@ -9,10 +9,10 @@ using namespace Win;
 StandardUVCFilter::StandardUVCFilter(std::shared_ptr<IGenericVCDevice> &device)
 	:isValid(true)
 {
-	auto source = std::dynamic_pointer_cast<IMSource>(device);
+	auto source = std::dynamic_pointer_cast<MSource>(device->GetSource());
 	if (source == nullptr)
 		return;
-	IUnknown* pUnk = source->GetSource();
+	IUnknown* pUnk = source->GetMediaSource();
 	std::shared_ptr<ExtensionUnit> xu;
 	GUID g;
 	for (auto &xucode : ExtensionRepository::Inventory)

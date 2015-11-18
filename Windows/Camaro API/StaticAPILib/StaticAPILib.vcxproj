@@ -152,14 +152,32 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\Common\Source\Camaro.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp" />
+    <ClCompile Include="..\..\Source\DeepCamAPI.cpp" />
+    <ClCompile Include="..\..\Source\DGExtensionFilter.cpp" />
+    <ClCompile Include="..\..\Source\ExtensionAccess.cpp" />
+    <ClCompile Include="..\..\Source\ExtensionFilterBase.cpp" />
+    <ClCompile Include="..\..\Source\ExtensionUnit.cpp" />
+    <ClCompile Include="..\..\Source\GenericVCDevice.cpp" />
+    <ClCompile Include="..\..\Source\MFHelper.cpp" />
+    <ClCompile Include="..\..\Source\StandardUVCFilter.cpp" />
+    <ClCompile Include="..\..\Source\VideoSourceReader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="..\..\..\Common\Include\BufferQueue.h" />
     <ClInclude Include="..\..\..\Common\Include\Camaro.h" />
-    <ClInclude Include="..\..\..\Common\Include\DeepCamAPI.h" />
     <ClInclude Include="..\..\..\Common\Include\CamaroDual.h" />
     <ClInclude Include="..\..\..\Common\Include\CameraBase.h" />
     <ClInclude Include="..\..\..\Common\Include\CameraSoloBase.h" />
+    <ClInclude Include="..\..\..\Common\Include\DeepCamAPI.h" />
+    <ClInclude Include="..\..\..\Common\Include\DeviceDecorator.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionInfo.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionRepository.h" />
+    <ClInclude Include="..\..\..\Common\Include\ExtensionVCDevice.h" />
+    <ClInclude Include="..\..\..\Common\Include\GenericVCDevice.h" />
     <ClInclude Include="..\..\..\Common\Include\ICameraControl.h" />
     <ClInclude Include="..\..\..\Common\Include\ICameraFactory.h" />
     <ClInclude Include="..\..\..\Common\Include\IDeviceControl.h" />
@@ -176,6 +194,8 @@
     <ClInclude Include="..\..\..\Common\Include\IVideoFrame.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoStream.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardUVC.h" />
+    <ClInclude Include="..\..\..\Common\Include\StandardUVCFilter.h" />
+    <ClInclude Include="..\..\..\Common\Include\StandardVCDevice.h" />
     <ClInclude Include="..\..\..\Common\Include\VideoFormat.h" />
     <ClInclude Include="..\..\..\Common\Include\VideoFrameEx.h" />
     <ClInclude Include="..\..\..\Common\Include\VideoSourceProxy.h" />
@@ -185,34 +205,12 @@
     <ClInclude Include="..\..\Include\EtronExtensionFilter.h" />
     <ClInclude Include="..\..\Include\ExtensionAccess.h" />
     <ClInclude Include="..\..\Include\ExtensionFilterBase.h" />
-    <ClInclude Include="..\..\Include\ExtensionVCDevice.h" />
-    <ClInclude Include="..\..\Include\GenericVCDevice.h" />
-    <ClInclude Include="..\..\Include\IMSource.h" />
+    <ClInclude Include="..\..\Include\ExtensionUnit.h" />
     <ClInclude Include="..\..\Include\MFHelper.h" />
-    <ClInclude Include="..\..\Include\SourceDecorator.h" />
-    <ClInclude Include="..\..\Include\StandardUVCFilter.h" />
-    <ClInclude Include="..\..\Include\StandardVCDevice.h" />
+    <ClInclude Include="..\..\Include\MSource.h" />
     <ClInclude Include="..\..\Include\System.h" />
     <ClInclude Include="..\..\Include\VideoBufferLock.h" />
     <ClInclude Include="..\..\Include\VideoSourceReader.h" />
-    <ClInclude Include="..\..\Include\ExtensionUnit.h" />
-    <ClInclude Include="targetver.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\..\Common\Source\Camaro.cpp" />
-    <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp" />
-    <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
-    <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp" />
-    <ClCompile Include="..\..\Source\DeepCamAPI.cpp" />
-    <ClCompile Include="..\..\Source\DeviceFactory.cpp" />
-    <ClCompile Include="..\..\Source\DGExtensionFilter.cpp" />
-    <ClCompile Include="..\..\Source\ExtensionAccess.cpp" />
-    <ClCompile Include="..\..\Source\ExtensionFilterBase.cpp" />
-    <ClCompile Include="..\..\Source\GenericVCDevice.cpp" />
-    <ClCompile Include="..\..\Source\MFHelper.cpp" />
-    <ClCompile Include="..\..\Source\StandardUVCFilter.cpp" />
-    <ClCompile Include="..\..\Source\VideoSourceReader.cpp" />
-    <ClCompile Include="..\..\Source\ExtensionUnit.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

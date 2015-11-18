@@ -41,15 +41,17 @@ namespace TopGear
 		inline std::shared_ptr<IVideoStream> CameraFactory<Camaro>::
 			CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
 		{
-			auto tgDevice = std::dynamic_pointer_cast<IDiscernible<ExtensionFilterBase>>(device);
-			if (tgDevice == nullptr)
+			auto exDevice = std::dynamic_pointer_cast<IDiscernible<IExtensionLite>>(device);
+			if (exDevice == nullptr)
 				return{};
 
 			auto reader = VideoSourceReader::CreateVideoStream(device);
 			if (reader == nullptr)
 				return{};
 
-			auto validator = tgDevice->GetValidator();
+			auto validator = std::dynamic_pointer_cast<ExtensionFilterBase>(exDevice->GetValidator());
+			if (validator == nullptr)
+				return{};
 			auto ex = std::static_pointer_cast<IExtensionAccess>(
 				std::make_shared<ExtensionAccess>(validator));
 
