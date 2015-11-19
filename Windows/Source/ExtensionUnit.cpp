@@ -35,7 +35,13 @@ std::shared_ptr<ExtensionUnit> ExtensionUnit::CreateXU(IUnknown* pUnkOuter, cons
 	hr = xu->get_InfoSize(&size);
 	if (hr != S_OK)
 		return{};
-	return xu;
+	std::unique_ptr<uint8_t[]> info(new uint8_t[size]{ 0 });
+	hr = xu->get_Info(size, info.get());
+	if (hr != S_OK)
+		return{};
+	if (std::memcmp(&info[1], &xCode, sizeof(GUID)) == 0)
+		return xu;
+	return{};
 }
 
 HRESULT ExtensionUnit::FindExtensionNode(IKsTopologyInfo* pIksTopologyInfo, DWORD& nodeId)
