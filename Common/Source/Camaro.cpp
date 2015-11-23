@@ -68,6 +68,7 @@ void Camaro::ObtainExtendedLines()
 
 void Camaro::OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr>& frames)
 {
+    (void)parent;
 	if (frames.size() != 1)
 		return;
 	auto frame = frames[0];

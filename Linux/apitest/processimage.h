@@ -62,15 +62,16 @@ private:
     bool bEnabled;
 
     std::atomic<int> dropcount;
+    std::unique_ptr<uchar[]> prgb;
 
     void Init();
-    void onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFrameRef> &frames);
+    void onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFramePtr> &frames);
     void onDeviceException(int); //override
 signals:
-    void onvideoframe(TopGear::IVideoFrameRef vf);
+    void onvideoframe(TopGear::IVideoFramePtr vf);
     void ondevexception(int err);
 private slots:
-    void showvideoframe(TopGear::IVideoFrameRef vf);
+    void showvideoframe(TopGear::IVideoFramePtr vf);
     void handledevexception(int);
     void ontimer();
     void display_error(QString err);

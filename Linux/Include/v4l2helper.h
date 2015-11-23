@@ -4,7 +4,7 @@
 #include <vector>
 #include <chrono>
 #include <memory>
-#include <ILSource.h>
+#include <LSource.h>
 #include <ExtensionInfo.h>
 
 #include <fcntl.h>
@@ -23,7 +23,7 @@ namespace TopGear
         {
         public:
             static void EnumVideoDeviceSources(std::vector<SourcePair> &inventory,
-                                   std::chrono::milliseconds waitTime);
+                    std::chrono::milliseconds waitTime = std::chrono::milliseconds(0));
             static std::shared_ptr<ExtensionInfo> GetXUFromBusInfo(
                     const v4l2_capability &cap);
         };

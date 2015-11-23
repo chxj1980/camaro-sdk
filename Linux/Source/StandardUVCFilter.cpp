@@ -1,5 +1,7 @@
 #include "StandardUVCFilter.h"
-#include "GeneralExtensionFilter.h"
+#include "ExtensionRepository.h"
+#include "LSource.h"
+
 #include "v4l2helper.h"
 
 #include <sys/ioctl.h>
@@ -12,21 +14,21 @@
 using namespace TopGear;
 using namespace Linux;
 
-StandardUVCFilter::StandardUVCFilter(int dev)
-    :isValid(false)
+StandardUVCFilter::StandardUVCFilter(std::shared_ptr<IGenericVCDevice> &device)
+    :isValid(true)
 {
-    v4l2_capability cap;
-    ioctl(dev,VIDIOC_QUERYCAP,&cap);
-    auto xu = v4l2Helper::GetXUFromBusInfo(cap);
-    if (xu)
+    auto source = std::dynamic_pointer_cast<LSource>(device->GetSource());
+    if (source == nullptr)
+        return;
+    auto pInfo = v4l2Helper::GetXUFromBusInfo(source->GetCapability());
+    if (pInfo == nullptr)
+        return;
+    for (auto &xucode : ExtensionRepository::Inventory)
     {
-        GeneralExtensionFilter filter(dev,xu);
-        isValid = !filter.IsValid();
+        if (std::memcmp(pInfo->ExtensionCode,xucode.data(),16)==0)
+        {
+            isValid = true;
+            break;
+        }
     }
-    else
-        isValid = true;
-}
-
-StandardUVCFilter::~StandardUVCFilter()
-{
 }

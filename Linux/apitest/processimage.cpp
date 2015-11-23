@@ -1,3 +1,4 @@
+
 #include <QtGui>
 #include <QMessageBox>
 #include <QHBoxLayout>
@@ -7,12 +8,17 @@
 #include <memory>
 #include <sys/time.h>
 
-#include "processimage.h"
-#include "Camaro.h"
-#include "DeviceFactory.h"
-#include "CameraFactory.h"
-#include "GenericVCDevice.h"
+#include "DeepCamAPI.h"
+#include "IVideoStream.h"
+//#include "IVideoFrame.h"
+//#include "ICameraControl.h"
+//#include "ILowlevelControl.h"
+//#include "IDeviceControl.h"
+//#include "IMultiVideoStream.h"
+//#include "VideoFormat.h"
 #include <iostream>
+
+#include "processimage.h"
 
 #define RESYNC_NUM 900
 
@@ -123,18 +129,18 @@ void ProcessImage::Init()
     timer = new QTimer(this);
 }
 
-void OnFrameCB(std::vector<TopGear::IVideoFrameRef> &frames)
-{
-    if (frames.size() == 0)
-        return;
-    auto frame = frames[0];
-    uint8_t *pData;		//Frame data
-    uint32_t stride;	//Actual stride of frame
-    frame->LockBuffer(&pData, &stride);		//Lock memory
-    std::cerr << static_cast<int>(frame->GetTimestamp().tv_usec) << std::endl;
-    //Do something...
-    frame->UnlockBuffer();	//Unlock memory
-}
+//void OnFrameCB(std::vector<TopGear::IVideoFrameRef> &frames)
+//{
+//    if (frames.size() == 0)
+//        return;
+//    auto frame = frames[0];
+//    uint8_t *pData;		//Frame data
+//    uint32_t stride;	//Actual stride of frame
+//    frame->LockBuffer(&pData, &stride);		//Lock memory
+//    std::cerr << static_cast<int>(frame->GetTimestamp().tv_usec) << std::endl;
+//    //Do something...
+//    frame->UnlockBuffer();	//Unlock memory
+//}
 
 //////////////////////////////////////
 ///
@@ -152,42 +158,42 @@ ProcessImage::ProcessImage(QWidget *parent)
 
     //Open
 
-    qRegisterMetaType<TopGear::IVideoFrameRef>("TopGear::IVideoFrameRef");
-    connect(this, SIGNAL(onvideoframe(TopGear::IVideoFrameRef)),
-            this, SLOT(showvideoframe(TopGear::IVideoFrameRef)),
+    qRegisterMetaType<TopGear::IVideoFramePtr>("TopGear::IVideoFramePtr");
+    connect(this, SIGNAL(onvideoframe(TopGear::IVideoFramePtr)),
+            this, SLOT(showvideoframe(TopGear::IVideoFramePtr)),
             Qt::QueuedConnection );
     connect(this, SIGNAL(ondevexception(int)),
             this, SLOT(handledevexception(int)),
             Qt::QueuedConnection );
 
-    auto uvcDevices = TopGear::Linux::DeviceFactory<TopGear::Linux::DiscernibleVCDevice>::EnumerateDevices();
-    for (auto dev : uvcDevices)
-    {
-        std::cerr << dev->GetFriendlyName() << std::endl;
-        std::cerr << dev->GetSymbolicLink() << std::endl;
-        camera = TopGear::Linux::CameraFactory<TopGear::Camaro>::CreateInstance(dev);
-        ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camera);
-        cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camera);
-        if (camera && ioControl && cameraControl)
-        {
-            std::cerr << ioControl->QueryDeviceInfo() << std::endl;
-            //Register callback function for frame arrival
-            TopGear::IVideoStream::RegisterFrameCallback(*camera,
-                                                         &ProcessImage::onGetVideoFrames,this);
-            //Is master camaro
-            if (ioControl->QueryDeviceRole() == 0)
-            {
-                TopGear::VideoFormat format;
-                //Get optimized video format
-                auto index = camera->GetOptimizedFormatIndex(format);
-                //Start streaming with selected format index
-                camera->StartStream(index);
-                break;
-            }
-            else
-                camera.reset();
-        }
-    }
+//    auto uvcDevices = TopGear::Linux::DeviceFactory<TopGear::Linux::DiscernibleVCDevice>::EnumerateDevices();
+//    for (auto dev : uvcDevices)
+//    {
+//        std::cerr << dev->GetFriendlyName() << std::endl;
+//        std::cerr << dev->GetSymbolicLink() << std::endl;
+//        camera = TopGear::Linux::CameraFactory<TopGear::Camaro>::CreateInstance(dev);
+//        ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camera);
+//        cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camera);
+//        if (camera && ioControl && cameraControl)
+//        {
+//            std::cerr << ioControl->QueryDeviceInfo() << std::endl;
+//            //Register callback function for frame arrival
+//            TopGear::IVideoStream::RegisterFrameCallback(*camera,
+//                                                         &ProcessImage::onGetVideoFrames,this);
+//            //Is master camaro
+//            if (ioControl->QueryDeviceRole() == 0)
+//            {
+//                TopGear::VideoFormat format;
+//                //Get optimized video format
+//                auto index = camera->GetOptimizedFormatIndex(format);
+//                //Start streaming with selected format index
+//                camera->StartStream(index);
+//                break;
+//            }
+//            else
+//                camera.reset();
+//        }
+//    }
 
 //    auto devices = TopGear::Linux::DeviceFactory<TopGear::Linux::StandardVCDevice>::EnumerateDevices();
 //    for (auto item : devices)
@@ -205,11 +211,26 @@ ProcessImage::ProcessImage(QWidget *parent)
 //            TopGear::VideoFormat format;
 //            //Get optimized video format
 //            auto index = camera->GetOptimizedFormatIndex(format);
-//            camera->StartStream(index);
+//            auto formats = camera->GetAllFormats();
+//            camera->StartStream(21);
 //            break;
 //        }
 //    }
 
+    auto deepcam = TopGear::DeepCamAPI::Instance();
+    camera = deepcam.CreateCamera(TopGear::Camera::StandardUVC);
+    if (camera)
+    {
+        TopGear::IVideoStream::RegisterFrameCallback(*camera,
+               &ProcessImage::onGetVideoFrames,this);
+        //labeldevinfo->setText(QString("devinfo:%1").arg(item->GetDeviceInfo().c_str()));
+        TopGear::VideoFormat format;
+        //Get optimized video format
+        auto index = camera->GetOptimizedFormatIndex(format);
+        auto formats = camera->GetAllFormats();
+        camera->SetCurrentFormat(21);
+        camera->StartStream();
+    }
 
 
     connect(timer,SIGNAL(timeout()),this,SLOT(ontimer()));
@@ -235,7 +256,7 @@ void ProcessImage::onDeviceException(int err)
     emit ondevexception(err);
 }
 
-void ProcessImage::onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFrameRef> &frames)//this is called in sub-thread
+void ProcessImage::onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFramePtr> &frames)//this is called in sub-thread
 {
     if (frames.size()==0)
         return;
@@ -253,7 +274,7 @@ void ProcessImage::handledevexception(int)
     msgBox.exec();
 }
 
-void ProcessImage::showvideoframe(TopGear::IVideoFrameRef vf)
+void ProcessImage::showvideoframe(TopGear::IVideoFramePtr vf)
 {
     static int lastIdx = -1;
     //TopGear::IVideoFrameRef vf = *reinterpret_cast<TopGear::IVideoFrameRef *>(p);
@@ -295,7 +316,9 @@ void ProcessImage::showvideoframe(TopGear::IVideoFrameRef vf)
     h = format.Height;
     w = format.Width;
     //vf->QueryActualSize(w,h);
-    std::unique_ptr<uchar[]> prgb(new uchar[w*h*3]);
+    //std::unique_ptr<uchar[]> prgb(new uchar[w*h*3]);
+    if (prgb==nullptr)
+        prgb.reset(new uchar[w*h*3]);
     unsigned char *pdata;
     uint32_t stride;
     vf->LockBuffer(&pdata,&stride);

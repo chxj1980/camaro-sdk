@@ -8,7 +8,7 @@ namespace TopGear
 		: public IVideoStream
 	{
 	public:
-		VideoSourceProxy(std::shared_ptr<IMultiVideoSource> &reader, uint32_t index);
+        VideoSourceProxy(std::shared_ptr<IMultiVideoSource> reader, uint32_t index);
 		virtual ~VideoSourceProxy() {}
 
 		virtual bool StartStream() override;

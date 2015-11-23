@@ -3,10 +3,10 @@
 #include <chrono>
 #include "IGenericVCDevice.h"
 #include "IDeviceFactory.h"
-#include "ILSource.h"
+#include "LSource.h"
 #include "GenericVCDevice.h"
-#include "StandardUVCFilter.h"
-#include "GeneralExtensionFilter.h"
+#include "ExtensionVCDevice.h"
+#include "StandardVCDevice.h"
 #include "v4l2helper.h"
 
 namespace TopGear
@@ -17,7 +17,7 @@ namespace TopGear
         class DeviceFactory : public IDeviceFactory<T>
         {
         public:
-            static std::vector<IGenericVCDeviceRef> EnumerateDevices();
+            static std::vector<IGenericVCDevicePtr> EnumerateDevices();
         private:
             static const std::chrono::milliseconds InitialTime;
             DeviceFactory() = default;
@@ -25,48 +25,53 @@ namespace TopGear
             ~DeviceFactory() = default;
         };
 
-        template<class T>
-        const std::chrono::milliseconds DeviceFactory<T>::InitialTime = std::chrono::milliseconds(100);
-
-        template <class T>
-        std::vector<IGenericVCDeviceRef> DeviceFactory<T>::EnumerateDevices()
+        template <>
+        std::vector<IGenericVCDevicePtr> DeviceFactory<GenericVCDevice>::EnumerateDevices()
         {
-            std::vector<IGenericVCDeviceRef> genericDevices;
+            std::vector<IGenericVCDevicePtr> genericDevices;
             try
             {
                 std::vector<SourcePair> inventory;
                 v4l2Helper::EnumVideoDeviceSources(inventory,InitialTime);
-                for (auto source : inventory)
+                for (auto &sp : inventory)
                 {
-                    IGenericVCDeviceRef pDevice(new GenericVCDevice(source.first, source.second));
-                    genericDevices.push_back(pDevice);
+                    std::shared_ptr<ISource> source = std::make_shared<LSource>(sp);
+                    genericDevices.emplace_back(std::make_shared<GenericVCDevice>(source));
                 }
             }
             catch (const std::exception&)
             {
 
             }
-            if (std::is_same<T,GenericVCDevice>::value)
-                return genericDevices;
+            return genericDevices;
+        }
 
-            std::vector<IGenericVCDeviceRef> result;
+        template<typename T>
+        struct IsExtensionVCDevice
+        {
+            typedef T value_type;
+            static constexpr bool value = false;
+        };
+
+        template<template<typename> class X, typename T>
+        struct IsExtensionVCDevice<X<T>>   //specialization
+        {
+            typedef T value_type;
+            static constexpr bool value = std::is_same<X<T>, ExtensionVCDevice<T>>::value;
+        };
+
+        template <class T>
+        std::vector<IGenericVCDevicePtr> DeviceFactory<T>::EnumerateDevices()
+        {
+            if (!IsExtensionVCDevice<T>::value && !std::is_same<StandardVCDevice,T>::value)
+                return{};
+            std::vector<IGenericVCDevicePtr> result;
+            auto genericDevices = DeviceFactory<GenericVCDevice>::EnumerateDevices();
             for (auto device : genericDevices)
             {
-                auto gDevice = std::dynamic_pointer_cast<ILSource>(device);
-                if (gDevice == nullptr)
-                    continue;
-                if (std::is_same<T,StandardVCDevice>::value)
-                {
-                    std::shared_ptr<IValidation> validator = std::make_shared<StandardUVCFilter>(gDevice->GetSource());
-                    if (validator->IsValid())
-                        result.push_back(device);
-                }
-                else if (std::is_same<T,DiscernibleVCDevice>::value)
-                {
-                    std::shared_ptr<ILExtensionLite> validator = std::make_shared<GeneralExtensionFilter>(gDevice->GetSource());
-                    if (validator->IsValid())
-                        result.push_back(std::make_shared<DiscernibleVCDevice>(device, validator));
-                }
+                auto exdev = std::make_shared<T>(device);
+                if (exdev->GetValidator()->IsValid())
+                    result.emplace_back(exdev);
             }
             return result;
         }

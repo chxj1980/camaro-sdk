@@ -1,4 +1,5 @@
 #include "GenericVCDevice.h"
+#include "LSource.h"
 
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -12,23 +13,28 @@ using namespace Linux;
 
 std::string GenericVCDevice::GetFriendlyName()
 {
-    if (name.empty())
-    {
-        v4l2_capability cap;
-        auto hr = ioctl(handle,VIDIOC_QUERYCAP,&cap);
-        if (hr==0)
-            name = std::string(reinterpret_cast<char *>(cap.card));
-    }
     return name;
 }
 
-GenericVCDevice::GenericVCDevice(std::string dev, int fd)
-    : symbol(dev), handle(fd)
+std::string GenericVCDevice::GetSymbolicLink()
 {
+    return symbolicLink;
+}
+
+GenericVCDevice::GenericVCDevice(std::shared_ptr<ISource> &vsource)
+    : source(vsource)
+{
+    auto ls = std::dynamic_pointer_cast<LSource>(source);
+    if (ls)
+    {
+        name = std::string(reinterpret_cast<const char *>(ls->GetCapability().card));
+        symbolicLink = ls->GetName();
+    }
 }
 
 GenericVCDevice::~GenericVCDevice()
 {
-    if (handle>-1)
-        ::close(handle);
+    auto ls = std::dynamic_pointer_cast<LSource>(source);
+    if (ls)
+        ::close(ls->GetHandle());
 }

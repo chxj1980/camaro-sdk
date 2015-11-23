@@ -5,7 +5,6 @@
 #include <sstream>
 #include <iostream>
 #include <functional>
-#include "VideoBufferLock.h"
 #include <thread>
 
 #include <sys/ioctl.h>
@@ -16,19 +15,48 @@
 #include <linux/uvcvideo.h>
 #include <linux/usb/video.h>
 
+#include "VideoBufferLock.h"
+#include "VideoSourceProxy.h"
+#include "v4l2helper.h"
+
 using namespace TopGear;
 using namespace Linux;
 
+
+std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &device)
+{
+    auto source = std::dynamic_pointer_cast<LSource>(device->GetSource());
+    if (source == nullptr)
+        return{};
+    std::shared_ptr<VideoSourceReader> pPlayer(new VideoSourceReader(device));
+    pPlayer->EnumerateStreams(*source);
+    std::vector<std::shared_ptr<IVideoStream>> list;
+    for (auto &s : pPlayer->streams)
+        list.emplace_back(std::make_shared<VideoSourceProxy>(
+            std::static_pointer_cast<IMultiVideoSource>(pPlayer), s.first));
+    return list;
+}
+
+std::shared_ptr<IVideoStream> VideoSourceReader::CreateVideoStream(std::shared_ptr<IGenericVCDevice> &device)
+{
+    auto source = std::dynamic_pointer_cast<LSource>(device->GetSource());
+    if (source == nullptr)
+        return{};
+    auto handle = source->GetHandle();
+    std::shared_ptr<VideoSourceReader> pPlayer(new VideoSourceReader(device));
+    pPlayer->streams[handle] = StreamState {};
+    pPlayer->EnumerateFormats(handle);
+    return std::make_shared<VideoSourceProxy>(
+                std::static_pointer_cast<IMultiVideoSource>(pPlayer), uint32_t(handle));
+}
 
 //-------------------------------------------------------------------
 //  constructor
 //-------------------------------------------------------------------
 
-VideoSourceReader::VideoSourceReader(std::shared_ptr<ILSource> &source) :
-    handleSource(source)
+VideoSourceReader::VideoSourceReader(std::shared_ptr<IGenericVCDevice> &device)
+    : deviceBackup(device)
 {
-    handle = handleSource->GetSource();
-    EnumerateFormats();
 }
 
 //-------------------------------------------------------------------
@@ -37,11 +65,40 @@ VideoSourceReader::VideoSourceReader(std::shared_ptr<ILSource> &source) :
 
 VideoSourceReader::~VideoSourceReader()
 {
-    StopStream();
+    for(auto &item: streams)
+    {
+        StopStream(item.first);
+    }
 }
 
-void VideoSourceReader::Initmmap()
+void VideoSourceReader::EnumerateStreams(const LSource &one)
 {
+    std::vector<SourcePair> sources;
+    v4l2_capability cap;
+
+    auto businfo = one.GetCapability().bus_info;
+
+    v4l2Helper::EnumVideoDeviceSources(sources);
+    for(auto &i: sources)
+    {
+        ioctl(i.second,VIDIOC_QUERYCAP,&cap);
+        if (std::memcmp(cap.bus_info, businfo, 32)==0)
+        {
+            streams[i.second] = StreamState {};
+            EnumerateFormats(i.second);
+        }
+    }
+}
+
+
+void VideoSourceReader::Initmmap(uint32_t handle)
+{
+    auto it = streams.find(handle);
+    if (it ==streams.end())
+        return;
+
+    auto vbuffers = (it->second).vbuffers;
+
     //request buffer
     v4l2_requestbuffers req;
     std::memset(&req,0,sizeof(req));
@@ -90,16 +147,21 @@ void VideoSourceReader::Initmmap()
     }//for
 }
 
-void VideoSourceReader::Uninitmmap()
+void VideoSourceReader::Uninitmmap(uint32_t handle)
 {
+    auto it = streams.find(handle);
+    if (it == streams.end())
+        return;
     for(int i = 0; i < FRAMEQUEUE_SIZE; ++i)
     {
-        munmap(vbuffers[i].first, vbuffers[i].second);
+        munmap((it->second).vbuffers[i].first, (it->second).vbuffers[i].second);
     }
 }
 
-std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int &index) //DQBUF
+std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &index) //DQBUF
 {
+    auto vbuffers = streams[handle].vbuffers;
+
     v4l2_buffer queue_buf;
     std::memset(&queue_buf,0,sizeof(queue_buf));
     queue_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -113,16 +175,18 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int &index) //DQBUF
     }
     index = queue_buf.index;
     std::shared_ptr<IVideoFrame> frame(new VideoBufferLock(
-                                                handle,
-                                                queue_buf.index,
-                                                vbuffers[queue_buf.index].first,
-                                                queue_buf.timestamp,
-                                                defaultStride, frameWidth, frameHeight));
+                                       handle,
+                                       queue_buf.index,
+                                       vbuffers[queue_buf.index].first,
+                                       queue_buf.timestamp,
+                                       streams[handle].defaultStride,
+                                       streams[handle].frameWidth,
+                                       streams[handle].frameHeight));
 
     return frame;
 }
 
-bool VideoSourceReader::ReleaseFrame(int index)
+bool VideoSourceReader::ReleaseFrame(int handle, int index)
 {
     v4l2_buffer queue_buf;
     std::memset(&queue_buf,0,sizeof(queue_buf));
@@ -133,11 +197,15 @@ bool VideoSourceReader::ReleaseFrame(int index)
     return ioctl(handle, VIDIOC_QBUF, &queue_buf)==0;
 }
 
-void VideoSourceReader::EnumerateFormats()
+void VideoSourceReader::EnumerateFormats(uint32_t handle)
 {
+    auto it = streams.find(handle);
+    if (it ==streams.end())
+        return;
+
+    auto &videoFormats = (it->second).formats;
+
     videoFormats.clear();
-    if (handle < 0)
-		return;
 
     v4l2_fmtdesc fmt;
     std::memset(&fmt,0,sizeof(fmt));
@@ -189,64 +257,16 @@ void VideoSourceReader::EnumerateFormats()
     }
 }
 
-int VideoSourceReader::GetMatchedFormatIndex(const VideoFormat& format) const
+bool VideoSourceReader::SetCurrentFormat(uint32_t handle, int formatIndex)
 {
-    if (handle<0)
-		return -1;
-	auto index = -1;
-	for (auto i : videoFormats)
-	{
-		index++;
-		if (format.Width > 0 && format.Width != i.Width)
-			continue;
-		if (format.Height> 0 && format.Height != i.Height)
-			continue;
-		if (format.MaxRate > 0 && format.MaxRate != i.MaxRate)
-			continue;
-        if (std::strcmp(format.PixelFormat, "")!=0 && std::strncmp(format.PixelFormat, i.PixelFormat, 4)!=0)
-			continue;
-		return index;
-	}
-	return -1;
-}
+    auto &videoFormats = streams[handle].formats;
 
-
-int VideoSourceReader::GetOptimizedFormatIndex(VideoFormat& format, const char *fourcc)
-{
-    if (handle<0)
-		return -1;
-
-    //auto wCurrent = 0
-    auto hCurrent = 0, rCurrent = 0;
-	auto index = -1;
-	auto i = -1;
-	for(auto f : videoFormats)
-	{
-		++i;
-		if (strcmp(fourcc, "") != 0 && strncmp(fourcc, f.PixelFormat, 4) != 0)
-			continue;
-		if (f.Height >= hCurrent && f.MaxRate >= rCurrent)
-		{
-            //wCurrent = f.Width;
-			hCurrent = f.Height;
-			rCurrent = f.MaxRate;
-			index = i;
-		}
-	}
-	if (index >= 0)
-		format = videoFormats[index];
-	return index;
-}
-
-bool VideoSourceReader::StartStream(int formatIndex)
-{
-	StopStream();
     if (formatIndex<0 || formatIndex>=(int)videoFormats.size())
         return false;
-    currentFormatIndex = formatIndex;
+    //currentFormatIndex = formatIndex;
     VideoFormat& format = videoFormats[formatIndex];
-    frameHeight = format.Height;
-    frameWidth = format.Width;
+    streams[handle].frameHeight = format.Height;
+    streams[handle].frameWidth = format.Width;
 
     //Set frame format
     v4l2_format fmt;
@@ -266,52 +286,68 @@ bool VideoSourceReader::StartStream(int formatIndex)
     param.parm.capture.timeperframe.numerator = 1;
     ioctl(handle, VIDIOC_S_PARM, &param);
 
-    Initmmap();
-    defaultStride = vbuffers[0].second / frameHeight;
-    isRunning = true;
-    streamThread = std::thread(&VideoSourceReader::OnReadWorker,this);
-    streamOn = streamThread.joinable();
+    return true;
+}
+
+const std::vector<VideoFormat> &VideoSourceReader::GetAllFormats(uint32_t handle)
+{
+    return streams[handle].formats;
+}
+
+bool VideoSourceReader::StartStream(uint32_t handle)
+{
+    if (streams.find(handle) == streams.end())
+        return false;
+    StopStream(handle);
+    Initmmap(handle);
+
+    streams[handle].defaultStride = streams[handle].vbuffers[0].second / streams[handle].frameHeight;
+    streams[handle].isRunning = true;
+    streams[handle].streamThread = std::thread(&VideoSourceReader::OnReadWorker, this, handle);
+    streams[handle].streamOn = streams[handle].streamThread.joinable();
     v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     ioctl(handle, VIDIOC_STREAMON, &type);
     return true;
 }
 
-bool VideoSourceReader::StopStream()
+bool VideoSourceReader::StopStream(uint32_t handle)
 {
-    if (!isRunning)
+    if (streams.find(handle) == streams.end())
         return false;
-    if (streamThread.joinable())
+    if (!streams[handle].isRunning)
+        return false;
+    if (streams[handle].streamThread.joinable())
     {
-        isRunning = false;
-        streamThread.join();
-        streamOn = false;
+        streams[handle].isRunning = false;
+        streams[handle].streamThread.join();
+        streams[handle].streamOn = false;
     }
     v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     ioctl(handle, VIDIOC_STREAMOFF, &type);
-    Uninitmmap();
+    Uninitmmap(handle);
     return true;
 }
 
-void VideoSourceReader::OnReadWorker()
+bool VideoSourceReader::IsStreaming(uint32_t handle)
+{
+    if (streams.find(handle) == streams.end())
+        return false;
+    return streams[handle].streamOn;
+}
+
+
+void VideoSourceReader::OnReadWorker(uint32_t handle)
 {
     int index;
-    while (isRunning)
+    while (streams[handle].isRunning)
     {
-        auto frame = RequestFrame(index);
-        if (frame)
+        auto frame = RequestFrame(handle, index);
+        if (frame && streams[handle].fncb)
         {
-            if (fnCb || pCbobj)
-            {
-                std::vector<std::shared_ptr<IVideoFrame>> frames;
-                frames.push_back(frame);
-                //Invoke callback handler
-                if (fnCb)
-                    fnCb(*this, frames);
-                if (pCbobj)
-                    pCbobj->OnFrame(*this, frames);
-                ReleaseFrame(index); //Release immediately if no callback
-                //std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            }
+            //Invoke callback handler
+            streams[handle].fncb(frame);
+            ReleaseFrame(handle, index); //Release immediately if no callback
+            //std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
         else
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -319,20 +355,12 @@ void VideoSourceReader::OnReadWorker()
 }
 
 
-//-------------------------------------------------------------------
-// TryMediaType
-//
-// Test a proposed video format.
-//-------------------------------------------------------------------
-
-void VideoSourceReader::RegisterFrameCallback(IVideoFrameCallback* pCB)
+void VideoSourceReader::RegisterReaderCallback(uint32_t handle, const ReaderCallbackFn& fn)
 {
-	pCbobj = pCB;
-}
-
-void VideoSourceReader::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
-{
-	fnCb = fn;
+    auto it = streams.find(handle);
+    if (it ==streams.end())
+        return;
+    (it->second).fncb = fn;
 }
 
 //bool VideoSourceReader::IsFormatSupported(const GUID &subtype) const

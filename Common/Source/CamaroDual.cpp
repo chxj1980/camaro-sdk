@@ -243,6 +243,7 @@ void CamaroDual::FrameWatcher()
 
 void CamaroDual::OnMasterFrame(IVideoStream &master, std::vector<IVideoFramePtr>& frames)
 {
+    (void)master;
 	if (frames.size() != 1)
 		return;
 	if (threadOn)
@@ -251,6 +252,7 @@ void CamaroDual::OnMasterFrame(IVideoStream &master, std::vector<IVideoFramePtr>
 
 void CamaroDual::OnSlaveFrame(IVideoStream &slave, std::vector<IVideoFramePtr>& frames)
 {
+    (void)slave;
 	if (frames.size() != 1)
 		return;
 	if (threadOn)

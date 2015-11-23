@@ -1,10 +1,11 @@
 #include "VideoSourceProxy.h"
 #include <thread>
 #include <chrono>
+#include <cstring>
 
 using namespace TopGear;
 
-VideoSourceProxy::VideoSourceProxy(std::shared_ptr<IMultiVideoSource>& reader, uint32_t index)
+VideoSourceProxy::VideoSourceProxy(std::shared_ptr<IMultiVideoSource> reader, uint32_t index)
 	: client(reader), streamIndex(index), formats(reader->GetAllFormats(index))
 {
 	client->RegisterReaderCallback(streamIndex, std::bind(&VideoSourceProxy::OnFrame, this, std::placeholders::_1));
@@ -68,7 +69,7 @@ int VideoSourceProxy::GetMatchedFormatIndex(const VideoFormat& format) const
 			continue;
 		if (format.MaxRate > 0 && format.MaxRate != i.MaxRate)
 			continue;
-		if (strcmp(format.PixelFormat, "") != 0 && strncmp(format.PixelFormat, i.PixelFormat, 4) != 0)
+        if (std::strcmp(format.PixelFormat, "") != 0 && std::strncmp(format.PixelFormat, i.PixelFormat, 4) != 0)
 			continue;
 		return index;
 	}
@@ -92,7 +93,7 @@ int VideoSourceProxy::GetOptimizedFormatIndex(VideoFormat& format, const char *f
 	for (auto f : formats)
 	{
 		++i;
-		if (strcmp(fourcc, "") != 0 && strncmp(fourcc, f.PixelFormat, 4) != 0)
+        if (std::strcmp(fourcc, "") != 0 && std::strncmp(fourcc, f.PixelFormat, 4) != 0)
 			continue;
 		if (f.Height >= hCurrent && f.MaxRate >= rCurrent)
 		{

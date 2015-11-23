@@ -10,10 +10,10 @@
 using namespace TopGear;
 using namespace Linux;
 
-ExtensionAccess::ExtensionAccess(int dev, std::shared_ptr<ILExtensionLite> &validator)
+ExtensionAccess::ExtensionAccess(int dev, std::shared_ptr<ExtensionFilterBase> &validator)
     : handle(dev), extensionAgent(validator)
 {
-    unitId = extensionAgent->GetExtensionUnit();
+    unitId = extensionAgent->GetExtensionInfo()->UnitId;
 }
 
 std::unique_ptr<uint8_t[]> ExtensionAccess::GetProperty(int index, int& len)

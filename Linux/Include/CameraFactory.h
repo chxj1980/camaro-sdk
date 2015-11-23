@@ -1,15 +1,18 @@
 #pragma once
-#include "ICameraFactory.h"
-#include "IVideoStream.h"
-#include "GenericVCDevice.h"
-#include "ILSource.h"
-#include "VideoSourceReader.h"
-#include "StandardUVC.h"
-#include "Camaro.h"
-#include "CamaroDual.h"
-#include "ExtensionAccess.h"
+
 #include <memory>
 #include <type_traits>
+
+#include "ICameraFactory.h"
+#include "IVideoStream.h"
+#include "StandardUVC.h"
+#include "Camaro.h"
+#include "ExtensionAccess.h"
+#include "VideoSourceReader.h"
+#include "CamaroDual.h"
+#include "ExtensionVCDevice.h"
+#include "IDiscernible.h"
+#include "ExtensionFilterBase.h"
 
 namespace TopGear
 {
@@ -27,49 +30,74 @@ namespace TopGear
 			~CameraFactory() = default;
 		};
 
-
-        std::shared_ptr<IVideoStream> CreateCamaroDual(std::vector<IGenericVCDeviceRef> &list);
-
-        template <class T>
-        template <class U>
-        std::shared_ptr<IVideoStream> CameraFactory<T>::CreateInstance(U &u)
+        template <>
+        template <>
+        inline std::shared_ptr<IVideoStream> CameraFactory<StandardUVC>::
+            CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
         {
-            static_assert(std::is_same<IGenericVCDeviceRef, U>::value |
-                          std::is_same<std::vector<IGenericVCDeviceRef>, U>::value,
-                          "Class U must be IGenericVCDeviceRef or std::vector<IGenericVCDeviceRef>");
-
-            if (std::is_same<T,CamaroDual>::value &&
-                std::is_same<std::vector<IGenericVCDeviceRef>, U>::value)
-            {
-                auto list = *reinterpret_cast<std::vector<IGenericVCDeviceRef> *>(&u);
-                return CreateCamaroDual(list);
-            }
+            auto reader = VideoSourceReader::CreateVideoStream(device);
+            if (reader == nullptr)
+                return{};
+            return std::make_shared<StandardUVC>(reader);
+        }
 
 
-            IGenericVCDeviceRef device;
-            std::shared_ptr<ILSource> source;
-            std::shared_ptr<IVideoStream> vs;
-            if (std::is_same<IGenericVCDeviceRef, U>::value)
+        template <>
+        template <>
+        inline std::shared_ptr<IVideoStream> CameraFactory<Camaro>::
+        CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
+        {
+            auto exDevice = std::dynamic_pointer_cast<IDiscernible<IExtensionLite>>(device);
+            if (exDevice == nullptr)
+                return{};
+
+            auto reader = VideoSourceReader::CreateVideoStream(device);
+            if (reader == nullptr)
+                return{};
+
+            auto validator = std::dynamic_pointer_cast<ExtensionFilterBase>(exDevice->GetValidator());
+            if (validator == nullptr)
+                return{};
+            auto lsource = std::dynamic_pointer_cast<LSource>(device->GetSource());
+            if (lsource == nullptr)
+                return{};
+            auto ex = std::static_pointer_cast<IExtensionAccess>(
+                        std::make_shared<ExtensionAccess>(lsource->GetHandle(), validator));
+
+            return std::make_shared<Camaro>(reader, ex);
+        }
+
+
+        template <>
+        template <>
+        inline std::shared_ptr<IVideoStream> CameraFactory<CamaroDual>::
+        CreateInstance<std::vector<IGenericVCDevicePtr>>(std::vector<IGenericVCDevicePtr> &devices)
+        {
+            std::shared_ptr<IVideoStream> master;
+            std::shared_ptr<IVideoStream> slave;
+            for (auto item : devices)
             {
-                device = *reinterpret_cast<IGenericVCDeviceRef *>(&u);
-                source = std::dynamic_pointer_cast<ILSource>(device);
-                if (source == nullptr)
-                    return {};
-                vs = std::make_shared<VideoSourceReader>(source);
+                auto camera = std::dynamic_pointer_cast<Camaro>(CameraFactory<Camaro>::CreateInstance(item));
+                if (camera->QueryDeviceRole() == 0 && master == nullptr)
+                {
+                    master = std::static_pointer_cast<IVideoStream>(camera);
+                }
+                if (camera->QueryDeviceRole() == 1 && slave == nullptr)
+                {
+                    slave = std::static_pointer_cast<IVideoStream>(camera);
+                }
+                if (master != nullptr && slave != nullptr)
+                    return std::make_shared<CamaroDual>(master, slave);
             }
-            if (std::is_same<T,StandardUVC>::value && vs)
-                return std::make_shared<StandardUVC>(vs);
-            else if (std::is_same<T,Camaro>::value && device)
-            {
-                auto tgDevice = std::dynamic_pointer_cast<ITopGearGeneralDevice>(device);
-                if (tgDevice == nullptr)
-                    return {};
-                auto validator = tgDevice->GetValidator();
-                std::shared_ptr<IExtensionAccess> ex(
-                            new ExtensionAccess(source->GetSource(),validator));
-                return std::make_shared<Camaro>(vs, ex);
-            }
-            return {};
+            return{};
+        }
+
+        template<class T>
+        template<class U>
+        inline std::shared_ptr<IVideoStream> CameraFactory<T>::CreateInstance(U& device)
+        {
+            throw std::exception("Unimplementation");
+            //return{};
         }
 	}
 }
