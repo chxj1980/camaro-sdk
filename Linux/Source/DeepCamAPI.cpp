@@ -94,35 +94,32 @@ DeepCamAPI::~DeepCamAPI()
 {
 }
 
-template<class T>
-DEEPCAM_API std::shared_ptr<T> DeepCamAPI::QueryInterface(std::shared_ptr<IVideoStream> &vs) const
+namespace TopGear
 {
-    return std::dynamic_pointer_cast<T>(vs);
+    template<>
+    DEEPCAM_API std::shared_ptr<TopGear::ICameraControl> DeepCamAPI::QueryInterface<TopGear::ICameraControl>(std::shared_ptr<IVideoStream> &vs) const
+    {
+        return std::dynamic_pointer_cast<TopGear::ICameraControl>(vs);
+    }
+
+    template<>
+    DEEPCAM_API std::shared_ptr<IDeviceControl> DeepCamAPI::QueryInterface<IDeviceControl>(std::shared_ptr<IVideoStream> &vs) const
+    {
+        return std::dynamic_pointer_cast<IDeviceControl>(vs);
+    }
+
+    template<>
+    DEEPCAM_API std::shared_ptr<ILowlevelControl> DeepCamAPI::QueryInterface<ILowlevelControl>(std::shared_ptr<IVideoStream> &vs) const
+    {
+        return std::dynamic_pointer_cast<ILowlevelControl>(vs);
+    }
+
+    template<>
+    DEEPCAM_API std::shared_ptr<IMultiVideoStream> DeepCamAPI::QueryInterface<IMultiVideoStream>(std::shared_ptr<IVideoStream> &vs) const
+    {
+        return std::dynamic_pointer_cast<IMultiVideoStream>(vs);
+    }
 }
-
-//template<>
-//DEEPCAM_API std::shared_ptr<TopGear::ICameraControl> DeepCamAPI::QueryInterface<TopGear::ICameraControl>(std::shared_ptr<IVideoStream> &vs) const
-//{
-//    return std::dynamic_pointer_cast<TopGear::ICameraControl>(vs);
-//}
-
-//template<>
-//DEEPCAM_API std::shared_ptr<IDeviceControl> DeepCamAPI::QueryInterface<IDeviceControl>(std::shared_ptr<IVideoStream> &vs) const
-//{
-//    return std::dynamic_pointer_cast<IDeviceControl>(vs);
-//}
-
-//template<>
-//DEEPCAM_API std::shared_ptr<ILowlevelControl> DeepCamAPI::QueryInterface<ILowlevelControl>(std::shared_ptr<IVideoStream> &vs) const
-//{
-//    return std::dynamic_pointer_cast<ILowlevelControl>(vs);
-//}
-
-//template<>
-//DEEPCAM_API std::shared_ptr<IMultiVideoStream> DeepCamAPI::QueryInterface<IMultiVideoStream>(std::shared_ptr<IVideoStream> &vs) const
-//{
-//    return std::dynamic_pointer_cast<IMultiVideoStream>(vs);
-//}
 
 DEEPCAM_API std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera(Camera camera)
 {
