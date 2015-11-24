@@ -218,9 +218,12 @@ ProcessImage::ProcessImage(QWidget *parent)
 //    }
 
     auto deepcam = TopGear::DeepCamAPI::Instance();
-    camera = deepcam.CreateCamera(TopGear::Camera::StandardUVC);
+    camera = deepcam.CreateCamera(TopGear::Camera::Camaro);
     if (camera)
     {
+        cameraControl = deepcam.QueryInterface<TopGear::ICameraControl>(camera);
+        ioControl = deepcam.QueryInterface<TopGear::IDeviceControl>(camera);
+        lowlevel = deepcam.QueryInterface<TopGear::ILowlevelControl>(camera);
         TopGear::IVideoStream::RegisterFrameCallback(*camera,
                &ProcessImage::onGetVideoFrames,this);
         //labeldevinfo->setText(QString("devinfo:%1").arg(item->GetDeviceInfo().c_str()));
@@ -228,7 +231,7 @@ ProcessImage::ProcessImage(QWidget *parent)
         //Get optimized video format
         auto index = camera->GetOptimizedFormatIndex(format);
         auto formats = camera->GetAllFormats();
-        camera->SetCurrentFormat(21);
+        camera->SetCurrentFormat(index);
         camera->StartStream();
     }
 
@@ -353,21 +356,26 @@ void ProcessImage::onSetGPIOLow()
 
 void ProcessImage::onRegGet()
 {
-//    unsigned short regaddr,regval;
-//    bool ok;
-//    regaddr = regaddrEdit->text().toInt(&ok,16);
-//    vd->get_register(regaddr, &regval);
-//    regvalEdit->setText(QString::number(regval,16));
+    unsigned short regaddr,regval;
+    bool ok;
+    regaddr = regaddrEdit->text().toInt(&ok,16);
+    if (lowlevel)
+    {
+        lowlevel->GetRegister(regaddr, regval);
+        regvalEdit->setText(QString::number(regval,16));
+    }
 }
 
 void ProcessImage::onRegSet()
 {
-//    unsigned short regaddr,regval;
-//    bool ok;
-//    regaddr = regaddrEdit->text().toInt(&ok,16);
-//    regval = regvalEdit->text().toInt(&ok,16);
-//    vd->set_register(regaddr,regval);
+    unsigned short regaddr,regval;
+    bool ok;
+    regaddr = regaddrEdit->text().toInt(&ok,16);
+    regval = regvalEdit->text().toInt(&ok,16);
+    if (lowlevel)
+        lowlevel->SetRegister(regaddr, regval);
 }
+
 void ProcessImage::onGainGet()
 {
     if (cameraControl == nullptr)

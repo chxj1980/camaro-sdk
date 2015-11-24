@@ -57,7 +57,7 @@ void bayer_bilinear(unsigned short * raw_16, unsigned char *rgb,int x, int y)
 
 #else
 //AR 0134
-#define Bay(x,y)  ((unsigned short)(raw_16[(x) + PIX_WIDTH *(y)] >> 4) & 0x00FF)
+#define Bay(x,y)  ((unsigned short)(raw_16[(x) + PIX_WIDTH *(y)] & 0x0FFF))
 
 /*
 G  R  G R
@@ -69,37 +69,37 @@ B  G  B G
 // for grey
 void grey_copy(unsigned short * raw_16, unsigned char *grey, int x, int y)
 {
-    GREY(x,y) = Bay(x,y);
+    GREY(x,y) = (unsigned char)(Bay(x,y)>>4);
 }
 
 void bayer_copy(unsigned short * raw_16, unsigned char *rgb, int x, int y)
 {
 
-    G(x,y) = Bay(x,y) ;
-    G(x+1,y+1) = Bay(x+1,y+1);
-    G(x+1,y) = G(x,y+1) = (Bay(x,y) + Bay(x+1,y+1)) / 2;
+    G(x,y) = (unsigned char)(Bay(x,y)>>4);
+    G(x+1,y+1) = (unsigned char)(Bay(x+1,y+1)>>4);
+    G(x+1,y) = G(x,y+1) = (G(x,y) + G(x+1,y+1))>>1;
 
-    B(x,y)=B(x+1,y)=B(x,y+1)=B(x+1,y+1) = Bay(x,y+1);
-    R(x,y)=R(x+1,y)=R(x,y+1)=R(x+1,y+1) = Bay(x+1,y);
+    B(x,y)=B(x+1,y)=B(x,y+1)=B(x+1,y+1) = (unsigned char)(Bay(x,y+1)>>4);
+    R(x,y)=R(x+1,y)=R(x,y+1)=R(x+1,y+1) = (unsigned char)(Bay(x+1,y)>>4);
 }
 
 void bayer_bilinear(unsigned short * raw_16, unsigned char *rgb,int x, int y)
 {
-    B(x,y) = (Bay(x,y-1) + Bay(x, y+1)) / 2;
-    G(x,y) = Bay(x,y);
-    R(x,y) = (Bay(x-1,y) + Bay(x+1, y)) / 2;
+    B(x,y) = (Bay(x,y-1) + Bay(x, y+1)) >>5;
+    G(x,y) = Bay(x,y)>>4;
+    R(x,y) = (Bay(x-1,y) + Bay(x+1, y)) >>5;
 
-    B(x+1,y) = (Bay(x,y-1) + Bay(x+2, y+1) + Bay(x+2,y-1) + Bay(x,y+1)) / 4;
-    G(x+1,y) = (Bay(x,y) + Bay(x+2, y) + Bay(x,y) + Bay(x+2,y)) / 4;
-    R(x+1,y) = Bay(x+1,y);
+    B(x+1,y) = (Bay(x,y-1) + Bay(x+2, y+1) + Bay(x+2,y-1) + Bay(x,y+1)) >>6;
+    G(x+1,y) = (Bay(x,y) + Bay(x+2, y) + Bay(x+1,y-1) + Bay(x+1,y+1)) >>6;
+    R(x+1,y) = Bay(x+1,y)>>4;
 
-    B(x,y+1) = Bay(x,y+1);
-    G(x,y+1) = (Bay(x,y) + Bay(x+1, y+1) + Bay(x-1,y+1) + Bay(x,y+2)) / 4;
-    R(x,y+1) = (Bay(x-1,y) + Bay(x+1,y) + Bay(x-1,y+2) + Bay(x+1,y+2)) / 4;
+    B(x,y+1) = Bay(x,y+1)>>4;
+    G(x,y+1) = (Bay(x,y) + Bay(x+1, y+1) + Bay(x-1,y+1) + Bay(x,y+2)) >>6;
+    R(x,y+1) = (Bay(x-1,y) + Bay(x+1,y) + Bay(x-1,y+2) + Bay(x+1,y+2)) >>6;
 
-    B(x+1,y+1) = (Bay(x,y+1) + Bay(x+2,y+1)) / 2;
-    G(x+1,y+1) = Bay(x+1,y+1);
-    R(x+1,y+1) = (Bay(x+1,y) + Bay(x+1, y+2) ) / 2;
+    B(x+1,y+1) = (Bay(x,y+1) + Bay(x+2,y+1))>>5;
+    G(x+1,y+1) = Bay(x+1,y+1)>>4;
+    R(x+1,y+1) = (Bay(x+1,y) + Bay(x+1, y+2))>>5;
 }
 
 
@@ -107,136 +107,137 @@ void bayer_bilinear(unsigned short * raw_16, unsigned char *rgb,int x, int y)
 //
 void bayer_copy_G(unsigned short * raw_16, unsigned char *rgb, int x, int y)
 {
-    G(x,y) = Bay(x,y) ;
+    G(x,y) = (unsigned char)(Bay(x,y)>>4);
 }
 
 void bayer_copy_B(unsigned short * raw_16, unsigned char *rgb, int x, int y)
 {
-    B(x,y) = Bay(x,y) ;
+    B(x,y) = (unsigned char)(Bay(x,y)>>4);
 }
 
 void bayer_copy_R(unsigned short * raw_16, unsigned char *rgb, int x, int y)
 {
-    R(x,y) = Bay(x,y) ;
+    R(x,y) = (unsigned char)(Bay(x,y)>>4);
 }
 
 void bayer_inter_G_at_BR(unsigned short * raw_16, unsigned char *rgb,int x, int y)
 {
-    float Wn, We, Ws, Ww, Gn, Ge, Gs, Gw, temp;
+    float Wn, We, Ws, Ww, temp;
+    int Gn, Ge, Gs, Gw;
 
-    Wn = 1.0 / (1 + abs(Bay(x,y+1) - Bay(x,y-1)) + abs(Bay(x,y) - Bay(x,y-2)));
-    We = 1.0 / (1 + abs(Bay(x-1,y) - Bay(x+1,y)) + abs(Bay(x,y) - Bay(x+2,y)));
-    Ws = 1.0 / (1 + abs(Bay(x,y-1) - Bay(x,y+1)) + abs(Bay(x,y) - Bay(x,y+2)));
-    Ww = 1.0 / (1 + abs(Bay(x+1,y) - Bay(x-1,y)) + abs(Bay(x,y) - Bay(x-2,y)));
+    Wn = 1.0f / (1 + abs(Bay(x,y+1) - Bay(x,y-1)) + abs(Bay(x,y) - Bay(x,y-2)));
+    We = 1.0f / (1 + abs(Bay(x-1,y) - Bay(x+1,y)) + abs(Bay(x,y) - Bay(x+2,y)));
+    Ws = 1.0f / (1 + abs(Bay(x,y-1) - Bay(x,y+1)) + abs(Bay(x,y) - Bay(x,y+2)));
+    Ww = 1.0f / (1 + abs(Bay(x+1,y) - Bay(x-1,y)) + abs(Bay(x,y) - Bay(x-2,y)));
 
-    Gn = Bay(x,y-1) + 1.0 * (Bay(x,y) - Bay(x,y-2)) / 2;
-    Ge = Bay(x+1,y) + 1.0 * (Bay(x,y) - Bay(x+2,y)) / 2;
-    Gs = Bay(x,y+1) + 1.0 * (Bay(x,y) - Bay(x,y+2)) / 2;
-    Gw = Bay(x-1,y) + 1.0 * (Bay(x,y) - Bay(x-2,y)) / 2;
+    Gn = Bay(x,y-1) + (Bay(x,y) - Bay(x,y-2)) /2;
+    Ge = Bay(x+1,y) + (Bay(x,y) - Bay(x+2,y)) /2;
+    Gs = Bay(x,y+1) + (Bay(x,y) - Bay(x,y+2)) /2;
+    Gw = Bay(x-1,y) + (Bay(x,y) - Bay(x-2,y)) /2;
 
     temp = (Wn * Gn + We * Ge + Ws * Gs + Ww * Gw) / (Wn + We + Ws + Ww);
-    if (temp >= 254.5)
+    if (temp > 254.5f)
         G(x,y) = 255;
-    else if (temp <= 0.49)
+    else if (temp < 0.5f)
         G(x,y) = 0;
     else
-        G(x,y) = temp + 0.5;
+        G(x,y) = (unsigned char)(temp + 0.5f);
 }
 
 void bayer_inter_B_at_R(unsigned short * raw_16, unsigned char *rgb,int x, int y)
 {
     float Wne, Wse, Wsw, Wnw, Bne, Bse, Bsw, Bnw, temp;
 
-    Wne = 1.0 / (1 + abs(Bay(x-1,y+1) - Bay(x+1,y-1)) + abs(G(x,y) - G(x+1,y-1)));
-    Wse = 1.0 / (1 + abs(Bay(x-1,y-1) - Bay(x+1,y+1)) + abs(G(x,y) - G(x+1,y+1)));
-    Wsw = 1.0 / (1 + abs(Bay(x+1,y-1) - Bay(x-1,y+1)) + abs(G(x,y) - G(x-1,y+1)));
-    Wnw = 1.0 / (1 + abs(Bay(x+1,y+1) - Bay(x-1,y-1)) + abs(G(x,y) - G(x-1,y-1)));
+    Wne = 1.0f / (1 + abs(Bay(x-1,y+1) - Bay(x+1,y-1)) + abs(G(x,y) - G(x+1,y-1)));
+    Wse = 1.0f / (1 + abs(Bay(x-1,y-1) - Bay(x+1,y+1)) + abs(G(x,y) - G(x+1,y+1)));
+    Wsw = 1.0f / (1 + abs(Bay(x+1,y-1) - Bay(x-1,y+1)) + abs(G(x,y) - G(x-1,y+1)));
+    Wnw = 1.0f / (1 + abs(Bay(x+1,y+1) - Bay(x-1,y-1)) + abs(G(x,y) - G(x-1,y-1)));
 
-    Bne = Bay(x+1,y-1) + 1.0 * (G(x,y) - G(x+1,y-1)) / 2;
-    Bse = Bay(x+1,y+1) + 1.0 * (G(x,y) - G(x+1,y+1)) / 2;
-    Bsw = Bay(x-1,y+1) + 1.0 * (G(x,y) - G(x-1,y+1)) / 2;
-    Bnw = Bay(x-1,y-1) + 1.0 * (G(x,y) - G(x-1,y-1)) / 2;
+    Bne = Bay(x+1,y-1) + (G(x,y) - G(x+1,y-1)) *0.5f;
+    Bse = Bay(x+1,y+1) + (G(x,y) - G(x+1,y+1)) *0.5f;
+    Bsw = Bay(x-1,y+1) + (G(x,y) - G(x-1,y+1)) *0.5f;
+    Bnw = Bay(x-1,y-1) + (G(x,y) - G(x-1,y-1)) *0.5f;
 
     temp = (Wne * Bne + Wse * Bse + Wsw * Bsw + Wnw * Bnw) / (Wne + Wse + Wsw + Wnw);
 
-    if (temp >= 254.5)
+    if (temp > 254.5f)
         B(x,y) = 255;
-    else if (temp <= 0.49)
+    else if (temp < 0.5f)
         B(x,y) = 0;
     else
-        B(x,y) = temp + 0.5;
+        B(x,y) = (unsigned char)(temp + 0.5f);
 }
 
 void bayer_inter_R_at_B(unsigned short * raw_16, unsigned char *rgb,int x, int y)
 {
     float Wne, Wse, Wsw, Wnw, Rne, Rse, Rsw, Rnw, temp;
 
-    Wne = 1.0 / (1 + abs(Bay(x-1,y+1) - Bay(x+1,y-1)) + abs(G(x,y) - G(x+1,y-1)));
-    Wse = 1.0 / (1 + abs(Bay(x-1,y-1) - Bay(x+1,y+1)) + abs(G(x,y) - G(x+1,y+1)));
-    Wsw = 1.0 / (1 + abs(Bay(x+1,y-1) - Bay(x-1,y+1)) + abs(G(x,y) - G(x-1,y+1)));
-    Wnw = 1.0 / (1 + abs(Bay(x+1,y+1) - Bay(x-1,y-1)) + abs(G(x,y) - G(x-1,y-1)));
+    Wne = 1.0f / (1 + abs(Bay(x-1,y+1) - Bay(x+1,y-1)) + abs(G(x,y) - G(x+1,y-1)));
+    Wse = 1.0f / (1 + abs(Bay(x-1,y-1) - Bay(x+1,y+1)) + abs(G(x,y) - G(x+1,y+1)));
+    Wsw = 1.0f / (1 + abs(Bay(x+1,y-1) - Bay(x-1,y+1)) + abs(G(x,y) - G(x-1,y+1)));
+    Wnw = 1.0f / (1 + abs(Bay(x+1,y+1) - Bay(x-1,y-1)) + abs(G(x,y) - G(x-1,y-1)));
 
-    Rne = Bay(x+1,y-1) + (G(x,y) - G(x+1,y-1)) / 2;
-    Rse = Bay(x+1,y+1) + (G(x,y) - G(x+1,y+1)) / 2;
-    Rsw = Bay(x-1,y+1) + (G(x,y) - G(x-1,y+1)) / 2;
-    Rnw = Bay(x-1,y-1) + (G(x,y) - G(x-1,y-1)) / 2;
+    Rne = Bay(x+1,y-1) + (G(x,y) - G(x+1,y-1)) *0.5f;
+    Rse = Bay(x+1,y+1) + (G(x,y) - G(x+1,y+1)) *0.5f;
+    Rsw = Bay(x-1,y+1) + (G(x,y) - G(x-1,y+1)) *0.5f;
+    Rnw = Bay(x-1,y-1) + (G(x,y) - G(x-1,y-1)) *0.5f;
 
     temp = (Wne * Rne + Wse * Rse + Wsw * Rsw + Wnw * Rnw) / (Wne + Wse + Wsw + Wnw);
 
-    if (temp >= 254.5)
+    if (temp > 254.5f)
         R(x,y) = 255;
-    else if (temp <= 0.49)
+    else if (temp < 0.5f)
         R(x,y) = 0;
     else
-        R(x,y) = temp + 0.5;
+        R(x,y) = (unsigned char)(temp + 0.5f);
 }
 
 void bayer_inter_B_at_G(unsigned short * raw_16, unsigned char *rgb,int x, int y)
 {
     float Wn, We, Ws, Ww, Bn, Be, Bs, Bw, temp;
 
-    Wn = 1.0 / (1 + abs(B(x,y+1) - B(x,y-1)) + abs(G(x,y) - G(x,y-2)));
-    We = 1.0 / (1 + abs(B(x-1,y) - B(x+1,y)) + abs(G(x,y) - G(x+2,y)));
-    Ws = 1.0 / (1 + abs(B(x,y-1) - B(x,y+1)) + abs(G(x,y) - G(x,y+2)));
-    Ww = 1.0 / (1 + abs(B(x+1,y) - B(x-1,y)) + abs(G(x,y) - G(x-2,y)));
+    Wn = 1.0f / (1 + abs(B(x,y+1) - B(x,y-1)) + abs(G(x,y) - G(x,y-2)));
+    We = 1.0f / (1 + abs(B(x-1,y) - B(x+1,y)) + abs(G(x,y) - G(x+2,y)));
+    Ws = 1.0f / (1 + abs(B(x,y-1) - B(x,y+1)) + abs(G(x,y) - G(x,y+2)));
+    Ww = 1.0f / (1 + abs(B(x+1,y) - B(x-1,y)) + abs(G(x,y) - G(x-2,y)));
 
-    Bn = B(x,y-1) + (G(x,y) - G(x,y-2)) / 2;
-    Be = B(x+1,y) + (G(x,y) - G(x+2,y)) / 2;
-    Bs = B(x,y+1) + (G(x,y) - G(x,y+2)) / 2;
-    Bw = B(x-1,y) + (G(x,y) - G(x-2,y)) / 2;
+    Bn = B(x,y-1) + (G(x,y) - G(x,y-2)) *0.5f;
+    Be = B(x+1,y) + (G(x,y) - G(x+2,y)) *0.5f;
+    Bs = B(x,y+1) + (G(x,y) - G(x,y+2)) *0.5f;
+    Bw = B(x-1,y) + (G(x,y) - G(x-2,y)) *0.5f;
 
     temp = (Wn * Bn + We * Be + Ws * Bs + Ww * Bw) / (Wn + We + Ws + Ww);
 
-    if (temp >= 254.5)
+    if (temp > 254.5f)
         B(x,y) = 255;
-    else if (temp <= 0.49)
+    else if (temp < 0.5f)
         B(x,y) = 0;
     else
-        B(x,y) = temp + 0.5;
+        B(x,y) = (unsigned char)(temp + 0.5f);
 }
 
 void bayer_inter_R_at_G(unsigned short * raw_16, unsigned char *rgb,int x, int y)
 {
     float Wn, We, Ws, Ww, Rn, Re, Rs, Rw, temp;
 
-    Wn = 1.0 / (1 + abs(R(x,y+1) - R(x,y-1)) + abs(G(x,y) - G(x,y-2)));
-    We = 1.0 / (1 + abs(R(x-1,y) - R(x+1,y)) + abs(G(x,y) - G(x+2,y)));
-    Ws = 1.0 / (1 + abs(R(x,y-1) - R(x,y+1)) + abs(G(x,y) - G(x,y+2)));
-    Ww = 1.0 / (1 + abs(R(x+1,y) - R(x-1,y)) + abs(G(x,y) - G(x-2,y)));
+    Wn = 1.0f / (1 + abs(R(x,y+1) - R(x,y-1)) + abs(G(x,y) - G(x,y-2)));
+    We = 1.0f / (1 + abs(R(x-1,y) - R(x+1,y)) + abs(G(x,y) - G(x+2,y)));
+    Ws = 1.0f / (1 + abs(R(x,y-1) - R(x,y+1)) + abs(G(x,y) - G(x,y+2)));
+    Ww = 1.0f / (1 + abs(R(x+1,y) - R(x-1,y)) + abs(G(x,y) - G(x-2,y)));
 
-    Rn = R(x,y-1) + (G(x,y) - G(x,y-2)) / 2;
-    Re = R(x+1,y) + (G(x,y) - G(x+2,y)) / 2;
-    Rs = R(x,y+1) + (G(x,y) - G(x,y+2)) / 2;
-    Rw = R(x-1,y) + (G(x,y) - G(x-2,y)) / 2;
+    Rn = R(x,y-1) + (G(x,y) - G(x,y-2)) *0.5f;
+    Re = R(x+1,y) + (G(x,y) - G(x+2,y)) *0.5f;
+    Rs = R(x,y+1) + (G(x,y) - G(x,y+2)) *0.5f;
+    Rw = R(x-1,y) + (G(x,y) - G(x-2,y)) *0.5f;
 
     temp = (Wn * Rn + We * Re + Ws * Rs + Ww * Rw) / (Wn + We + Ws + Ww);
 
-    if (temp >= 254.5)
+    if (temp > 254.5f)
         R(x,y) = 255;
-    else if (temp <= 0.49)
+    else if (temp < 0.5f)
         R(x,y) = 0;
     else
-        R(x,y) = temp + 0.5;
+        R(x,y) = (unsigned char)(temp + 0.5f);
 }
 #endif
 
@@ -406,7 +407,7 @@ int convert_raw_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, bool isGra
          {
              for (i = 2; i < PIX_WIDTH-2; i++)
              {
-                if ((i + j) % 2 == 0)
+                if (((i + j) & 1) == 0)
                     bayer_copy_G((unsigned short *)raw, rgb, i, j);
                 else
                     bayer_inter_G_at_BR((unsigned short *)raw, rgb, i, j);

@@ -15,6 +15,7 @@
 #include "IVideoStream.h"
 #include "ICameraControl.h"
 #include "IDeviceControl.h"
+#include "ILowlevelControl.h"
 
 class ProcessImage : public QWidget
 {
@@ -57,6 +58,7 @@ private:
     std::shared_ptr<TopGear::IVideoStream> camera;
     std::shared_ptr<TopGear::ICameraControl> cameraControl;
     std::shared_ptr<TopGear::IDeviceControl> ioControl;
+    std::shared_ptr<TopGear::ILowlevelControl> lowlevel;
 
     bool bRenderPaused;
     bool bEnabled;
