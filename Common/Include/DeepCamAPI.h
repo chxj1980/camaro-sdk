@@ -2,7 +2,6 @@
 #include <memory>
 #include <vector>
 #include "IVideoStream.h"
-#include "IGenericVCDevice.h"
 
 // Generic helper definitions for shared library support
 #ifndef DEEPCAM_API
@@ -55,9 +54,17 @@ namespace TopGear
 
 		template<class T>
 		std::shared_ptr<T> QueryInterface(std::shared_ptr<IVideoStream> &vs) const;
+
+		template<class T>
+		bool GetProperty(std::shared_ptr<IVideoStream> &stream, std::string name, T &value);
+
+		template<class T>
+		bool SetProperty(std::shared_ptr<IVideoStream> &stream, std::string name, T &value);
+
 		~DeepCamAPI();
 	private:
 		DeepCamAPI();
+		
 	};
 	// ReSharper restore CppFunctionIsNotImplemented
 }

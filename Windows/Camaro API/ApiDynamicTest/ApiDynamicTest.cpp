@@ -66,9 +66,9 @@ void Loop()
 	}
 }
 
-#define CAMARO_DUAL 
+//#define CAMARO_DUAL 
 #define CAMARO_SOLO
-#define 	STD_UVC
+//#define 	STD_UVC
 
 void main()
 {
@@ -127,7 +127,11 @@ void main()
 			//Register callback function for frame arrival
 			TopGear::IVideoStream::RegisterFrameCallback(*camaro, &FrameDemo::OnFrameMember, &demo);
 			//Is master camaro
-			if (ioControl->QueryDeviceRole() == 0)
+			TopGear::PropertyData<uint8_t> role;
+			TopGear::PropertyData<std::string> info;
+			ioControl->GetControl("DeviceInfo", info);
+			std::cout << info.Payload << std::endl;
+			if (ioControl->GetControl("DeviceRole", role) && role.Payload == 0)
 			{
 				TopGear::VideoFormat format;
 				//Get optimized video format

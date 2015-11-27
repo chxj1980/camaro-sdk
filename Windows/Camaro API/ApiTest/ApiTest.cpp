@@ -67,7 +67,7 @@ void Loop()
 
 void main()
 {
-	FrameDemo demo;
+	//FrameDemo demo;
 	auto deepcam = TopGear::DeepCamAPI::Instance();
 #ifdef STD_UVC
 	auto uvcDevices = deepcam.EnumerateDevices(TopGear::DeviceType::Standard);
