@@ -63,10 +63,10 @@
     <ClCompile Include="..\..\Source\VideoSourceReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Common\Source\Configuration.cpp">
+    <ClCompile Include="..\..\..\Common\Source\jsoncpp.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Common\Source\jsoncpp.cpp">
+    <ClCompile Include="..\..\..\Common\Source\CameraProfile.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
   </ItemGroup>
@@ -203,9 +203,6 @@
     <ClInclude Include="..\..\Include\VideoSourceReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Common\Include\Configuration.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\Common\Include\json.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
@@ -213,6 +210,9 @@
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\Common\Include\ExtensionAccessAdapter.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\CameraProfile.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
   </ItemGroup>

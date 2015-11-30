@@ -143,7 +143,7 @@ bool Camaro::SetControl(std::string name, IPropertyData &&val)
 
 bool Camaro::SetControl(std::string name, IPropertyData &val)
 {
-	if (&config == &Configuration::NullObject())
+	if (&config == &CameraProfile::NullObject())
 		return false;
 	auto it = config.XuControls.find(name);
 	if (it != config.XuControls.end())
@@ -177,7 +177,7 @@ bool Camaro::SetControl(std::string name, IPropertyData &val)
 }
 bool Camaro::GetControl(std::string name, IPropertyData &val)
 {
-	if (&config == &Configuration::NullObject())
+	if (&config == &CameraProfile::NullObject())
 		return false;
 	auto it = config.XuControls.find(name);
 	if (it != config.XuControls.end())
@@ -339,8 +339,8 @@ int Camaro::SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB)
 }
 
 Camaro::Camaro(std::shared_ptr<IVideoStream>& vs, 
-			   std::shared_ptr<IExtensionAccess>& ex,
-		       Configuration &con)
+	std::shared_ptr<IExtensionAccess>& ex,
+	CameraProfile &con)
 	: CameraSoloBase(vs, con), extensionAdapter(ex)
 {
 	PropertyData<std::string> info;

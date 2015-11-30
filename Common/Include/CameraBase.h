@@ -1,6 +1,6 @@
 #pragma once
 #include "IVideoStream.h"
-#include "Configuration.h"
+#include "CameraProfile.h"
 
 namespace TopGear
 {
@@ -8,20 +8,20 @@ namespace TopGear
 	{
 	protected:
 		explicit CameraBase(std::vector<std::shared_ptr<IVideoStream>> &vss,
-							Configuration &con = Configuration::NullObject())
+			CameraProfile &con = CameraProfile::NullObject())
 			: videoStreams(vss), config(con)
 		{
 		}
 		explicit CameraBase(std::vector<std::shared_ptr<IVideoStream>> &&vss,
-							Configuration &con = Configuration::NullObject())
+			CameraProfile &con = CameraProfile::NullObject())
 			: videoStreams(vss), config(con)
 		{
 		}
-		explicit CameraBase(Configuration &con = Configuration::NullObject()) 
+		explicit CameraBase(CameraProfile &con = CameraProfile::NullObject())
 			: config(con)
 		{}
 		std::vector<std::shared_ptr<IVideoStream>> videoStreams;
-		Configuration &config;
+		CameraProfile &config;
 	public:
 		virtual ~CameraBase()
 		{

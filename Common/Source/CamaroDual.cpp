@@ -118,7 +118,9 @@ bool CamaroDual::StartStream()
 		camera0->CameraSoloBase::StartStream();
 		camera1->CameraSoloBase::StartStream();
 		while (!camera0->IsStreaming() || !camera1->IsStreaming())
+		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		}
 		frameWatchThread = std::thread(&CamaroDual::FrameWatcher, this);
 		threadOn = frameWatchThread.joinable();
 		//masterDC->SetSensorTrigger(1);

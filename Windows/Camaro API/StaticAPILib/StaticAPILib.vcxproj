@@ -154,7 +154,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\Source\Camaro.cpp" />
     <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp" />
-    <ClCompile Include="..\..\..\Common\Source\Configuration.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\CameraProfile.cpp" />
     <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
     <ClCompile Include="..\..\..\Common\Source\jsoncpp.cpp" />
     <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp" />
@@ -173,8 +173,8 @@
     <ClInclude Include="..\..\..\Common\Include\Camaro.h" />
     <ClInclude Include="..\..\..\Common\Include\CamaroDual.h" />
     <ClInclude Include="..\..\..\Common\Include\CameraBase.h" />
+    <ClInclude Include="..\..\..\Common\Include\CameraProfile.h" />
     <ClInclude Include="..\..\..\Common\Include\CameraSoloBase.h" />
-    <ClInclude Include="..\..\..\Common\Include\Configuration.h" />
     <ClInclude Include="..\..\..\Common\Include\DeepCamAPI.h" />
     <ClInclude Include="..\..\..\Common\Include\DeviceDecorator.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionAccessAdapter.h" />

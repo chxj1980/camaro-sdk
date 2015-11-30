@@ -76,7 +76,7 @@ namespace TopGear
 		virtual int SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB) override;
 		Camaro(std::shared_ptr<IVideoStream> &vs, 
 			   std::shared_ptr<IExtensionAccess> &ex,
-			   Configuration &con = Configuration::NullObject());
+			CameraProfile &con = CameraProfile::NullObject());
 		virtual ~Camaro();
 	};
 }

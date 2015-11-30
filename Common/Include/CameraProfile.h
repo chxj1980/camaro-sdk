@@ -44,7 +44,7 @@ namespace TopGear
 
 	typedef std::map<std::string, RegisterControl> RegisterMap;
 
-	class Configuration
+	class CameraProfile
 	{
 	public:
 		const uint8_t RegisterCode;
@@ -52,14 +52,16 @@ namespace TopGear
 		std::map<std::string, XuControl> XuControls;
 		const RegisterMap *QueryRegisterMap(const std::string &identifier) const;
 
-		static std::map<Camera, Configuration> CameraConfigurations;
+		static std::map<Camera, CameraProfile> Repository;
 		static bool Parse(std::istream &stream);
-		static Configuration &NullObject();
-		virtual ~Configuration() = default;
+		static CameraProfile &NullObject();
+		virtual ~CameraProfile() = default;
 	private:
-		static std::unique_ptr<Configuration> nullObj;
+		static const std::map<std::string, Camera> NameMap;
+		static const float Version;
+		static std::unique_ptr<CameraProfile> nullObj;
 		std::map<std::string, RegisterMap> sensors;
-		explicit Configuration(uint8_t registerCode)
+		explicit CameraProfile(uint8_t registerCode)
 			: RegisterCode(registerCode)
 		{
 		}

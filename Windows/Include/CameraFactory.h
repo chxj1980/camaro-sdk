@@ -55,8 +55,8 @@ namespace TopGear
 			auto ex = std::static_pointer_cast<IExtensionAccess>(
 				std::make_shared<ExtensionAccess>(validator));
 
-			auto it = Configuration::CameraConfigurations.find(Camera::Camaro);
-			if (it != Configuration::CameraConfigurations.end())
+			auto it = CameraProfile::Repository.find(Camera::Camaro);
+			if (it != CameraProfile::Repository.end())
 				return std::make_shared<Camaro>(reader, ex, it->second);
 			return std::make_shared<Camaro>(reader, ex);
 		}

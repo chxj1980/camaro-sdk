@@ -1,22 +1,24 @@
-#include "Configuration.h"
+#include "CameraProfile.h"
 
 
 namespace TopGear
 {
-	const std::map<std::string, Camera> CameraMap = {
+	const std::map<std::string, Camera> CameraProfile::NameMap = {
 		{ "StandardUVC", Camera::StandardUVC },
 		{ "Camaro", Camera::Camaro },
 		{ "CamaroDual", Camera::CamaroDual },
 		{ "Etron3D", Camera::Etron3D }
 	};
 
-	std::unique_ptr<Configuration> Configuration::nullObj;
-	std::map<Camera, Configuration> Configuration::CameraConfigurations;
+	const float CameraProfile::Version = 1.0f;
 
-	Configuration &Configuration::NullObject()
+	std::unique_ptr<CameraProfile> CameraProfile::nullObj;
+	std::map<Camera, CameraProfile> CameraProfile::Repository;
+
+	CameraProfile &CameraProfile::NullObject()
 	{
 		if (nullObj == nullptr)
-			nullObj = std::unique_ptr<Configuration>(new Configuration(0));
+			nullObj = std::unique_ptr<CameraProfile>(new CameraProfile(0));
 		return *nullObj;
 	}
 
@@ -107,15 +109,15 @@ namespace TopGear
 		return pair;
 	}
 
-	bool Configuration::Parse(std::istream &stream)
+	bool CameraProfile::Parse(std::istream &stream)
 	{
 		Json::Value root;
 		stream >> root;
-		auto & element = root["xdl-version"];
+		auto & element = root["profile-version"];
 		if (element.isNull())
 			return false;
 		auto ver = std::stof(element.asString());
-		if (ver < 1.0f)
+		if (ver < Version)
 			return false;
 		element = root["camera-name"];
 		if (element.isNull())
@@ -124,12 +126,10 @@ namespace TopGear
 		element = root["register-control-code"];
 		auto registerCode = element.isNull() ? 0 : element.asInt();
 
-		//element = root["register-data-type"];
-		//auto hash = element.isNull() ? 0 : GetTypeHash(element.asString());
-		auto it = CameraMap.find(root["camera-name"].asString());
-		if (it == CameraMap.end())
+		auto it = NameMap.find(root["camera-name"].asString());
+		if (it == NameMap.end())
 			return false;
-		auto result = CameraConfigurations.emplace(it->second, Configuration(registerCode));
+		auto result = Repository.emplace(it->second, CameraProfile(registerCode));
 		if (result.second == false)
 			return false;
 		auto &config = (result.first)->second;
@@ -167,22 +167,10 @@ namespace TopGear
 				}
 			}
 		}
-
-		//element = root["register-controls"];
-		//if (!element.isNull())
-		//{
-		//	for (auto i = 0u; i < element.size(); ++i)
-		//	{
-		//		auto pair = RegisterControl::Parse(element[i]);
-		//		if (pair.first.empty())
-		//			continue;
-		//		config.RegisterControls.emplace(pair.first, pair.second);
-		//	}
-		//}
 		return true;
 	}
 
-	const RegisterMap *Configuration::QueryRegisterMap(const std::string &identifier) const
+	const RegisterMap *CameraProfile::QueryRegisterMap(const std::string &identifier) const
 	{
 		for(auto &item : sensors)
 		{

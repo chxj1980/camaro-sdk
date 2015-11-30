@@ -13,7 +13,7 @@
 //#include "IGenericVCDevice.h"
 #include <iostream>
 
-#include "Configuration.h"
+#include "CameraProfile.h"
 #include <fstream>
 #include <Windows.h>
 #include <strsafe.h> 
@@ -106,12 +106,13 @@ namespace TopGear
 					(ffd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0)
 				{
 					std::wstring filename(ffd.cFileName);
-					if (filename.substr(filename.length() - ConfigSuffix.length()) != ConfigSuffix)
+					int offset = filename.length() - ConfigSuffix.length();
+					if (offset < 0 || filename.substr(offset) != ConfigSuffix)
 						continue;
 					std::ifstream config_doc(filename, std::ifstream::binary);
 					if (config_doc.is_open())
 					{
-						Configuration::Parse(config_doc);
+						CameraProfile::Parse(config_doc);
 						config_doc.close();
 					}
 				}
@@ -119,7 +120,7 @@ namespace TopGear
 		}
 	};
 
-	const std::wstring DeepCamAPIInternal::ConfigSuffix = L".xdl.json";
+	const std::wstring DeepCamAPIInternal::ConfigSuffix = L".profile.json";
 	std::unique_ptr<DeepCamAPI> DeepCamAPIInternal::Instance;
 
 	DeepCamAPI &DeepCamAPI::Instance()
