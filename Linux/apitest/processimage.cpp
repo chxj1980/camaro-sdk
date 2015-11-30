@@ -218,17 +218,19 @@ ProcessImage::ProcessImage(QWidget *parent)
 //    }
 
     auto deepcam = TopGear::DeepCamAPI::Instance();
-    camera = deepcam.CreateCamera(TopGear::Camera::StandardUVC);
+    camera = deepcam.CreateCamera(TopGear::Camera::Camaro);
     if (camera)
     {
+        ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camera);
+        cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camera);
         TopGear::IVideoStream::RegisterFrameCallback(*camera,
                &ProcessImage::onGetVideoFrames,this);
         //labeldevinfo->setText(QString("devinfo:%1").arg(item->GetDeviceInfo().c_str()));
         TopGear::VideoFormat format;
         //Get optimized video format
         auto index = camera->GetOptimizedFormatIndex(format);
-        auto formats = camera->GetAllFormats();
-        camera->SetCurrentFormat(21);
+        //auto formats = camera->GetAllFormats();
+        camera->SetCurrentFormat(index);
         camera->StartStream();
     }
 
@@ -341,14 +343,15 @@ void ProcessImage::ontimer()
 void ProcessImage::onSetGPIOHigh()
 {
     if (ioControl)
-        ioControl->SetSensorTrigger(1);
-
+        //ioControl->SetSensorTrigger(1);
+        ioControl->SetControl("Trigger", TopGear::PropertyData<uint8_t>(1));
 }
 
 void ProcessImage::onSetGPIOLow()
 {
     if (ioControl)
-        ioControl->SetSensorTrigger(0);
+        //ioControl->SetSensorTrigger(0);
+        ioControl->SetControl("Trigger", TopGear::PropertyData<uint8_t>(0));
 }
 
 void ProcessImage::onRegGet()

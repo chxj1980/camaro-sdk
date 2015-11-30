@@ -63,7 +63,9 @@ namespace TopGear
                 return{};
             auto ex = std::static_pointer_cast<IExtensionAccess>(
                         std::make_shared<ExtensionAccess>(lsource->GetHandle(), validator));
-
+            auto it = CameraProfile::Repository.find(Camera::Camaro);
+            if (it!=CameraProfile::Repository.end())
+                return std::make_shared<Camaro>(reader, ex, it->second);
             return std::make_shared<Camaro>(reader, ex);
         }
 
@@ -78,11 +80,13 @@ namespace TopGear
             for (auto item : devices)
             {
                 auto camera = std::dynamic_pointer_cast<Camaro>(CameraFactory<Camaro>::CreateInstance(item));
-                if (camera->QueryDeviceRole() == 0 && master == nullptr)
+                PropertyData<uint8_t> data;
+                camera->GetControl("DeviceRole", data);
+                if (data.Payload == 0 && master == nullptr)
                 {
                     master = std::static_pointer_cast<IVideoStream>(camera);
                 }
-                if (camera->QueryDeviceRole() == 1 && slave == nullptr)
+                if (data.Payload == 1 && slave == nullptr)
                 {
                     slave = std::static_pointer_cast<IVideoStream>(camera);
                 }

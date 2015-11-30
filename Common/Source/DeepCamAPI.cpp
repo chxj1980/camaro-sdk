@@ -129,39 +129,39 @@ namespace TopGear
 					}
 				}
 			} while (FindNextFile(hFind, &ffd));
-		}
 #elif defined(__linux__)
-		//Get current path
-		char cCurrentPath[FILENAME_MAX];
-		if (!getcwd(cCurrentPath, sizeof(cCurrentPath)))
-			return; //errno
-		cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
+            //Get current path
+            char cCurrentPath[FILENAME_MAX];
+            if (!getcwd(cCurrentPath, sizeof(cCurrentPath)))
+                return; //errno
+            cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
 
-		dirent *dirp;
-		DIR *dp = opendir(cCurrentPath);
-		if (dp == nullptr)
-		{
-			//cout << "Error(" << errno << ") opening " << dir << endl;
-			return;
-		}
+            dirent *dirp;
+            DIR *dp = opendir(cCurrentPath);
+            if (dp == nullptr)
+            {
+                //cout << "Error(" << errno << ") opening " << dir << endl;
+                return;
+            }
 
-		while ((dirp = readdir(dp)) != nullptr)
-		{
-			if (dirp->d_type == DT_DIR)
-				continue;
-			auto filename = std::string(dirp->d_name);
-			int offset = filename.length() - ConfigSuffix.length();
-			if (offset < 0 || filename.substr(offset) != ConfigSuffix)
-				continue;
-			std::ifstream config_doc(filename, std::ifstream::binary);
-			if (config_doc.is_open())
-			{
-				CameraProfile::Parse(config_doc);
-				config_doc.close();
-			}
-		}
-		closedir(dp);
+            while ((dirp = readdir(dp)) != nullptr)
+            {
+                if (dirp->d_type == DT_DIR)
+                    continue;
+                auto filename = std::string(dirp->d_name);
+                int offset = filename.length() - ConfigSuffix.length();
+                if (offset < 0 || filename.substr(offset) != ConfigSuffix)
+                    continue;
+                std::ifstream config_doc(filename, std::ifstream::binary);
+                if (config_doc.is_open())
+                {
+                    CameraProfile::Parse(config_doc);
+                    config_doc.close();
+                }
+            }
+            closedir(dp);
 #endif
+        }
 	};
 
 #ifdef _WIN32

@@ -29,6 +29,9 @@
 #endif
 #else
 #define DEEPCAM_API
+#ifdef DEEPCAM_API_LOCAL
+#undef DEEPCAM_API_LOCAL
+#endif
 #define DEEPCAM_API_LOCAL
 #endif
 #endif

@@ -69,18 +69,24 @@ HEADERS += \
     ../Include/LSource.h \
     ../Include/v4l2helper.h \
     ../Include/VideoBufferLock.h \
-    ../Include/VideoSourceReader.h
+    ../Include/VideoSourceReader.h \
+    ../../Common/Include/ExtensionAccessAdapter.h \
+    ../../Common/Include/json.h \
+    ../../Common/Include/json-forwards.h \
+    ../../Common/Include/CameraProfile.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \
     ../../Common/Source/CamaroDual.cpp \
     ../../Common/Source/ExtensionRepository.cpp \
     ../../Common/Source/VideoSourceProxy.cpp \
-    ../Source/DeepCamAPI.cpp \
     ../Source/DGExtensionFilter.cpp \
     ../Source/ExtensionAccess.cpp \
     ../Source/ExtensionFilterBase.cpp \
     ../Source/GenericVCDevice.cpp \
     ../Source/StandardUVCFilter.cpp \
     ../Source/v4l2helper.cpp \
-    ../Source/VideoSourceReader.cpp
+    ../Source/VideoSourceReader.cpp \
+    ../../Common/Source/CameraProfile.cpp \
+    ../../Common/Source/jsoncpp.cpp \
+    ../../Common/Source/DeepCamAPI.cpp
