@@ -36,9 +36,6 @@
     <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\DeepCamAPI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Source\DGExtensionFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -67,6 +64,9 @@
       <Filter>Source Files\Common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\Common\Source\CameraProfile.cpp">
+      <Filter>Source Files\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Common\Source\DeepCamAPI.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
   </ItemGroup>

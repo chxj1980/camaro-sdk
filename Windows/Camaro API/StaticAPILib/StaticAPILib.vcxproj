@@ -155,10 +155,10 @@
     <ClCompile Include="..\..\..\Common\Source\Camaro.cpp" />
     <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp" />
     <ClCompile Include="..\..\..\Common\Source\CameraProfile.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\DeepCamAPI.cpp" />
     <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
     <ClCompile Include="..\..\..\Common\Source\jsoncpp.cpp" />
     <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp" />
-    <ClCompile Include="..\..\Source\DeepCamAPI.cpp" />
     <ClCompile Include="..\..\Source\DGExtensionFilter.cpp" />
     <ClCompile Include="..\..\Source\ExtensionAccess.cpp" />
     <ClCompile Include="..\..\Source\ExtensionFilterBase.cpp" />

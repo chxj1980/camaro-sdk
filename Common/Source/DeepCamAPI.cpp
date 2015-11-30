@@ -2,27 +2,34 @@
 #include "DeviceFactory.h"
 #include "GenericVCDevice.h"
 #include "DGExtensionFilter.h"
-#include "EtronExtensionFilter.h"
-#include "System.h"
+//#include "EtronExtensionFilter.h"
 #include "CameraFactory.h"
 #include "StandardUVC.h"
 #include "Camaro.h"
 #include "CamaroDual.h"
 #include "IMultiVideoStream.h"
 #include "StandardVCDevice.h"
-//#include "IGenericVCDevice.h"
-#include <iostream>
-
 #include "CameraProfile.h"
-#include <fstream>
-#include <Windows.h>
-#include <strsafe.h> 
 
-using namespace TopGear::Win;
+#ifdef _WIN32
+	#include "System.h"
+	#include <Windows.h>
+	#include <strsafe.h>
+	using namespace TopGear::Win;
+#elif defined(__linux__)
+	#include <unistd.h>
+	#include <dirent.h>
+	using namespace TopGear::Linux;
+#endif
+
+#include <fstream>
+#include <iostream>
 
 namespace TopGear
 {
+#ifdef _WIN32
 	bool System::inited = false;
+#endif
 
 	template<typename T>
 	const std::chrono::milliseconds DeviceFactory<T>::InitialTime = std::chrono::milliseconds(100);
@@ -40,7 +47,11 @@ namespace TopGear
 		friend class DeepCamAPI;
 		static std::unique_ptr<DeepCamAPI> Instance;
 
+#ifdef _WIN32
 		static const std::wstring ConfigSuffix;
+#elif defined(__linux__)
+		static const std::string ConfigSuffix;
+#endif
 
 		static std::vector<IGenericVCDevicePtr> EnumerateDevices(DeviceType type)
 		{
@@ -57,7 +68,7 @@ namespace TopGear
 				inventory = DeviceFactory<ExtensionVCDevice<DGExtensionFilter>>::EnumerateDevices();
 				break;
 			case DeviceType::Etron:
-				inventory = DeviceFactory<ExtensionVCDevice<EtronExtensionFilter>>::EnumerateDevices();
+				//inventory = DeviceFactory<ExtensionVCDevice<EtronExtensionFilter>>::EnumerateDevices();
 				break;
 			default:
 				break;
@@ -92,6 +103,7 @@ namespace TopGear
 
 		static void LoadCameraConfigs()
 		{
+#ifdef _WIN32
 			auto dir = new wchar_t[MAX_PATH];
 			GetCurrentDirectory(MAX_PATH, dir);
 			StringCchCat(dir, MAX_PATH, TEXT("\\*"));
@@ -106,7 +118,7 @@ namespace TopGear
 					(ffd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0)
 				{
 					std::wstring filename(ffd.cFileName);
-					int offset = filename.length() - ConfigSuffix.length();
+					int offset = int(filename.length()) - int(ConfigSuffix.length());
 					if (offset < 0 || filename.substr(offset) != ConfigSuffix)
 						continue;
 					std::ifstream config_doc(filename, std::ifstream::binary);
@@ -118,9 +130,46 @@ namespace TopGear
 				}
 			} while (FindNextFile(hFind, &ffd));
 		}
+#elif defined(__linux__)
+		//Get current path
+		char cCurrentPath[FILENAME_MAX];
+		if (!getcwd(cCurrentPath, sizeof(cCurrentPath)))
+			return; //errno
+		cCurrentPath[sizeof(cCurrentPath) - 1] = '\0'; /* not really required */
+
+		dirent *dirp;
+		DIR *dp = opendir(cCurrentPath);
+		if (dp == nullptr)
+		{
+			//cout << "Error(" << errno << ") opening " << dir << endl;
+			return;
+		}
+
+		while ((dirp = readdir(dp)) != nullptr)
+		{
+			if (dirp->d_type == DT_DIR)
+				continue;
+			auto filename = std::string(dirp->d_name);
+			int offset = filename.length() - ConfigSuffix.length();
+			if (offset < 0 || filename.substr(offset) != ConfigSuffix)
+				continue;
+			std::ifstream config_doc(filename, std::ifstream::binary);
+			if (config_doc.is_open())
+			{
+				CameraProfile::Parse(config_doc);
+				config_doc.close();
+			}
+		}
+		closedir(dp);
+#endif
 	};
 
+#ifdef _WIN32
 	const std::wstring DeepCamAPIInternal::ConfigSuffix = L".profile.json";
+#elif defined(__linux__)
+	const std::string DeepCamAPIInternal::ConfigSuffix = ".profile.json";
+#endif
+
 	std::unique_ptr<DeepCamAPI> DeepCamAPIInternal::Instance;
 
 	DeepCamAPI &DeepCamAPI::Instance()
@@ -133,14 +182,18 @@ namespace TopGear
 	DeepCamAPI::DeepCamAPI()
 	{
 		//std::cout << "Initialize" << std::endl;
+#ifdef _WIN32
 		System::Initialize();
+#endif
 		DeepCamAPIInternal::LoadCameraConfigs();
 	}
 
 	DeepCamAPI::~DeepCamAPI()
 	{
 		//std::cout << "Uninitialize" << std::endl;
+#ifdef _WIN32
 		System::Dispose();
+#endif
 	}
 
 
