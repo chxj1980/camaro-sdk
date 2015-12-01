@@ -223,6 +223,7 @@ ProcessImage::ProcessImage(QWidget *parent)
     {
         ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camera);
         cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camera);
+        lowlevelControl = std::dynamic_pointer_cast<TopGear::ILowlevelControl>(camera);
         TopGear::IVideoStream::RegisterFrameCallback(*camera,
                &ProcessImage::onGetVideoFrames,this);
         //labeldevinfo->setText(QString("devinfo:%1").arg(item->GetDeviceInfo().c_str()));
@@ -260,6 +261,7 @@ void ProcessImage::onDeviceException(int err)
 
 void ProcessImage::onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFramePtr> &frames)//this is called in sub-thread
 {
+    (void)sender;
     if (frames.size()==0)
         return;
     qDebug("frameidx:  %d",frames[0]->GetFrameIdx());
@@ -356,20 +358,30 @@ void ProcessImage::onSetGPIOLow()
 
 void ProcessImage::onRegGet()
 {
-//    unsigned short regaddr,regval;
-//    bool ok;
-//    regaddr = regaddrEdit->text().toInt(&ok,16);
-//    vd->get_register(regaddr, &regval);
-//    regvalEdit->setText(QString::number(regval,16));
+    if (lowlevelControl ==nullptr)
+        return;
+    unsigned short regaddr,regval;
+    bool ok;
+    regaddr = regaddrEdit->text().toInt(&ok,16);
+    if (!ok)
+        return;
+    lowlevelControl->GetRegister(regaddr,regval);
+    regvalEdit->setText(QString::number(regval,16));
 }
 
 void ProcessImage::onRegSet()
 {
-//    unsigned short regaddr,regval;
-//    bool ok;
-//    regaddr = regaddrEdit->text().toInt(&ok,16);
-//    regval = regvalEdit->text().toInt(&ok,16);
-//    vd->set_register(regaddr,regval);
+    if (lowlevelControl ==nullptr)
+        return;
+    unsigned short regaddr,regval;
+    bool ok;
+    regaddr = regaddrEdit->text().toInt(&ok,16);
+    if (!ok)
+        return;
+    regval = regvalEdit->text().toInt(&ok,16);
+    if (!ok)
+        return;
+    lowlevelControl->SetRegister(regaddr,regval);
 }
 void ProcessImage::onGainGet()
 {
