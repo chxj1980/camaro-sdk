@@ -413,10 +413,10 @@ bool Camaro::StartStream()
 		return false;
 
 	SetControl("Trigger", PropertyData<uint8_t>(0));
-	SetControl("Resync", PropertyData<uint16_t>(100));
+    SetControl("Resync", PropertyData<uint16_t>(900));
 	//SetSensorTrigger(0);
 	//SetResyncNumber(900);
-	Flip(true, false);
+    //Flip(true, false);
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	if (CameraSoloBase::StartStream())
 	{

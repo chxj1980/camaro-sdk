@@ -36,7 +36,7 @@ namespace TopGear
 	BufferQueue<T>::BufferQueue(size_t limit)
 		:sizeLimit(limit), discarded(false)
 	{
-		std::this_thread::get_id();
+        //std::this_thread::get_id();
 	}
 
 	template <class T>
@@ -47,12 +47,11 @@ namespace TopGear
 	template <class T>
 	bool BufferQueue<T>::Push(const T &item)
 	{
-		std::unique_lock<std::mutex> mlock(mtx);
+        std::lock_guard<std::mutex> lk(mtx);
 		auto result = false;
 		if (sizeLimit == 0 || queue.size() < sizeLimit)
 		{
 			queue.push(item);
-			mlock.unlock();
 			cond.notify_one();
 			result = true;
 		}
@@ -62,17 +61,24 @@ namespace TopGear
 	template <class T>
 	inline bool BufferQueue<T>::Pop(T &item, bool noWait)
 	{
-		std::unique_lock<std::mutex> mlock(mtx);
 		discarded = false;
-		if (noWait && queue.empty())
-			return false;
-		while (queue.empty())
-		{
-			cond.wait(mlock);
-			if (discarded)
-				return false;
-		}
-		item = queue.front();
+        if (noWait)
+        {
+            std::lock_guard<std::mutex> lk(mtx);
+            if (queue.empty())
+                return false;
+        }
+        else
+        {
+            std::unique_lock<std::mutex> lk(mtx);
+            while (queue.empty())
+            {
+                cond.wait(lk);
+                if (discarded)
+                    return false;
+            }
+        }
+        item = std::move(queue.front());
 		queue.pop();
 		return true;
 	}
@@ -80,19 +86,16 @@ namespace TopGear
 	template <class T>
 	void BufferQueue<T>::Discard()
 	{
-		std::unique_lock<std::mutex> mlock(mtx);
+        std::lock_guard<std::mutex> lk(mtx);
 		discarded = true;
-		mlock.unlock();
 		cond.notify_one();
 	}
 
 	template <class T>
 	bool BufferQueue<T>::Empty()
 	{
-		mtx.lock();
-		auto empty = queue.empty();
-		mtx.unlock();
-		return empty;
+        std::lock_guard<std::mutex> lk(mtx);
+        return queue.empty();
 	}
 }
 

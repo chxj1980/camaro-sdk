@@ -206,13 +206,8 @@ void CamaroDual::FrameWatcher()
 	{
 		if (!frameBuffer.Pop(frameEx))
 			break;
-		//if (frame.second->GetFrameIdx() == droppedIndex)
-		//	continue;  //Discard lagged frame
 
-		auto one = frameEx.first;
-		//auto other = one ? 0 : 1;
-
-		frameVector[one].push_back(frameEx.second);
+        frameVector[frameEx.first].emplace_back(std::move(frameEx.second));
 
 		auto found = false;
 		for (auto mit = frameVector[0].begin(); mit != frameVector[0].end(); ++mit)
