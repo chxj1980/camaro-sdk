@@ -66,14 +66,14 @@ void Loop()
 	}
 }
 
-//#define CAMARO_DUAL 
-#define CAMARO_SOLO
-//#define 	STD_UVC
+#define CAMARO_DUAL 
+//#define CAMARO_SOLO
+//#define STD_UVC
 
 void main()
 {
 	FrameDemo demo;
-	auto deepcam = TopGear::DeepCamAPI::Instance();
+	TopGear::DeepCamAPI::Initialize();
 #ifdef STD_UVC
 	//auto uvcDevices = deepcam.EnumerateDevices(TopGear::DeviceType::Standard);
 	std::shared_ptr<TopGear::IVideoStream> uvc;
@@ -81,7 +81,7 @@ void main()
 	//{
 	//	std::cout << dev->GetFriendlyName() << std::endl;
 	//	std::cout << dev->GetSymbolicLink() << std::endl;
-		uvc = deepcam.CreateCamera(TopGear::Camera::StandardUVC);
+		uvc = TopGear::DeepCamAPI::CreateCamera(TopGear::Camera::StandardUVC);
 		if (uvc)
 		{
 			auto formats = uvc->GetAllFormats();
@@ -113,9 +113,9 @@ void main()
 	//	std::cout << item->GetSymbolicLink() << std::endl;
 	//	std::cout << item->GetDeviceInfo() << std::endl;
 		//Create a Camaro instance 
-		camaro = deepcam.CreateCamera(TopGear::Camera::Camaro);
-		auto ioControl = deepcam.QueryInterface<TopGear::IDeviceControl>(camaro);
-		auto cameraControl = deepcam.QueryInterface<TopGear::ICameraControl>(camaro);
+		camaro = TopGear::DeepCamAPI::CreateCamera(TopGear::Camera::Camaro);
+		auto ioControl = TopGear::DeepCamAPI::QueryInterface<TopGear::IDeviceControl>(camaro);
+		auto cameraControl = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camaro);
 		if (camaro && ioControl && cameraControl)
 		{
 			auto formats = camaro->GetAllFormats();
@@ -154,7 +154,7 @@ void main()
 	}
 #elif defined CAMARO_DUAL
 	//auto devices = deepcam.EnumerateDevices(TopGear::DeviceType::DeepGlint);
-	auto dual = deepcam.CreateCamera(TopGear::Camera::CamaroDual);
+	auto dual = TopGear::DeepCamAPI::CreateCamera(TopGear::Camera::CamaroDual);
 	if (dual)
 	{
 		TopGear::IVideoStream::RegisterFrameCallback(*dual, &FrameDemo::OnFrameMember, &demo);

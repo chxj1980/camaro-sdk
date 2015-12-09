@@ -51,23 +51,23 @@ namespace TopGear
 	class DEEPCAM_API DeepCamAPI
 	{
 	public:
-		static DeepCamAPI &Instance();
+		static void Initialize();
 
-		std::shared_ptr<IVideoStream> CreateCamera(Camera camera);
-
-		template<class T>
-		std::shared_ptr<T> QueryInterface(std::shared_ptr<IVideoStream> &vs) const;
+		static std::shared_ptr<IVideoStream> CreateCamera(Camera camera);
 
 		template<class T>
-		bool GetProperty(std::shared_ptr<IVideoStream> &stream, std::string name, T &value);
+		static std::shared_ptr<T> QueryInterface(std::shared_ptr<IVideoStream> &vs);
 
 		template<class T>
-		bool SetProperty(std::shared_ptr<IVideoStream> &stream, std::string name, T &value);
+		static bool GetProperty(std::shared_ptr<IVideoStream> &stream, std::string name, T &value);
+
+		template<class T>
+		static bool SetProperty(std::shared_ptr<IVideoStream> &stream, std::string name, T &value);
 
 		~DeepCamAPI();
 	private:
 		DeepCamAPI();
-		
+		DeepCamAPI(DeepCamAPI &) = delete;
 	};
 	// ReSharper restore CppFunctionIsNotImplemented
 }

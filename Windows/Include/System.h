@@ -11,21 +11,19 @@ namespace TopGear
 		public:
 			static void Initialize()
 			{
-				if (inited)
-					return;
 				CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 				MFStartup(MF_VERSION, MFSTARTUP_LITE);
-				inited = true;
 			}
 
 			static void Dispose()
 			{
-				if (inited)
+				try
 				{
 					MFShutdown();
-					CoUninitialize();
-					inited = false;
 				}
+				catch(...)
+				{ }
+				CoUninitialize();
 			}
 
 			template<typename T>
@@ -44,7 +42,6 @@ namespace TopGear
 			~System() {}
 		private:
 			System() {}
-			static bool inited;
 		};
 	}
 }
