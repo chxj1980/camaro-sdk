@@ -16,24 +16,19 @@ namespace TopGear
 				instance = std::unique_ptr<Logger>(new Logger);
 		}
 
-		//static std::ostream &Info;
+		//static std::shared_ptr<spdlog::logger> &Instance()
+		//{
+		//	return instance->logger;
+		//}
 
-		static std::shared_ptr<spdlog::logger> GetLogger()
-		{
-			if (instance == nullptr)
-				return {};
-			return instance->logger;
-		}
+		static void Write(spdlog::level::level_enum level, const std::string &text);
 
 		static bool SwitchStdout(bool enable);
 		static bool SwitchDaily(bool enable);
 #ifdef __linux__
 		static bool SwitchSyslog(bool enable);
 #endif
-		~Logger()
-		{
-			//spdlog::drop_all();
-		}
+		~Logger() {}
 	private:
 		Logger();
 		std::shared_ptr<spdlog::sinks::dist_sink_mt> dist_sink;

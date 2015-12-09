@@ -158,6 +158,7 @@
     <ClCompile Include="..\..\..\Common\Source\DeepCamAPI.cpp" />
     <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
     <ClCompile Include="..\..\..\Common\Source\jsoncpp.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\Logger.cpp" />
     <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp" />
     <ClCompile Include="..\..\Source\DGExtensionFilter.cpp" />
     <ClCompile Include="..\..\Source\ExtensionAccess.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="..\..\..\Common\Include\IVideoStream.h" />
     <ClInclude Include="..\..\..\Common\Include\json-forwards.h" />
     <ClInclude Include="..\..\..\Common\Include\json.h" />
+    <ClInclude Include="..\..\..\Common\Include\Logger.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardUVC.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardUVCFilter.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardVCDevice.h" />

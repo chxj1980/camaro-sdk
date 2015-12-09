@@ -67,13 +67,16 @@ void Loop()
 }
 
 #define CAMARO_DUAL 
-//#define CAMARO_SOLO
+#define CAMARO_SOLO
 //#define STD_UVC
 
 void main()
 {
 	FrameDemo demo;
 	TopGear::DeepCamAPI::Initialize();
+	//TopGear::DeepCamAPI::EnableLog(TopGear::LogType::Standard | TopGear::LogType::DailyFile);
+	TopGear::DeepCamAPI::SetLogLevel(TopGear::Level::Info);
+	TopGear::DeepCamAPI::WriteLog(TopGear::Level::Info, "Initialized");
 #ifdef STD_UVC
 	//auto uvcDevices = deepcam.EnumerateDevices(TopGear::DeviceType::Standard);
 	std::shared_ptr<TopGear::IVideoStream> uvc;

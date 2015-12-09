@@ -8,6 +8,7 @@
 #include "VideoSourceReader.h"
 #include "CamaroDual.h"
 #include "ExtensionVCDevice.h"
+#include <Logger.h>
 
 namespace TopGear
 {
@@ -32,7 +33,10 @@ namespace TopGear
 		{
 			auto reader = VideoSourceReader::CreateVideoStream(device);
 			if (reader == nullptr)
+			{
+				Logger::Write(spdlog::level::warn, "No standard UVC camera");
 				return{};
+			}
 			return std::make_shared<StandardUVC>(reader);
 		}
 
@@ -83,8 +87,11 @@ namespace TopGear
 					slave = std::static_pointer_cast<IVideoStream>(camera);
 				}
 				if (master != nullptr && slave != nullptr)
+				{
 					return std::make_shared<CamaroDual>(master, slave);
+				}
 			}
+			Logger::Write(spdlog::level::warn, "No Camaro stereo camera");
 			return{};
 		}
 

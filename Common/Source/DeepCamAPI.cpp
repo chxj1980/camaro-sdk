@@ -10,6 +10,7 @@
 #include "IMultiVideoStream.h"
 #include "StandardVCDevice.h"
 #include "CameraProfile.h"
+#include "Logger.h"
 
 #ifdef _WIN32
 	#include "System.h"
@@ -115,7 +116,7 @@ namespace TopGear
 					(ffd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0)
 				{
 					std::wstring filename(ffd.cFileName);
-					int offset = int(filename.length()) - int(ConfigSuffix.length());
+					auto offset = int(filename.length()) - int(ConfigSuffix.length());
 					if (offset < 0 || filename.substr(offset) != ConfigSuffix)
 						continue;
 					std::ifstream config_doc(filename, std::ifstream::binary);
@@ -176,18 +177,38 @@ namespace TopGear
 		//return *DeepCamAPIInternal::Instance;
 	}
 
+	DEEPCAM_API void DeepCamAPI::SetLogLevel(Level level)
+	{
+		spdlog::set_level(spdlog::level::level_enum(int(level)));
+	}
+
+	DEEPCAM_API void DeepCamAPI::EnableLog(uint8_t flag)
+	{
+		Logger::SwitchStdout((flag & LogType::Standard) != 0);
+		Logger::SwitchDaily((flag & LogType::DailyFile) != 0);
+#ifdef __linux__
+		Logger::SwitchSyslog((flag & LogType::Syslog) != 0);
+#endif
+	}
+
+	DEEPCAM_API void DeepCamAPI::WriteLog(Level level, const std::string &text)
+	{
+		Logger::Write(spdlog::level::level_enum(int(level)), text);
+	}
+
 	DeepCamAPI::DeepCamAPI()
 	{
-		std::cout << "Initialize" << std::endl;
+		//std::cout << "Initialize" << std::endl;
 #ifdef _WIN32
 		System::Initialize();
 #endif
+		Logger::Initialize();
 		DeepCamAPIInternal::LoadCameraConfigs();
 	}
 
 	DeepCamAPI::~DeepCamAPI()
 	{
-		std::cout << "Uninitialize" << std::endl;
+		//std::cout << "Uninitialize" << std::endl;
 #ifdef _WIN32
 		System::Dispose();
 #endif
@@ -227,7 +248,11 @@ namespace TopGear
 		case Camera::StandardUVC:
 			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceType::Standard);
 			if (inventory.size() > 0)
+			{
 				vs = CameraFactory<StandardUVC>::CreateInstance(inventory[0]);
+				if (vs)
+					Logger::Write(spdlog::level::info, "Standard UVC camera created");
+			}
 			break;
 		case Camera::Camaro:
 			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceType::DeepGlint);
@@ -240,7 +265,12 @@ namespace TopGear
 					PropertyData<uint8_t> role;
 					dc->GetControl("DeviceRole", role);
 					if (role.Payload == 0)
+					{
+						Logger::Write(spdlog::level::info, "Camaro camera created");
 						break;
+					}
+					else
+						Logger::Write(spdlog::level::warn, "Camaro camera found, but in slave mode");
 				}
 				vs.reset();
 			}
@@ -248,6 +278,8 @@ namespace TopGear
 		case Camera::CamaroDual:
 			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceType::DeepGlint);
 			vs = CameraFactory<CamaroDual>::CreateInstance(inventory);
+			if (vs)
+				Logger::Write(spdlog::level::info, "Camaro stereo camera created");
 			break;
 		case Camera::Etron3D:
 			break;
