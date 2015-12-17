@@ -20,8 +20,9 @@ namespace TopGear
 		virtual ~BufferQueue();
 		BufferQueue(const BufferQueue&) = delete;            // disable copying
 		BufferQueue& operator=(const BufferQueue&) = delete; // disable assignment
-		bool Push(const T &item);
-		bool Pop(T &item, bool noWait = false);	//Keep waiting until any item popped, if noWait is true
+		bool Push(T item);
+		bool Pop(T &item);	//Keep waiting until any item popped, if noWait is true
+		bool Pop_NoWait(T &item);
 		void Discard();		//Stop popping waiting
 		bool Empty();
 	private:
@@ -36,7 +37,6 @@ namespace TopGear
 	BufferQueue<T>::BufferQueue(size_t limit)
 		:sizeLimit(limit), discarded(false)
 	{
-		std::this_thread::get_id();
 	}
 
 	template <class T>
@@ -45,14 +45,13 @@ namespace TopGear
 	}
 
 	template <class T>
-	bool BufferQueue<T>::Push(const T &item)
+	bool BufferQueue<T>::Push(T item)
 	{
-		std::unique_lock<std::mutex> mlock(mtx);
+        std::lock_guard<std::mutex> lk(mtx);
 		auto result = false;
 		if (sizeLimit == 0 || queue.size() < sizeLimit)
 		{
-			queue.push(item);
-			mlock.unlock();
+			queue.push(std::move(item));
 			cond.notify_one();
 			result = true;
 		}
@@ -60,19 +59,28 @@ namespace TopGear
 	}
 
 	template <class T>
-	inline bool BufferQueue<T>::Pop(T &item, bool noWait)
+	bool BufferQueue<T>::Pop_NoWait(T& item)
 	{
-		std::unique_lock<std::mutex> mlock(mtx);
-		discarded = false;
-		if (noWait && queue.empty())
+		std::lock_guard<std::mutex> lk(mtx);
+		if (queue.empty())
 			return false;
-		while (queue.empty())
+		item = std::move(queue.front());
+		queue.pop();
+		return true;
+	}
+
+	template <class T>
+	inline bool BufferQueue<T>::Pop(T &item)
+	{
+		std::unique_lock<std::mutex> lk(mtx);
+		discarded = false;
+        while (queue.empty())
 		{
-			cond.wait(mlock);
+			cond.wait(lk);
 			if (discarded)
 				return false;
-		}
-		item = queue.front();
+        }
+        item = std::move(queue.front());
 		queue.pop();
 		return true;
 	}
@@ -80,19 +88,16 @@ namespace TopGear
 	template <class T>
 	void BufferQueue<T>::Discard()
 	{
-		std::unique_lock<std::mutex> mlock(mtx);
+        std::lock_guard<std::mutex> lk(mtx);
 		discarded = true;
-		mlock.unlock();
 		cond.notify_one();
 	}
 
 	template <class T>
 	bool BufferQueue<T>::Empty()
 	{
-		mtx.lock();
-		auto empty = queue.empty();
-		mtx.unlock();
-		return empty;
+        std::lock_guard<std::mutex> lk(mtx);
+        return queue.empty();
 	}
 }
 

@@ -28,6 +28,12 @@ namespace TopGear
 				return actualStride*height;
 			}
 
+			virtual void GetSize(int &w, int &h) override
+			{
+				w = width;
+				h = height;
+			}
+
 			explicit VideoBufferLock(IMFMediaBuffer *pBuffer,
 				LONGLONG timestamp, //In 100-nanosecond
 				LONG lDefaultStride, DWORD dwWidthInPixels, DWORD dwHeightInPixels)

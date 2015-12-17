@@ -22,7 +22,7 @@
     <ProjectGuid>{F7EC1922-2D7F-4A9F-9559-EE20875F0BD7}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>DynamicAPILib</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -155,9 +155,12 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\Common\Source\Camaro.cpp" />
     <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\CameraProfile.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\DeepCamAPI.cpp" />
     <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\jsoncpp.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\Logger.cpp" />
     <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp" />
-    <ClCompile Include="..\..\Source\DeepCamAPI.cpp" />
     <ClCompile Include="..\..\Source\DGExtensionFilter.cpp" />
     <ClCompile Include="..\..\Source\ExtensionAccess.cpp" />
     <ClCompile Include="..\..\Source\ExtensionFilterBase.cpp" />
@@ -173,8 +176,10 @@
     <ClInclude Include="..\..\..\Common\Include\CamaroDual.h" />
     <ClInclude Include="..\..\..\Common\Include\CameraBase.h" />
     <ClInclude Include="..\..\..\Common\Include\CameraSoloBase.h" />
+    <ClInclude Include="..\..\..\Common\Include\CameraProfile.h" />
     <ClInclude Include="..\..\..\Common\Include\DeepCamAPI.h" />
     <ClInclude Include="..\..\..\Common\Include\DeviceDecorator.h" />
+    <ClInclude Include="..\..\..\Common\Include\ExtensionAccessAdapter.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionInfo.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionRepository.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionVCDevice.h" />
@@ -194,6 +199,9 @@
     <ClInclude Include="..\..\..\Common\Include\IValidation.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoFrame.h" />
     <ClInclude Include="..\..\..\Common\Include\IVideoStream.h" />
+    <ClInclude Include="..\..\..\Common\Include\json-forwards.h" />
+    <ClInclude Include="..\..\..\Common\Include\json.h" />
+    <ClInclude Include="..\..\..\Common\Include\Logger.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardUVC.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardUVCFilter.h" />
     <ClInclude Include="..\..\..\Common\Include\StandardVCDevice.h" />
@@ -212,6 +220,11 @@
     <ClInclude Include="..\..\Include\System.h" />
     <ClInclude Include="..\..\Include\VideoBufferLock.h" />
     <ClInclude Include="..\..\Include\VideoSourceReader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Common\camaro.profile.json">
+      <DeploymentContent>true</DeploymentContent>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

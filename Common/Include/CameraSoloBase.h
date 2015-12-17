@@ -6,8 +6,8 @@ namespace TopGear
 	class CameraSoloBase: public CameraBase
 	{
 	protected:
-		explicit CameraSoloBase(std::shared_ptr<IVideoStream> &vs)
-			:CameraBase(), pReader(vs)
+		explicit CameraSoloBase(std::shared_ptr<IVideoStream> &vs, CameraProfile &con = CameraProfile::NullObject())
+			:CameraBase(con), pReader(vs)
 		{
 			videoStreams.emplace_back(vs);
 		}

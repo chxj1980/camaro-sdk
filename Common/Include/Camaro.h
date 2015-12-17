@@ -5,6 +5,7 @@
 #include "IDeviceControl.h"
 #include "CameraSoloBase.h"
 #include "ILowlevelControl.h"
+#include "ExtensionAccessAdapter.h"
 
 
 namespace TopGear
@@ -29,10 +30,14 @@ namespace TopGear
 		virtual bool StartStream() override;
 		virtual bool StopStream() override;
 
-		virtual int SetSensorTrigger(uint8_t level) override;
-		virtual int SetResyncNumber(uint16_t resyncNum) override;
-		virtual int QueryDeviceRole() override;
-		virtual std::string QueryDeviceInfo() override;
+		virtual bool SetControl(std::string name, IPropertyData &val) override;
+		virtual bool SetControl(std::string name, IPropertyData &&val) override;
+		virtual bool GetControl(std::string name, IPropertyData &val) override;
+
+		//virtual int SetSensorTrigger(uint8_t level) override;
+		//virtual int SetResyncNumber(uint16_t resyncNum) override;
+		//virtual int QueryDeviceRole() override;
+		//virtual std::string QueryDeviceInfo() override;
 
 		//advanced device controls (on EP0)
 		virtual int SetRegisters(uint16_t regaddr[], uint16_t regval[], int num) override;
@@ -41,32 +46,37 @@ namespace TopGear
 		virtual int SetRegister(uint16_t regaddr, uint16_t regval) override;
 		virtual int GetRegister(uint16_t regaddr, uint16_t &regval) override;
 	protected:
-		enum class ControlCode
-		{
-			Trigger = 1,
-			DeviceInfo = 2,
-			DeviceRole = 3,
-			RegisterAccess = 4,
-			Resync = 5,
-		};
+		//enum class ControlCode
+		//{
+		//	Trigger = 1,
+		//	DeviceInfo = 2,
+		//	DeviceRole = 3,
+		//	RegisterAccess = 4,
+		//	Resync = 5,
+		//};
+
 
 		void OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr> &frames);
-		std::shared_ptr<IExtensionAccess> extension;
+		//std::shared_ptr<IExtensionAccess> extension;
+		ExtensionAccessAdapter extensionAdapter;
 		VideoFrameCallbackFn fnCb = nullptr;
 		std::vector<VideoFormat> formats;
 		int currentFormatIndex = -1;
 	private:
 		static const int EMBEDDED_LINES = 2;
 		void ObtainExtendedLines();
-		int header;
-		int footer;
+		int header = 0;
+		int footer = 0;
+		const RegisterMap * registerMap = nullptr;
 	public:
 		virtual int Flip(bool vertical, bool horizontal) override;
 		virtual int GetExposure(uint16_t& val) override;
 		virtual int SetExposure(uint16_t val) override;
 		virtual int GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB) override;
 		virtual int SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB) override;
-		Camaro(std::shared_ptr<IVideoStream> &vs, std::shared_ptr<IExtensionAccess> &ex);
+		Camaro(std::shared_ptr<IVideoStream> &vs, 
+			   std::shared_ptr<IExtensionAccess> &ex,
+			CameraProfile &con = CameraProfile::NullObject());
 		virtual ~Camaro();
 	};
 }

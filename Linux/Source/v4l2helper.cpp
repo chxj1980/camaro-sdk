@@ -132,13 +132,6 @@ std::string GetDescPathFromBusInfo(const std::string busInfo,
     auto busStr = busInfo.substr(0,pos);
     auto locationStr = busInfo.substr(pos+1,rpos-pos-1);
     auto terminalStr = busInfo.substr(rpos+1);
-    std::string subStr;
-    pos = terminalStr.find('.');
-    if (pos!=std::string::npos)
-    {
-        subStr = terminalStr;
-        terminalStr = subStr.substr(0,pos);
-    }
 
     std::string locationPath;
     if (SearchDir(BUS_BASE_PATH,locationStr,locationPath))
@@ -150,22 +143,26 @@ std::string GetDescPathFromBusInfo(const std::string busInfo,
         {
             auto offset = busName.find(busStr) + busStr.length();
             auto prefix= busName.substr(offset)+"-";
-            auto specficPath = locationPath+"/"+busName+"/"+prefix+terminalStr;
+            std::string end;
+            size_t pos = 0;
+            while((pos = terminalStr.find('.', pos))!=std::string::npos)
+            {
+                end += prefix + terminalStr.substr(0, pos) + "/";
+                pos++;
+            }
+            end += prefix + terminalStr;
+            auto specficPath = locationPath+"/"+busName+"/"+end;
+
             if (!MatchPath(specficPath,S_IFDIR))
                 continue;
-            if (!subStr.empty())
-            {
-                specficPath += "/"+prefix+subStr;
-                if (!MatchPath(specficPath,S_IFDIR))
-                    continue;
-            }
+
             auto destPath = specficPath + "/"+DEST_FILE;
             auto prodPath = specficPath + "/"+PRODUCT_FILE;
             if (MatchPath(destPath,S_IFREG) && MatchPath(prodPath,S_IFREG))
             {
                 std::ifstream fp(prodPath.c_str());
                 std::string fileVal;
-                fp>>fileVal;
+                std::getline (fp, fileVal);
                 fp.close();
                 if (fileVal!=productName)
                     continue;

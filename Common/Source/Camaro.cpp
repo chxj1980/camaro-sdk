@@ -7,6 +7,8 @@ using namespace TopGear;
 
 int Camaro::SetRegisters(uint16_t regaddr[], uint16_t regval[], int num)
 {
+	if (config.RegisterCode == 0)
+		return false;
 	std::array<uint8_t, 50> data;
 	data[0] = 1;  //write registers
 	data[1] = num;
@@ -17,11 +19,13 @@ int Camaro::SetRegisters(uint16_t regaddr[], uint16_t regval[], int num)
 		data[26 + (i << 1)] = regval[i] >> 8;    //high data
 		data[27 + (i << 1)] = regval[i] & 0xff;    //low data
 	}
-	return extension->SetProperty(static_cast<int>(ControlCode::RegisterAccess), data);
+	return extensionAdapter.Source().SetProperty(config.RegisterCode, data);
 }
 
 int Camaro::GetRegisters(uint16_t regaddr[], uint16_t regval[], int num)
 {
+	if (config.RegisterCode == 0)
+		return false;
 	std::array<uint8_t, 50> prop;
 	prop[0] = 0;  //read registers
 	prop[1] = num;
@@ -32,11 +36,11 @@ int Camaro::GetRegisters(uint16_t regaddr[], uint16_t regval[], int num)
 		prop[3 + (i << 1)] = regaddr[i] & 0xff;  //low addr
 	}
 
-	auto res = extension->SetProperty(static_cast<int>(ControlCode::RegisterAccess), prop);
+	auto res = extensionAdapter.Source().SetProperty(config.RegisterCode, prop);
 	if (res)
 		return res;
 	auto len = 0;
-	auto data = extension->GetProperty(static_cast<int>(ControlCode::RegisterAccess), len);
+	auto data = extensionAdapter.Source().GetProperty(config.RegisterCode, len);
 
 	if (data == nullptr || len<(3+(num<<1)))
 		return -1;
@@ -58,8 +62,25 @@ inline int Camaro::GetRegister(uint16_t regaddr, uint16_t &regval)
 
 void Camaro::ObtainExtendedLines()
 {
+	if (registerMap == nullptr)
+		return;
 	uint16_t val = 0;
-	GetRegister(0x3064, val);	//AR0134_RR_D P.17
+	try 
+	{
+		auto addrs = registerMap->at("EmbeddedData").AddressArray;
+		if (addrs.size() != 1)
+			return;
+		GetRegister(addrs[0], val);	//AR0134_RR_D P.17
+	}
+	catch (const std::out_of_range&) 
+	{
+		header = 0;
+		footer = 0;
+		return;
+		//std::cerr << "Out of Range error: " << oor.what() << '\n';
+	}
+	
+	//GetRegister(0x3064, val);	//AR0134_RR_D P.17
 	auto enH = (val & (1 << 8));
 	auto enF = enH ? val & (1 << 7) : false;
 	header = enH ? EMBEDDED_LINES : 0;
@@ -99,45 +120,133 @@ int Camaro::Flip(bool vertical, bool horizontal)
 		val |= (1 << 15);
 	if (horizontal)
 		val |= (1 << 14);
-	return SetRegister(0x3040, val);
-}
-
-int Camaro::SetSensorTrigger(uint8_t level)
-{
-	return extension->SetProperty(static_cast<int>(ControlCode::Trigger), level);
-}
-
-int Camaro::SetResyncNumber(uint16_t resyncNum)
-{
-	std::array<uint8_t, 3> data;
-	data[0] = 1;  //write registers
-	data[1] = resyncNum >> 8;
-	data[2] = resyncNum & 0xff;
-	return extension->SetProperty(static_cast<int>(ControlCode::Resync), data);
-}
-
-int Camaro::QueryDeviceRole()
-{
-	auto len = 0;
-	auto data = extension->GetProperty(static_cast<int>(ControlCode::DeviceRole), len);
-	if (data==nullptr || len<2)
-		return -1;
-	return data[1];
-}
-
-std::string Camaro::QueryDeviceInfo()
-{
-	auto len = 0;
-	auto data = extension->GetProperty(static_cast<int>(ControlCode::DeviceInfo), len);
-
-	if (data == nullptr)
+	auto result = -1;
+	try
 	{
-		//std::cout<<"Unable to get property value\n";
-		return "";
+		auto addrs = registerMap->at("Flip").AddressArray;
+		if (addrs.size() != 1)
+			return result;
+		result = SetRegister(addrs[0], val);
 	}
-	std::string info(reinterpret_cast<char *>(data.get()));
-	return info;
+	catch (const std::out_of_range&)
+	{
+	}
+	//return SetRegister(0x3040, val);
+	return result;
 }
+
+bool Camaro::SetControl(std::string name, IPropertyData &&val)
+{
+	auto& obj = val;
+	return SetControl(name, obj);
+}
+
+bool Camaro::SetControl(std::string name, IPropertyData &val)
+{
+	if (&config == &CameraProfile::NullObject())
+		return false;
+	auto it = config.XuControls.find(name);
+	if (it != config.XuControls.end())
+	{
+		if (it->second.TypeHash != val.GetTypeHash())
+			return false;
+		if (it->second.Attribute.find('w') == std::string::npos)
+			return false;
+		//Find fixed prefix
+		auto pit = it->second.Payloads.find("w");
+		size_t prefixLen = 0;
+		uint8_t *pPrefix = nullptr;
+		if (pit != it->second.Payloads.end())
+		{
+			pPrefix = pit->second.second.data();
+			prefixLen = pit->second.second.size();
+		}
+
+		if (val.GetTypeHash() == typeid(uint8_t).hash_code())
+			return extensionAdapter.SetProperty<uint8_t>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+		if (val.GetTypeHash() == typeid(uint16_t).hash_code())
+			return extensionAdapter.SetProperty<uint16_t>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+		if (val.GetTypeHash() == typeid(int).hash_code())
+			return extensionAdapter.SetProperty<int32_t>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+		if (val.GetTypeHash() == typeid(std::string).hash_code())
+			return extensionAdapter.SetProperty<std::string>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+		if (val.GetTypeHash() == typeid(std::vector<uint8_t>).hash_code())
+			return extensionAdapter.SetProperty<std::vector<uint8_t>>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+	}
+	return false;
+}
+bool Camaro::GetControl(std::string name, IPropertyData &val)
+{
+	if (&config == &CameraProfile::NullObject())
+		return false;
+	auto it = config.XuControls.find(name);
+	if (it != config.XuControls.end())
+	{
+		if (it->second.TypeHash != val.GetTypeHash())
+			return false;
+		if (it->second.Attribute.find('r') == std::string::npos)
+			return false;
+		//Find fixed prefix
+		auto pit = it->second.Payloads.find("r");
+		size_t prefixLen = 0;
+		uint8_t *pPrefix = nullptr;
+		if (pit != it->second.Payloads.end())
+		{
+			if (pit->second.first)	//Need verify prefix
+				pPrefix = pit->second.second.data();
+			prefixLen = pit->second.second.size();
+		}
+
+		if (val.GetTypeHash() == typeid(uint8_t).hash_code())
+			return extensionAdapter.GetProperty<uint8_t>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+		if (val.GetTypeHash() == typeid(uint16_t).hash_code())
+			return extensionAdapter.GetProperty<uint16_t>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+		if (val.GetTypeHash() == typeid(int).hash_code())
+			return extensionAdapter.GetProperty<int32_t>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+		if (val.GetTypeHash() == typeid(std::string).hash_code())
+			return extensionAdapter.GetProperty<std::string>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+		if (val.GetTypeHash() == typeid(std::vector<uint8_t>).hash_code())
+			return extensionAdapter.GetProperty<std::vector<uint8_t>>(it->second.Code, val, pPrefix, prefixLen, it->second.IsBigEndian);
+	}
+	return false;
+}
+
+//int Camaro::SetSensorTrigger(uint8_t level)
+//{
+//	return extension->SetProperty(static_cast<int>(ControlCode::Trigger), level);
+//}
+//
+//int Camaro::SetResyncNumber(uint16_t resyncNum)
+//{
+//	std::array<uint8_t, 3> data;
+//	data[0] = 1;  //write registers
+//	data[1] = resyncNum >> 8;
+//	data[2] = resyncNum & 0xff;
+//	return extension->SetProperty(static_cast<int>(ControlCode::Resync), data);
+//}
+//
+//int Camaro::QueryDeviceRole()
+//{
+//	auto len = 0;
+//	auto data = extension->GetProperty(static_cast<int>(ControlCode::DeviceRole), len);
+//	if (data==nullptr || len<2)
+//		return -1;
+//	return data[1];
+//}
+//
+//std::string Camaro::QueryDeviceInfo()
+//{
+//	auto len = 0;
+//	auto data = extension->GetProperty(static_cast<int>(ControlCode::DeviceInfo), len);
+//
+//	if (data == nullptr)
+//	{
+//		//std::cout<<"Unable to get property value\n";
+//		return "";
+//	}
+//	std::string info(reinterpret_cast<char *>(data.get()));
+//	return info;
+//}
 
 //////////////////////////////////////////////////
 //    aptina specific
@@ -150,12 +259,36 @@ std::string Camaro::QueryDeviceInfo()
 
 inline int Camaro::GetExposure(uint16_t& val)
 {
-	return GetRegister(0x3012, val);
+	auto result = -1;
+	try
+	{
+		auto addrs = registerMap->at("Exposure").AddressArray;
+		if (addrs.size() != 1)
+			return result;
+		result = GetRegister(addrs[0], val);	//AR0134_RR_D P.17
+	}
+	catch (const std::out_of_range&)
+	{
+	}
+	//return GetRegister(0x3012, val);
+	return result;
 }
 
 inline int Camaro::SetExposure(uint16_t val)
 {
-	return SetRegister(0x3012, val);
+	auto result = -1;
+	try
+	{
+		auto addrs = registerMap->at("Exposure").AddressArray;
+		if (addrs.size() != 1)
+			return result;
+		result = SetRegister(addrs[0], val);
+	}
+	catch (const std::out_of_range&)
+	{
+	}
+	//return SetRegister(0x3012, val);
+	return result;
 }
 
 /*
@@ -165,26 +298,55 @@ the step size for yyyyy is 0.03125(1/32), while the step size of xxx is 1.
 */
 int Camaro::GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB)
 {
-	uint16_t regaddr[4]{ 0x3056, 0x305C, 0x305A, 0x3058 }; //AR0134 DG page 4, Gr/Gb/R/B
+	auto result = -1;
 	uint16_t val[4];
-	auto r = GetRegisters(regaddr, val, 4);
-	gainR = val[2];
-	gainB = val[3];
-	gainG = val[0];
-	//gainGb = val[1];
-	return r;
+	try
+	{
+		auto addrs = registerMap->at("Gain").AddressArray;
+		if (addrs.size() != 4)
+			return result;
+		result = GetRegisters(addrs.data(), val, 4);
+		gainR = val[2];
+		gainB = val[3];
+		gainG = val[0];
+		//gainGb = val[1];
+	}
+	catch (const std::out_of_range&)
+	{
+	}
+	//uint16_t regaddr[4]{ 0x3056, 0x305C, 0x305A, 0x3058 }; //AR0134 DG page 4, Gr/Gb/R/B
+	//auto r = GetRegisters(regaddr, val, 4);
+	return result;
 }
 
 int Camaro::SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB)
 {
-	uint16_t regaddr[4]{ 0x3056,0x305C, 0x305A, 0x3058 };//AR0134 DG page 4
+	//uint16_t regaddr[4]{ 0x3056,0x305C, 0x305A, 0x3058 };//AR0134 DG page 4
 	uint16_t val[4]{ gainG, gainG, gainR, gainB };
-	return SetRegisters(regaddr, val, 4);
+	//return SetRegisters(regaddr, val, 4);
+	auto result = -1;
+	try
+	{
+		auto addrs = registerMap->at("Gain").AddressArray;
+		if (addrs.size() != 4)
+			return result;
+		result = SetRegisters(addrs.data(), val, 4);
+	}
+	catch (const std::out_of_range&)
+	{
+	}
+	return result;
 }
 
-Camaro::Camaro(std::shared_ptr<IVideoStream>& vs, std::shared_ptr<IExtensionAccess>& ex)
-	: CameraSoloBase(vs), extension(ex)
+Camaro::Camaro(std::shared_ptr<IVideoStream>& vs, 
+	std::shared_ptr<IExtensionAccess>& ex,
+	CameraProfile &con)
+	: CameraSoloBase(vs, con), extensionAdapter(ex)
 {
+	PropertyData<std::string> info;
+	if (Camaro::GetControl("DeviceInfo", info))
+		registerMap = config.QueryRegisterMap(info.Payload);
+
 	vs->RegisterFrameCallback(std::bind(&Camaro::OnFrame, this, std::placeholders::_1, std::placeholders::_2));
 	ObtainExtendedLines();
     formats = pReader->GetAllFormats();
@@ -250,13 +412,16 @@ bool Camaro::StartStream()
 	if (currentFormatIndex < 0)
 		return false;
 
-	SetSensorTrigger(0);
-	SetResyncNumber(900);
-	Flip(true, false);
+	SetControl("Trigger", PropertyData<uint8_t>(0));
+    SetControl("Resync", PropertyData<uint16_t>(900));
+	//SetSensorTrigger(0);
+	//SetResyncNumber(900);
+    //Flip(true, false);
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	if (CameraSoloBase::StartStream())
 	{
-		SetSensorTrigger(1);
+		SetControl("Trigger", PropertyData<uint8_t>(1));
+//		SetSensorTrigger(1);
 		return true;
 	}
 	return false;
@@ -265,6 +430,7 @@ bool Camaro::StartStream()
 bool Camaro::StopStream()
 {
 	CameraSoloBase::StopStream();
-	SetSensorTrigger(0);
+	SetControl("Trigger", PropertyData<uint8_t>(0));
+	//SetSensorTrigger(0);
 	return true;
 }

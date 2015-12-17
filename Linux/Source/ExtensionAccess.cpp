@@ -34,13 +34,26 @@ std::unique_ptr<uint8_t[]> ExtensionAccess::GetProperty(int index, int& len)
 
 int ExtensionAccess::SetProperty(int index, const uint8_t* data, size_t size)
 {
+    auto len = extensionAgent->GetLen(index);
+    if (len<size)
+        return -1;
+
     uvc_xu_control_query qry;
     qry.unit = unitId;//XU unit id
     qry.selector = index;
-    qry.size = size;
+    qry.size = len;
     qry.query = UVC_SET_CUR;
-    qry.data = const_cast<uint8_t *>(data);
-    return ioctl(handle,UVCIOC_CTRL_QUERY, &qry);
+
+    std::unique_ptr<uint8_t[]> payload;
+    if (len==size)
+        qry.data = const_cast<uint8_t *>(data);
+    else
+    {
+        payload = std::unique_ptr<uint8_t[]>(new uint8_t[len]);
+        std::memcpy(payload.get(), data, size);
+        qry.data = payload.get();
+    }
+    return ioctl(handle, UVCIOC_CTRL_QUERY, &qry);
 }
 
 ExtensionAccess::~ExtensionAccess()

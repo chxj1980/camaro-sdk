@@ -41,6 +41,12 @@ namespace TopGear
 			return actualStride*actualHeight;
 		}
 
+		virtual void GetSize(int &width, int &height) override
+		{
+			width = actualWidth;
+			height = actualHeight;
+		}
+
 		explicit VideoFrameEx(std::shared_ptr<IVideoFrame> &vf,
 			uint32_t headOffset, uint32_t stride, uint32_t width, uint32_t height, uint16_t index,
 			uint32_t extraOffset, uint32_t extraSize

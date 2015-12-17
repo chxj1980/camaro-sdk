@@ -18,7 +18,7 @@ namespace TopGear
 		virtual void Notify(std::vector<IVideoFramePtr>& payload) override;
 		virtual void Register(std::shared_ptr<IProcessor>& p) override;
 	protected:
-		static const uint16_t RESYNC_NUM = 900;
+		static const uint16_t RESYNC_NUM = 100;
 		std::shared_ptr<TopGear::ICameraControl> masterCC;
 		std::shared_ptr<TopGear::ICameraControl> slaveCC;
 		std::shared_ptr<IDeviceControl> masterDC;
@@ -40,10 +40,14 @@ namespace TopGear
 		virtual int SetExposure(uint16_t val) override;
 		virtual int GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB) override;
 		virtual int SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB) override;
-		virtual int SetSensorTrigger(uint8_t level) override;
-		virtual int SetResyncNumber(uint16_t resyncNum) override;
-		virtual int QueryDeviceRole() override;
-		virtual std::string QueryDeviceInfo() override;
+
+		virtual bool SetControl(std::string name, IPropertyData &val) override;
+		virtual bool SetControl(std::string name, IPropertyData &&val) override;
+		virtual bool GetControl(std::string name, IPropertyData &val) override;
+		//virtual int SetSensorTrigger(uint8_t level) override;
+		//virtual int SetResyncNumber(uint16_t resyncNum) override;
+		//virtual int QueryDeviceRole() override;
+		//virtual std::string QueryDeviceInfo() override;
 		virtual bool StartStream() override;
 		virtual bool StopStream() override;
 		virtual bool IsStreaming() const override;

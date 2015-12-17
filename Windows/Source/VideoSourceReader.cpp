@@ -347,7 +347,7 @@ HRESULT VideoSourceReader::QueryInterface(REFIID riid, void** ppv)
 	static const QITAB qit[] =
 	{
 		QITABENT(VideoSourceReader, IMFSourceReaderCallback),
-		{ 0 },
+		{ nullptr },
 	};
 	return QISearch(this, qit, riid, ppv);
 #pragma warning( pop )
@@ -380,7 +380,7 @@ HRESULT VideoSourceReader::OnReadSample(
 
 	if (pSample)
 	{
-		OutputDebugStringW(L"Frame Arrival\n");
+		//OutputDebugStringW(L"Frame Arrival\n");
 		// Get the video frame buffer from the sample.
 
 		hr = pSample->GetBufferByIndex(streamIndex, &pBuffer);

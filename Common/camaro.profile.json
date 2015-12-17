@@ -1,0 +1,87 @@
+{
+    "profile-version" : "1.0",
+    "camera-name": "Camaro",
+    "camera-version": "1.0",
+    "xu-controls": [
+        {
+            "control-name": "Trigger",
+            "control-code": 1,
+            "attribute": "w",
+            "type": "byte"
+        },
+        {
+            "control-name": "DeviceInfo",
+            "control-code": 2,
+            "attribute": "r",
+            "type": "string"
+        },
+        {
+            "control-name": "DeviceRole",
+            "control-code": 3,
+            "attribute": "r",
+            "type": "byte",
+            "payloads": [
+                {
+                    "attribute": "r",
+                    "prefix": 1
+                }
+            ]
+        },
+        {
+            "control-name": "Resync",
+            "control-code": 5,
+            "attribute": "rw",
+            "type": "ushort",
+            "big-endian" : true,
+            "payloads": [
+                {
+                    "attribute": "w",
+                    "prefix": [ 1 ]
+                },
+                {
+                    "attribute": "r",
+                    "prefix": 1
+                }
+            ]
+        },
+        {
+            "control-name": "Parameters",
+            "control-code": 6,
+            "attribute": "rw",
+            "type": "data"
+        }
+    ],
+    "register-control-code": 4,
+    "sensors" : [
+        {
+            "sensor-identifier" : "DGFA",
+            "register-controls": [
+                {
+                    "control-name": "Exposure",
+                    "register-address": "0x3012",
+                    "attribute": "rw"
+                },
+                {
+                    "control-name": "Gain",
+                    "register-address-array": [
+                        "0x3056",
+                        "0x305C",
+                        "0x305A",
+                        "0x3058"
+                    ],
+                    "attribute": "rw"
+                },
+                {
+                    "control-name": "Flip",
+                    "register-address": "0x3040",
+                    "attribute": "w"
+                },
+                {
+                    "control-name": "EmbeddedData",
+                    "register-address": "0x3064",
+                    "attribute": "r"
+                }
+            ]
+        }
+    ]
+}
