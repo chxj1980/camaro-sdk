@@ -2,7 +2,7 @@
 #ifndef _FRAMERATECOUNTER_H
 #define _FRAMERATECOUNTER_H
 
-#include <pthread.h>
+#include <mutex>
 #include <deque>
 
 
@@ -42,7 +42,7 @@ public:
 protected:
     std::deque<double>  m_frameTime; 
 
-    pthread_mutex_t  m_dequeMutex;
+    std::mutex m_dequeMutex;
 };
 
 #endif // #ifndef _FRAMERATECOUNTER_H

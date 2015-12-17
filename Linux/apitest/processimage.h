@@ -2,7 +2,6 @@
 #define PROCESSIMAGE_H
 
 #include <QtGui>
-#include <QWidget>
 #include <QLabel>
 #include <QPushButton>
 #include <QLineEdit>
@@ -22,7 +21,7 @@ class ProcessImage : public QWidget
     Q_OBJECT
 
 public:
-    ProcessImage(QWidget *parent = 0);
+	explicit ProcessImage(QWidget *parent = nullptr);
     ~ProcessImage();
 
 private:
@@ -65,6 +64,10 @@ private:
 
     std::atomic<int> dropcount;
     std::unique_ptr<uchar[]> prgb;
+    std::thread ev_thread;
+	std::mutex ev_mutex;
+
+	float Sharpness(std::unique_ptr<uint8_t[]> pixel, int w, int h);
 
     void Init();
     void onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFramePtr> &frames);

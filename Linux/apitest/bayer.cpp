@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <memory.h>
+#ifdef _WIN32
+#include <omp.h>
+#endif
 ////////////////////////////////////////////////////////
 
 int PIX_HEIGHT = 0;
@@ -268,11 +271,11 @@ int convert_raw_to_rgb_buffer_with_lumi_calc(unsigned char *raw, unsigned char *
     *lumi = 0;
     //int sum_lumi = 0;
     //#pragma omp parallel for shared(raw,rgb) private(i,j)
-    int x = (lumi_x % 2) ? (lumi_x + 1) : lumi_x;
-    int y = (lumi_y % 2) ? (lumi_y + 1) : lumi_y;
+	auto x = (lumi_x % 2) ? (lumi_x + 1) : lumi_x;
+	auto y = (lumi_y % 2) ? (lumi_y + 1) : lumi_y;
 
-    int width = (lumi_width % 2) ? (lumi_width - 1) : lumi_width;
-    int height = (lumi_height % 2) ? (lumi_height - 1) : lumi_height;
+	auto width = (lumi_width % 2) ? (lumi_width - 1) : lumi_width;
+	auto height = (lumi_height % 2) ? (lumi_height - 1) : lumi_height;
     for (j=0;j < PIX_HEIGHT; j+=2)
     {
         for (i=0;i < PIX_WIDTH; i+=2)
@@ -280,12 +283,12 @@ int convert_raw_to_rgb_buffer_with_lumi_calc(unsigned char *raw, unsigned char *
 
             if (i==0||j==0||i== PIX_WIDTH -2|| j== PIX_HEIGHT-2)
             {
-                bayer_copy((unsigned short *)raw,rgb, i,j);
+                bayer_copy(reinterpret_cast<unsigned short *>(raw),rgb, i,j);
 
             }
             else
             {
-                bayer_bilinear((unsigned short *)raw,rgb, i,j);
+                bayer_bilinear(reinterpret_cast<unsigned short *>(raw),rgb, i,j);
                 // bayer_copy((unsigned short *)raw,rgb, i,j);
             }
 
@@ -490,138 +493,138 @@ int convert_raw_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, bool isGra
 //      the threshold for excluding the little values
 // magnitude:
 //      magnitude gradient value of the area
-int convert_raw_to_rgb_buffer_with_gradient_calc(unsigned char *raw, unsigned char *rgb, bool isGradientBasedInter, int M_START_X, int M_START_Y, int M_WIDTH, int M_HEIGHT, float M_Threshold, float &magnitude)
-{
-    int i,j;
-
-    unsigned short *raw_16 = (unsigned short *)raw;
-    float M[PIX_WIDTH][PIX_HEIGHT];
-
-    if (!isGradientBasedInter)
-    {
-        #pragma omp parallel for shared(raw,rgb) private(i,j)
-        for (j=0;j < PIX_HEIGHT; j+=2)
-         {
-            for (i=0;i < PIX_WIDTH; i+=2)
-             {
-
-                 if (i==0||j==0||i== PIX_WIDTH -2|| j== PIX_HEIGHT-2)
-                 {
-                    bayer_copy((unsigned short *)raw,rgb, i,j);
-
-                 }
-                 else
-                 {
-                    bayer_bilinear((unsigned short *)raw,rgb, i,j);
-                    // bayer_copy((unsigned short *)raw,rgb, i,j);
-                 }
-
-                 if (i >=M_START_X && i < M_START_X + M_WIDTH && j >= M_START_Y && j < M_START_Y + M_HEIGHT)
-                 {
-                    int m, n, u, v;
-                    for(m = 0; m <= 1; m++)
-                        for (n = 0; n <= 1; n++)
-                        {
-                            u = i + m; v = j + n;
-                            M[u-M_START_X][v-M_START_Y] = sqrt( (Bay(u+2,v) - Bay(u,v)) * (Bay(u+2,v)-Bay(u,v)) + (Bay(u,v+2) - Bay(u,v)) * (Bay(u,v+2)-Bay(u,v)) );
-                        }
-                 }
-
-             }
-         }
-
-        magnitude = 0;
-        for (i = 0; i < M_WIDTH;i++)
-            for (j = 0; j < M_HEIGHT; j++)
-            {
-                if (M[i][j] > M_Threshold)
-                    magnitude += M[i][j] / 1000;
-            }
-    }
-    else
-    {
-        //0. fill the 4 sides first
-        #pragma omp parallel for shared(raw,rgb) private(i,j)
-        for (j=0;j < PIX_HEIGHT; j+=2)
-        {
-            for (i=0;i < PIX_WIDTH; i+=2)
-             {
-
-                 if (i==0||j==0||i== PIX_WIDTH -2|| j== PIX_HEIGHT-2)
-                 {
-                    bayer_copy((unsigned short *)raw,rgb, i,j);
-                 }
-
-                 if (i >=M_START_X && i < M_START_X + M_WIDTH && j >= M_START_Y && j < M_START_Y + M_HEIGHT)
-                 {
-                    int m, n, u, v;
-                    for(m = 0; m <= 1; m++)
-                        for (n = 0; n <= 1; n++)
-                        {
-                            u = i + m; v = j + n;
-                            M[u-M_START_X][v-M_START_Y] = sqrt( (Bay(u+2,v) - Bay(u,v)) * (Bay(u+2,v)-Bay(u,v)) + (Bay(u,v+2) - Bay(u,v)) * (Bay(u,v+2)-Bay(u,v)) );
-                        }
-                 }
-
-            }
-         }
-
-        magnitude = 0;
-        for (i = 0; i < M_WIDTH;i++)
-            for (j = 0; j < M_HEIGHT; j++)
-            {
-                if (M[i][j] > M_Threshold)
-                    magnitude += M[i][j] / 1000;
-            }
-
-         //1. fill G at G && interpolate G at B&R
-        #pragma omp parallel for shared(raw,rgb) private(i,j)
-         for (j = 2; j < PIX_HEIGHT-2; j++)
-         {
-             for (i = 2; i < PIX_WIDTH-2; i++)
-             {
-                if ((i + j) % 2 == 0)
-                    bayer_copy_G((unsigned short *)raw, rgb, i, j);
-                else
-                    bayer_inter_G_at_BR((unsigned short *)raw, rgb, i, j);
-
-             }
-         }
-
-         //2. interpolate B/R at R/B
-         #pragma omp parallel for shared(raw,rgb) private(i,j)
-         for (j = 2; j < PIX_HEIGHT-2; j++)
-         {
-             for (i = 2; i < PIX_WIDTH-2; i++)
-             {
-                if (i % 2 == 1 && j % 2 == 0)       // at R
-                {
-                    bayer_copy_R((unsigned short *)raw, rgb, i, j);
-                    bayer_inter_B_at_R((unsigned short *)raw, rgb, i, j);
-
-                }
-                else if (i % 2 == 0 && j % 2 == 1)   // at B
-                {
-                    bayer_copy_B((unsigned short *)raw, rgb, i, j);
-                    bayer_inter_R_at_B((unsigned short *)raw, rgb, i, j);
-                }
-             }
-         }
-
-         //3. interpolate B R at G
-         #pragma omp parallel for shared(raw,rgb) private(i,j)
-         for (j = 2; j < PIX_HEIGHT-2; j++)
-         {
-             for (i = 2; i < PIX_WIDTH-2; i++)
-             {
-                 if ((i + j) % 2 == 0) //at G
-                 {
-                     bayer_inter_B_at_G((unsigned short *)raw, rgb, i, j);
-                     bayer_inter_R_at_G((unsigned short *)raw, rgb, i, j);
-                 }
-             }
-         }
-    }
-
-     return 0;
-}
+//int convert_raw_to_rgb_buffer_with_gradient_calc(unsigned char *raw, unsigned char *rgb, bool isGradientBasedInter, int M_START_X, int M_START_Y, int M_WIDTH, int M_HEIGHT, float M_Threshold, float &magnitude)
+//{
+//    int i,j;
+//
+//    unsigned short *raw_16 = (unsigned short *)raw;
+//    float M[PIX_WIDTH][PIX_HEIGHT];
+//
+//    if (!isGradientBasedInter)
+//    {
+//        #pragma omp parallel for shared(raw,rgb) private(i,j)
+//        for (j=0;j < PIX_HEIGHT; j+=2)
+//         {
+//            for (i=0;i < PIX_WIDTH; i+=2)
+//             {
+//
+//                 if (i==0||j==0||i== PIX_WIDTH -2|| j== PIX_HEIGHT-2)
+//                 {
+//                    bayer_copy((unsigned short *)raw,rgb, i,j);
+//
+//                 }
+//                 else
+//                 {
+//                    bayer_bilinear((unsigned short *)raw,rgb, i,j);
+//                    // bayer_copy((unsigned short *)raw,rgb, i,j);
+//                 }
+//
+//                 if (i >=M_START_X && i < M_START_X + M_WIDTH && j >= M_START_Y && j < M_START_Y + M_HEIGHT)
+//                 {
+//                    int m, n, u, v;
+//                    for(m = 0; m <= 1; m++)
+//                        for (n = 0; n <= 1; n++)
+//                        {
+//                            u = i + m; v = j + n;
+//                            M[u-M_START_X][v-M_START_Y] = sqrt( (Bay(u+2,v) - Bay(u,v)) * (Bay(u+2,v)-Bay(u,v)) + (Bay(u,v+2) - Bay(u,v)) * (Bay(u,v+2)-Bay(u,v)) );
+//                        }
+//                 }
+//
+//             }
+//         }
+//
+//        magnitude = 0;
+//        for (i = 0; i < M_WIDTH;i++)
+//            for (j = 0; j < M_HEIGHT; j++)
+//            {
+//                if (M[i][j] > M_Threshold)
+//                    magnitude += M[i][j] / 1000;
+//            }
+//    }
+//    else
+//    {
+//        //0. fill the 4 sides first
+//        #pragma omp parallel for shared(raw,rgb) private(i,j)
+//        for (j=0;j < PIX_HEIGHT; j+=2)
+//        {
+//            for (i=0;i < PIX_WIDTH; i+=2)
+//             {
+//
+//                 if (i==0||j==0||i== PIX_WIDTH -2|| j== PIX_HEIGHT-2)
+//                 {
+//                    bayer_copy((unsigned short *)raw,rgb, i,j);
+//                 }
+//
+//                 if (i >=M_START_X && i < M_START_X + M_WIDTH && j >= M_START_Y && j < M_START_Y + M_HEIGHT)
+//                 {
+//                    int m, n, u, v;
+//                    for(m = 0; m <= 1; m++)
+//                        for (n = 0; n <= 1; n++)
+//                        {
+//                            u = i + m; v = j + n;
+//                            M[u-M_START_X][v-M_START_Y] = sqrt( (Bay(u+2,v) - Bay(u,v)) * (Bay(u+2,v)-Bay(u,v)) + (Bay(u,v+2) - Bay(u,v)) * (Bay(u,v+2)-Bay(u,v)) );
+//                        }
+//                 }
+//
+//            }
+//         }
+//
+//        magnitude = 0;
+//        for (i = 0; i < M_WIDTH;i++)
+//            for (j = 0; j < M_HEIGHT; j++)
+//            {
+//                if (M[i][j] > M_Threshold)
+//                    magnitude += M[i][j] / 1000;
+//            }
+//
+//         //1. fill G at G && interpolate G at B&R
+//        #pragma omp parallel for shared(raw,rgb) private(i,j)
+//         for (j = 2; j < PIX_HEIGHT-2; j++)
+//         {
+//             for (i = 2; i < PIX_WIDTH-2; i++)
+//             {
+//                if ((i + j) % 2 == 0)
+//                    bayer_copy_G((unsigned short *)raw, rgb, i, j);
+//                else
+//                    bayer_inter_G_at_BR((unsigned short *)raw, rgb, i, j);
+//
+//             }
+//         }
+//
+//         //2. interpolate B/R at R/B
+//         #pragma omp parallel for shared(raw,rgb) private(i,j)
+//         for (j = 2; j < PIX_HEIGHT-2; j++)
+//         {
+//             for (i = 2; i < PIX_WIDTH-2; i++)
+//             {
+//                if (i % 2 == 1 && j % 2 == 0)       // at R
+//                {
+//                    bayer_copy_R((unsigned short *)raw, rgb, i, j);
+//                    bayer_inter_B_at_R((unsigned short *)raw, rgb, i, j);
+//
+//                }
+//                else if (i % 2 == 0 && j % 2 == 1)   // at B
+//                {
+//                    bayer_copy_B((unsigned short *)raw, rgb, i, j);
+//                    bayer_inter_R_at_B((unsigned short *)raw, rgb, i, j);
+//                }
+//             }
+//         }
+//
+//         //3. interpolate B R at G
+//         #pragma omp parallel for shared(raw,rgb) private(i,j)
+//         for (j = 2; j < PIX_HEIGHT-2; j++)
+//         {
+//             for (i = 2; i < PIX_WIDTH-2; i++)
+//             {
+//                 if ((i + j) % 2 == 0) //at G
+//                 {
+//                     bayer_inter_B_at_G((unsigned short *)raw, rgb, i, j);
+//                     bayer_inter_R_at_G((unsigned short *)raw, rgb, i, j);
+//                 }
+//             }
+//         }
+//    }
+//
+//     return 0;
+//}

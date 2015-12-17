@@ -2,11 +2,16 @@
 #include <QtGui>
 #include <QMessageBox>
 #include <QHBoxLayout>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-#include <memory>
+//#include <cstdio>
+//#include <cstdlib>
+//#include <ctime>
+//#include <memory>
+#ifdef _WIN32
+#include <winsock.h>
+#include <omp.h>
+#elif defined(__linux__)
 #include <sys/time.h>
+#endif
 
 #include "DeepCamAPI.h"
 #include "IVideoStream.h"
@@ -20,7 +25,135 @@
 
 #include "processimage.h"
 
+
+
 #define RESYNC_NUM 900
+
+inline int fast_abs(int value)
+{
+    uint32_t temp = value >> 31;     // make a mask of the sign bit
+    value ^= temp;                   // toggle the bits if value is negative
+    value += temp & 1;               // add one if value was negative
+    return value;
+}
+
+const float WEIGHT_B = 0.1140f;
+const float WEIGHT_G = 0.5870f;
+const float WEIGHT_R = 0.2989f;
+const uint16_t BAYER_MAX = 0xFF;
+
+//AR 0134
+#define Bayer(x,y)  ((unsigned short)(raw_16[(x) + w *(y)] >> 4) & 0x00FF)
+//#define Bayer(x,y)  raw_16[(x) + w *(y)]
+#define Grey(x,y)	grey[((x) + w *(y))*3] = grey[((x) + w *(y))*3 +1] = grey[((x) + w *(y))*3 +2]
+
+void bayer_copy_grey(uint16_t *raw_16, uint8_t *grey, int x, int y, int w)
+{
+    float val = 0;
+
+    val = Bayer(x, y + 1) * WEIGHT_B +
+        Bayer(x, y) * WEIGHT_G +
+        Bayer(x + 1, y) * WEIGHT_R;
+    Grey(x, y) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+
+    val = Bayer(x, y + 1) * WEIGHT_B +
+        ((Bayer(x, y) + Bayer(x + 1, y + 1)) >> 1) * WEIGHT_G +
+        Bayer(x + 1, y) * WEIGHT_R;
+    Grey(x + 1, y) = Grey(x, y + 1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+
+    val = Bayer(x, y + 1) * WEIGHT_B +
+        Bayer(x + 1, y + 1) * WEIGHT_G +
+        Bayer(x + 1, y) * WEIGHT_R;
+    Grey(x + 1, y + 1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+}
+
+
+void bayer_bilinear_grey(uint16_t *raw_16, uint8_t *grey, int x, int y, int w)
+{
+    float val = 0;
+
+    val = ((Bayer(x, y - 1) + Bayer(x, y + 1)) >> 1) * WEIGHT_B +
+        Bayer(x, y) * WEIGHT_G +
+        ((Bayer(x - 1, y) + Bayer(x + 1, y)) >> 1) * WEIGHT_R;
+    Grey(x, y) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+
+    val = ((Bayer(x, y - 1) + Bayer(x + 2, y + 1) + Bayer(x + 2, y - 1) + Bayer(x, y + 1)) >> 2) * WEIGHT_B +
+        ((Bayer(x, y) + Bayer(x + 2, y) + Bayer(x, y) + Bayer(x + 2, y)) >> 2) * WEIGHT_G +
+        Bayer(x + 1, y)* WEIGHT_R;
+    Grey(x+1, y) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+
+    val = Bayer(x, y + 1) * WEIGHT_B +
+        ((Bayer(x, y) + Bayer(x + 1, y + 1) + Bayer(x - 1, y + 1) + Bayer(x, y + 2)) >> 2)* WEIGHT_G +
+        ((Bayer(x - 1, y) + Bayer(x + 1, y) + Bayer(x - 1, y + 2) + Bayer(x + 1, y + 2)) >> 2)* WEIGHT_R;
+    Grey(x, y+1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+
+    val = ((Bayer(x, y + 1) + Bayer(x + 2, y + 1)) >> 1) * WEIGHT_B +
+        Bayer(x + 1, y + 1)* WEIGHT_G +
+        ((Bayer(x + 1, y) + Bayer(x + 1, y + 2)) >> 1)* WEIGHT_R;
+    Grey(x+1, y+1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+}
+
+void RawToGrey(uint8_t *raw, uint8_t *grey, int w, int h)
+{
+	auto i =0,j = 0;
+    #pragma omp parallel for shared(raw,grey) private(i,j)
+    for (j = 0; j < h; j += 2)
+    {
+        for (i = 0; i < w; i += 2)
+        {
+
+            if (i == 0 || j == 0 || i == w - 2 || j == h - 2)
+                bayer_copy_grey(reinterpret_cast<uint16_t *>(raw), grey, i, j, w);
+            else
+                bayer_bilinear_grey(reinterpret_cast<uint16_t *>(raw), grey, i, j, w);
+        }
+    }
+}
+
+float Gradient(uint8_t *pixel, int x,int y, uint32_t stride, float &max)
+{
+    max = 0;
+    float g = 0;
+    auto current = pixel[y*stride + x*3];
+    for (auto i = -1; i <= 1; ++i)
+        for (auto j = -1; j <= 1;++j)
+        {
+            if (i == 0 && j == 0)
+                continue;
+            auto val = float(fast_abs((int)current - (int)pixel[(y + i)*stride + (x + j)*3]));
+            if (fast_abs(i)+ fast_abs(j)>1)
+                val *= 0.707107f;
+            if (val > max)
+                max = val;
+            g += val;
+        }
+    return g;
+}
+
+float ProcessImage::Sharpness(std::unique_ptr<uint8_t[]> pixel,int w,int h)
+{
+	std::unique_lock<std::mutex> ul(ev_mutex);
+    constexpr auto lamda1 = 0.6f;
+    constexpr auto lamda2 = 1 - lamda1;
+    float sum1 = 0;
+    float sum2 = 0;
+	auto i=0,j=0;
+    #pragma omp parallel for shared(pixel) private(i,j)
+    for (i = 1; i < h - 1; ++i)
+        for (j = 1; j < w - 1;++j)
+        {
+            float max = 0;
+            auto g = Gradient(pixel.get(), j, i, w*3, max);
+            sum1 += g;
+            sum2 += max;
+        }
+    auto s = (sum1*lamda1+sum2*lamda2)/((h - 2)*(w - 2))*10;
+    qDebug("P:  %f", s);
+	labelMag->setText(QString::number(s));
+	//OutputDebugStringW(L"Frame Arrival\n");
+	//std::cout << "P: " << s << std::endl;
+    return s;
+}
 
 void ProcessImage::Init()
 {
@@ -70,7 +203,7 @@ void ProcessImage::Init()
 
     QLabel *labelNMag = new QLabel();
     labelMag = new QLabel();
-    labelNMag->setText("Mag:");
+    labelNMag->setText("Sharpness:");
     labelMag->setText("0");
     hLayout1->addWidget(labelNMag);
     hLayout1->addWidget(labelMag);
@@ -217,8 +350,8 @@ ProcessImage::ProcessImage(QWidget *parent)
 //        }
 //    }
 
-    auto deepcam = TopGear::DeepCamAPI::Instance();
-    camera = deepcam.CreateCamera(TopGear::Camera::Camaro);
+    TopGear::DeepCamAPI::Initialize();
+    camera = TopGear::DeepCamAPI::CreateCamera(TopGear::Camera::Camaro);
     if (camera)
     {
         ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camera);
@@ -232,6 +365,7 @@ ProcessImage::ProcessImage(QWidget *parent)
         auto index = camera->GetOptimizedFormatIndex(format);
         //auto formats = camera->GetAllFormats();
         camera->SetCurrentFormat(index);
+        cameraControl->Flip(true,false);
         camera->StartStream();
     }
 
@@ -246,6 +380,8 @@ ProcessImage::~ProcessImage()
         timer->stop();
     if (camera)
         camera->StopStream();
+	if (ev_thread.joinable())
+		ev_thread.join();
 }
 
 void ProcessImage::display_error(QString err)
@@ -264,7 +400,7 @@ void ProcessImage::onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<T
     (void)sender;
     if (frames.size()==0)
         return;
-    qDebug("frameidx:  %d",frames[0]->GetFrameIdx());
+    //qDebug("frameidx:  %d",frames[0]->GetFrameIdx());
     emit onvideoframe(frames[0]);
 }
 
@@ -326,20 +462,35 @@ void ProcessImage::showvideoframe(TopGear::IVideoFramePtr vf)
     unsigned char *pdata;
     uint32_t stride;
     vf->LockBuffer(&pdata,&stride);
-    convert_raw_to_rgb_buffer(pdata, prgb.get(), false , w,h);
+    RawToGrey(pdata,prgb.get(),w,h);
+//    if ((currentIdx & 0xf) == 0)
+//        qDebug("P:  %f", Sharpness(prgb.get(),w,h));
+    //convert_raw_to_rgb_buffer(pdata, prgb.get(), false , w,h);
     vf->UnlockBuffer();
 
     std::unique_ptr<QImage> frame(new QImage(prgb.get(),w,h, QImage::Format_RGB888));
     labelVideo->setPixmap(QPixmap::fromImage(*frame, Qt::AutoColor));
+
+    if (ev_thread.joinable())
+    {
+		std::unique_lock<std::mutex> ul(ev_mutex, std::try_to_lock);
+		if (ul)
+		{
+			ev_thread.join();
+			ev_thread = std::thread(&ProcessImage::Sharpness, this, std::move(prgb), w, h);
+		}
+    }
+	else
+        ev_thread = std::thread(&ProcessImage::Sharpness, this, std::move(prgb),w,h);
 }
 
 
 void ProcessImage::ontimer()
 {
     //labelfps->setText("fps:"+QString::number((int)fc.GetFrameRate()));
-    int drops = dropcount.load(std::memory_order_relaxed);
+	auto drops = dropcount.load(std::memory_order_relaxed);
     dropcount = 0;
-    labelfps->setText(QString("fps:%1  framedrops:%2").arg((int)fc.GetFrameRate()).arg(drops));
+    labelfps->setText(QString("fps:%1  framedrops:%2").arg(int(fc.GetFrameRate())).arg(drops));
 }
 
 void ProcessImage::onSetGPIOHigh()
