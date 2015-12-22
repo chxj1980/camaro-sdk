@@ -244,9 +244,6 @@ void bayer_inter_R_at_G(unsigned short * raw_16, unsigned char *rgb,int x, int y
 }
 #endif
 
-
-#include <omp.h>
-
 int convert_raw_to_grey_buffer(unsigned char *raw,
                                unsigned char *grey,
                                int w,int h)

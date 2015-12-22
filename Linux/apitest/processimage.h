@@ -9,12 +9,16 @@
 #include <QRadioButton>
 
 #include <atomic>
+#include <future>
+
 #include "FrameRateCounter.h"
 #include "IVideoFrame.h"
 #include "IVideoStream.h"
 #include "ICameraControl.h"
 #include "IDeviceControl.h"
 #include "ILowlevelControl.h"
+
+#include "ImageAnalysis.h"
 
 class ProcessImage : public QWidget
 {
@@ -64,10 +68,8 @@ private:
 
     std::atomic<int> dropcount;
     std::unique_ptr<uchar[]> prgb;
-    std::thread ev_thread;
 	std::mutex ev_mutex;
-
-	float Sharpness(std::unique_ptr<uint8_t[]> pixel, int w, int h);
+	std::future<TopGear::ImageAnalysis::Result> image_result;
 
     void Init();
     void onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFramePtr> &frames);

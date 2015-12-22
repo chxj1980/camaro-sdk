@@ -13,6 +13,10 @@
 #include <sys/time.h>
 #endif
 
+#include <tbb/tbb.h>
+#include <future>
+
+
 #include "DeepCamAPI.h"
 #include "IVideoStream.h"
 //#include "IVideoFrame.h"
@@ -21,142 +25,103 @@
 //#include "IDeviceControl.h"
 //#include "IMultiVideoStream.h"
 //#include "VideoFormat.h"
-#include <iostream>
 
 #include "processimage.h"
 
 
-
 #define RESYNC_NUM 900
 
-inline int fast_abs(int value)
-{
-    uint32_t temp = value >> 31;     // make a mask of the sign bit
-    value ^= temp;                   // toggle the bits if value is negative
-    value += temp & 1;               // add one if value was negative
-    return value;
-}
+//const float WEIGHT_B = 0.1140f;
+//const float WEIGHT_G = 0.5870f;
+//const float WEIGHT_R = 0.2989f;
+//const uint16_t BAYER_MAX = 0xFF;
 
-const float WEIGHT_B = 0.1140f;
-const float WEIGHT_G = 0.5870f;
-const float WEIGHT_R = 0.2989f;
-const uint16_t BAYER_MAX = 0xFF;
-
-//AR 0134
-#define Bayer(x,y)  ((unsigned short)(raw_16[(x) + w *(y)] >> 4) & 0x00FF)
-//#define Bayer(x,y)  raw_16[(x) + w *(y)]
-#define Grey(x,y)	grey[((x) + w *(y))*3] = grey[((x) + w *(y))*3 +1] = grey[((x) + w *(y))*3 +2]
-
-void bayer_copy_grey(uint16_t *raw_16, uint8_t *grey, int x, int y, int w)
-{
-    float val = 0;
-
-    val = Bayer(x, y + 1) * WEIGHT_B +
-        Bayer(x, y) * WEIGHT_G +
-        Bayer(x + 1, y) * WEIGHT_R;
-    Grey(x, y) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
-
-    val = Bayer(x, y + 1) * WEIGHT_B +
-        ((Bayer(x, y) + Bayer(x + 1, y + 1)) >> 1) * WEIGHT_G +
-        Bayer(x + 1, y) * WEIGHT_R;
-    Grey(x + 1, y) = Grey(x, y + 1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
-
-    val = Bayer(x, y + 1) * WEIGHT_B +
-        Bayer(x + 1, y + 1) * WEIGHT_G +
-        Bayer(x + 1, y) * WEIGHT_R;
-    Grey(x + 1, y + 1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
-}
-
-
-void bayer_bilinear_grey(uint16_t *raw_16, uint8_t *grey, int x, int y, int w)
-{
-    float val = 0;
-
-    val = ((Bayer(x, y - 1) + Bayer(x, y + 1)) >> 1) * WEIGHT_B +
-        Bayer(x, y) * WEIGHT_G +
-        ((Bayer(x - 1, y) + Bayer(x + 1, y)) >> 1) * WEIGHT_R;
-    Grey(x, y) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
-
-    val = ((Bayer(x, y - 1) + Bayer(x + 2, y + 1) + Bayer(x + 2, y - 1) + Bayer(x, y + 1)) >> 2) * WEIGHT_B +
-        ((Bayer(x, y) + Bayer(x + 2, y) + Bayer(x, y) + Bayer(x + 2, y)) >> 2) * WEIGHT_G +
-        Bayer(x + 1, y)* WEIGHT_R;
-    Grey(x+1, y) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
-
-    val = Bayer(x, y + 1) * WEIGHT_B +
-        ((Bayer(x, y) + Bayer(x + 1, y + 1) + Bayer(x - 1, y + 1) + Bayer(x, y + 2)) >> 2)* WEIGHT_G +
-        ((Bayer(x - 1, y) + Bayer(x + 1, y) + Bayer(x - 1, y + 2) + Bayer(x + 1, y + 2)) >> 2)* WEIGHT_R;
-    Grey(x, y+1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
-
-    val = ((Bayer(x, y + 1) + Bayer(x + 2, y + 1)) >> 1) * WEIGHT_B +
-        Bayer(x + 1, y + 1)* WEIGHT_G +
-        ((Bayer(x + 1, y) + Bayer(x + 1, y + 2)) >> 1)* WEIGHT_R;
-    Grey(x+1, y+1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
-}
-
-void RawToGrey(uint8_t *raw, uint8_t *grey, int w, int h)
-{
-	auto i =0,j = 0;
-    #pragma omp parallel for shared(raw,grey) private(i,j)
-    for (j = 0; j < h; j += 2)
-    {
-        for (i = 0; i < w; i += 2)
-        {
-
-            if (i == 0 || j == 0 || i == w - 2 || j == h - 2)
-                bayer_copy_grey(reinterpret_cast<uint16_t *>(raw), grey, i, j, w);
-            else
-                bayer_bilinear_grey(reinterpret_cast<uint16_t *>(raw), grey, i, j, w);
-        }
-    }
-}
-
-float Gradient(uint8_t *pixel, int x,int y, uint32_t stride, float &max)
-{
-    max = 0;
-    float g = 0;
-    auto current = pixel[y*stride + x*3];
-    for (auto i = -1; i <= 1; ++i)
-        for (auto j = -1; j <= 1;++j)
-        {
-            if (i == 0 && j == 0)
-                continue;
-            auto val = float(fast_abs((int)current - (int)pixel[(y + i)*stride + (x + j)*3]));
-            if (fast_abs(i)+ fast_abs(j)>1)
-                val *= 0.707107f;
-            if (val > max)
-                max = val;
-            g += val;
-        }
-    return g;
-}
-
-float ProcessImage::Sharpness(std::unique_ptr<uint8_t[]> pixel,int w,int h)
-{
-	std::unique_lock<std::mutex> ul(ev_mutex);
-    constexpr auto lamda1 = 0.6f;
-    constexpr auto lamda2 = 1 - lamda1;
-    float sum1 = 0;
-    float sum2 = 0;
-	auto i=0,j=0;
-    #pragma omp parallel for shared(pixel) private(i,j)
-    for (i = 1; i < h - 1; ++i)
-        for (j = 1; j < w - 1;++j)
-        {
-            float max = 0;
-            auto g = Gradient(pixel.get(), j, i, w*3, max);
-            sum1 += g;
-            sum2 += max;
-        }
-    auto s = (sum1*lamda1+sum2*lamda2)/((h - 2)*(w - 2))*10;
-    qDebug("P:  %f", s);
-	labelMag->setText(QString::number(s));
-	//OutputDebugStringW(L"Frame Arrival\n");
-	//std::cout << "P: " << s << std::endl;
-    return s;
-}
+////AR 0134
+//#define Bayer(x,y)  ((unsigned short)(raw_16[(x) + w *(y)] >> 4) & 0x00FF)
+////#define Bayer(x,y)  raw_16[(x) + w *(y)]
+//#define Grey(x,y)	grey[((x) + w *(y))*3] = grey[((x) + w *(y))*3 +1] = grey[((x) + w *(y))*3 +2]
+//
+//void bayer_copy_grey(uint16_t *raw_16, uint8_t *grey, int x, int y, int w)
+//{
+//    float val = 0;
+//
+//    val = Bayer(x, y + 1) * WEIGHT_B +
+//        Bayer(x, y) * WEIGHT_G +
+//        Bayer(x + 1, y) * WEIGHT_R;
+//    Grey(x, y) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+//
+//    val = Bayer(x, y + 1) * WEIGHT_B +
+//        ((Bayer(x, y) + Bayer(x + 1, y + 1)) >> 1) * WEIGHT_G +
+//        Bayer(x + 1, y) * WEIGHT_R;
+//    Grey(x + 1, y) = Grey(x, y + 1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+//
+//    val = Bayer(x, y + 1) * WEIGHT_B +
+//        Bayer(x + 1, y + 1) * WEIGHT_G +
+//        Bayer(x + 1, y) * WEIGHT_R;
+//    Grey(x + 1, y + 1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+//}
+//
+//
+//void bayer_bilinear_grey(uint16_t *raw_16, uint8_t *grey, int x, int y, int w)
+//{
+//    float val = 0;
+//
+//    val = ((Bayer(x, y - 1) + Bayer(x, y + 1)) >> 1) * WEIGHT_B +
+//        Bayer(x, y) * WEIGHT_G +
+//        ((Bayer(x - 1, y) + Bayer(x + 1, y)) >> 1) * WEIGHT_R;
+//    Grey(x, y) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+//
+//    val = ((Bayer(x, y - 1) + Bayer(x + 2, y + 1) + Bayer(x + 2, y - 1) + Bayer(x, y + 1)) >> 2) * WEIGHT_B +
+//        ((Bayer(x, y) + Bayer(x + 2, y) + Bayer(x, y) + Bayer(x + 2, y)) >> 2) * WEIGHT_G +
+//        Bayer(x + 1, y)* WEIGHT_R;
+//    Grey(x+1, y) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+//
+//    val = Bayer(x, y + 1) * WEIGHT_B +
+//        ((Bayer(x, y) + Bayer(x + 1, y + 1) + Bayer(x - 1, y + 1) + Bayer(x, y + 2)) >> 2)* WEIGHT_G +
+//        ((Bayer(x - 1, y) + Bayer(x + 1, y) + Bayer(x - 1, y + 2) + Bayer(x + 1, y + 2)) >> 2)* WEIGHT_R;
+//    Grey(x, y+1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+//
+//    val = ((Bayer(x, y + 1) + Bayer(x + 2, y + 1)) >> 1) * WEIGHT_B +
+//        Bayer(x + 1, y + 1)* WEIGHT_G +
+//        ((Bayer(x + 1, y) + Bayer(x + 1, y + 2)) >> 1)* WEIGHT_R;
+//    Grey(x+1, y+1) = (val > BAYER_MAX) ? BAYER_MAX : uint8_t(val);
+//}
+//
+//void RawToGrey(uint8_t *raw, uint8_t *grey, int w, int h)
+//{
+//	auto i =0,j = 0;
+//    #pragma omp parallel for shared(raw,grey) private(i,j)
+//    for (j = 0; j < h; j += 2)
+//    {
+//        for (i = 0; i < w; i += 2)
+//        {
+//
+//            if (i == 0 || j == 0 || i == w - 2 || j == h - 2)
+//                bayer_copy_grey(reinterpret_cast<uint16_t *>(raw), grey, i, j, w);
+//            else
+//                bayer_bilinear_grey(reinterpret_cast<uint16_t *>(raw), grey, i, j, w);
+//        }
+//    }
+//}
 
 void ProcessImage::Init()
 {
+	//auto img = cv::imread("M.png");
+	////cv::Mat d(720, 1280, CV_8UC3);
+	//std::vector<cv::Point2f> corners;
+
+	//cv::Size size(9, 6);
+	//auto found = cv::findChessboardCorners(img, size, corners, 
+	//	cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE
+	//	| cv::CALIB_CB_FAST_CHECK);
+
+	//if (found)
+	//	cv::cornerSubPix(img, corners, cv::Size(11, 11), cv::Size(-1, -1),
+	//	                 cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
+
+	//cv::drawChessboardCorners(img, size, cv::Mat(corners), found);
+	//cv::imwrite("aa.png", img);
+
     setWindowTitle(tr("Camera View"));
 
     labelfps = new QLabel();
@@ -262,23 +227,6 @@ void ProcessImage::Init()
     timer = new QTimer(this);
 }
 
-//void OnFrameCB(std::vector<TopGear::IVideoFrameRef> &frames)
-//{
-//    if (frames.size() == 0)
-//        return;
-//    auto frame = frames[0];
-//    uint8_t *pData;		//Frame data
-//    uint32_t stride;	//Actual stride of frame
-//    frame->LockBuffer(&pData, &stride);		//Lock memory
-//    std::cerr << static_cast<int>(frame->GetTimestamp().tv_usec) << std::endl;
-//    //Do something...
-//    frame->UnlockBuffer();	//Unlock memory
-//}
-
-//////////////////////////////////////
-///
-///
-
 ProcessImage::ProcessImage(QWidget *parent)
     :QWidget(parent), dropcount(0)
 {
@@ -288,7 +236,6 @@ ProcessImage::ProcessImage(QWidget *parent)
 
     Init();
     fc.Reset();
-
     //Open
 
     qRegisterMetaType<TopGear::IVideoFramePtr>("TopGear::IVideoFramePtr");
@@ -365,7 +312,7 @@ ProcessImage::ProcessImage(QWidget *parent)
         auto index = camera->GetOptimizedFormatIndex(format);
         //auto formats = camera->GetAllFormats();
         camera->SetCurrentFormat(index);
-        cameraControl->Flip(true,false);
+        cameraControl->Flip(true,true);
         camera->StartStream();
     }
 
@@ -380,8 +327,8 @@ ProcessImage::~ProcessImage()
         timer->stop();
     if (camera)
         camera->StopStream();
-	if (ev_thread.joinable())
-		ev_thread.join();
+	if (image_result.valid())
+		image_result.wait();
 }
 
 void ProcessImage::display_error(QString err)
@@ -416,72 +363,104 @@ void ProcessImage::handledevexception(int)
 
 void ProcessImage::showvideoframe(TopGear::IVideoFramePtr vf)
 {
-    static int lastIdx = -1;
-    //TopGear::IVideoFrameRef vf = *reinterpret_cast<TopGear::IVideoFrameRef *>(p);
-    auto currentIdx = vf->GetFrameIdx();
+	static std::vector<std::pair<int, int>> lastCorners;
+	static auto lastIdx = -1;
 
-    if (lastIdx==-1)
-    {
-        lastIdx=currentIdx;
-        dropcount = 0;
-    }
-    else
-    {
-        if (++lastIdx >= RESYNC_NUM)
-            lastIdx = 0;
-        if (currentIdx>lastIdx)
-        {
-            dropcount += currentIdx-lastIdx;
-            lastIdx = currentIdx;
-        }
-        else if (currentIdx<lastIdx)
-        {
-            dropcount += currentIdx-lastIdx;
-            lastIdx = currentIdx;
-        }
-        else if (currentIdx<lastIdx)
-        {
-            dropcount.fetch_add(RESYNC_NUM - lastIdx + currentIdx);
-            lastIdx = currentIdx;
-        }
-    }
-
-
-    //qDebug("frame %d.%03d", vf->tv.tv_sec, vf->tv.tv_usec/1000);
-
-    fc.NewFrame();
-
-    uint32_t w,h;
-    auto format = camera->GetCurrentFormat();
-    h = format.Height;
-    w = format.Width;
-    //vf->QueryActualSize(w,h);
-    //std::unique_ptr<uchar[]> prgb(new uchar[w*h*3]);
-    if (prgb==nullptr)
-        prgb.reset(new uchar[w*h*3]);
-    unsigned char *pdata;
-    uint32_t stride;
-    vf->LockBuffer(&pdata,&stride);
-    RawToGrey(pdata,prgb.get(),w,h);
-//    if ((currentIdx & 0xf) == 0)
-//        qDebug("P:  %f", Sharpness(prgb.get(),w,h));
-    //convert_raw_to_rgb_buffer(pdata, prgb.get(), false , w,h);
-    vf->UnlockBuffer();
-
-    std::unique_ptr<QImage> frame(new QImage(prgb.get(),w,h, QImage::Format_RGB888));
-    labelVideo->setPixmap(QPixmap::fromImage(*frame, Qt::AutoColor));
-
-    if (ev_thread.joinable())
-    {
-		std::unique_lock<std::mutex> ul(ev_mutex, std::try_to_lock);
-		if (ul)
-		{
-			ev_thread.join();
-			ev_thread = std::thread(&ProcessImage::Sharpness, this, std::move(prgb), w, h);
-		}
-    }
+	auto currentIdx = vf->GetFrameIdx();
+	if (lastIdx == -1)
+	{
+		lastIdx = currentIdx;
+		dropcount = 0;
+	}
 	else
-        ev_thread = std::thread(&ProcessImage::Sharpness, this, std::move(prgb),w,h);
+	{
+		if (++lastIdx >= RESYNC_NUM)
+			lastIdx = 0;
+		if (currentIdx > lastIdx)
+		{
+			dropcount += currentIdx - lastIdx;
+			lastIdx = currentIdx;
+		}
+		else if (currentIdx < lastIdx)
+		{
+			dropcount += currentIdx - lastIdx;
+			lastIdx = currentIdx;
+		}
+		else if (currentIdx < lastIdx)
+		{
+			dropcount.fetch_add(RESYNC_NUM - lastIdx + currentIdx);
+			lastIdx = currentIdx;
+		}
+	}
+
+
+	//qDebug("frame %d.%03d", vf->tv.tv_sec, vf->tv.tv_usec/1000);
+
+	fc.NewFrame();
+
+	int w, h;
+	vf->GetSize(w, h);
+	//	camera->GetCurrentFormat();
+	//h = format.Height;
+	//w = format.Width;
+	//vf->QueryActualSize(w,h);
+
+	if (prgb == nullptr)
+		prgb.reset(new uchar[w*h * 3]);
+
+	unsigned char *pdata;
+	uint32_t stride;
+	vf->LockBuffer(&pdata, &stride);
+	TopGear::ImageAnalysis::ConvertRawGB12ToGray(reinterpret_cast<uint16_t *>(pdata), prgb.get(), w, h);
+	vf->UnlockBuffer();
+
+	std::unique_ptr<QImage> frame(new QImage(prgb.get(), w, h, QImage::Format_RGB888));
+	QPainter paint;
+	//QBrush redBrush(QColor::fromRgb(255, 0, 0));
+	static const QPen gpen(QBrush(QColor::fromRgb(0, 255, 0)), 3);
+	static const QPen rpen(QBrush(QColor::fromRgb(255, 0, 0)), 2);
+	static const QPen ypen(QBrush(QColor::fromRgb(255, 255, 0)), 3);
+	const auto crossSize = 10;
+	paint.begin(frame.get());
+	paint.setPen(gpen);
+	paint.drawLine(w / 2 - crossSize, h / 2, w / 2 + crossSize, h / 2);
+	paint.drawLine(w / 2, h / 2 - crossSize, w / 2, h / 2 + crossSize);
+
+	std::unique_lock<std::mutex> ul(ev_mutex, std::try_to_lock);
+	if (ul)
+	{
+		if (image_result.valid())
+		{
+			auto result = image_result.get();
+			labelMag->setText(QString::number(result.Sharpness));
+			lastCorners = std::move(result.Corners);
+		}
+		ul.unlock();
+		image_result = std::async([&, this]()
+		{
+			std::lock_guard<std::mutex> lock(ev_mutex);
+			return TopGear::ImageAnalysis::Process(prgb.release(), w, h);
+		});
+	}
+	if (lastCorners.size() > 0)
+	{
+		paint.setPen(rpen);
+		auto xpos = 0;
+		auto ypos = 0;
+		for (auto &point : lastCorners)
+		{
+			xpos += point.first;
+			ypos += point.second;
+			//paint.drawEllipse(QPoint(point.first, point.second), 3, 3);
+		}
+		xpos /= lastCorners.size();
+		ypos /= lastCorners.size();
+		paint.setPen(ypen);
+		paint.drawLine(xpos - crossSize, ypos, xpos + crossSize, ypos);
+		paint.drawLine(xpos, ypos - crossSize, xpos, ypos + crossSize);
+	}
+	paint.end();
+	labelVideo->setPixmap(QPixmap::fromImage(*frame, Qt::AutoColor));
 }
 
 
