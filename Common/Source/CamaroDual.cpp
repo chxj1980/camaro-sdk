@@ -184,6 +184,42 @@ void CamaroDual::RegisterFrameCallback(IVideoFrameCallback* pCB)
 	fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
 }
 
+int CamaroDual::SetRegisters(uint16_t regaddr[], uint16_t regval[], int num)
+{
+	auto ll1 = std::dynamic_pointer_cast<ILowlevelControl>(videoStreams[0]);
+	auto ll2 = std::dynamic_pointer_cast<ILowlevelControl>(videoStreams[1]);
+	if (ll1 == nullptr || ll2 == nullptr)
+		return -1;
+	return ll1->SetRegisters(regaddr, regval, num) | ll2->SetRegisters(regaddr, regval, num);
+}
+
+int CamaroDual::GetRegisters(uint16_t regaddr[], uint16_t regval[], int num)
+{
+	auto ll1 = std::dynamic_pointer_cast<ILowlevelControl>(videoStreams[0]);
+	auto ll2 = std::dynamic_pointer_cast<ILowlevelControl>(videoStreams[1]);
+	if (ll1 == nullptr || ll2 == nullptr)
+		return -1;
+	return ll1->GetRegisters(regaddr, regval, num) | ll2->GetRegisters(regaddr, regval, num);
+}
+
+int CamaroDual::SetRegister(uint16_t regaddr, uint16_t regval)
+{
+	auto ll1 = std::dynamic_pointer_cast<ILowlevelControl>(videoStreams[0]);
+	auto ll2 = std::dynamic_pointer_cast<ILowlevelControl>(videoStreams[1]);
+	if (ll1 == nullptr || ll2 == nullptr)
+		return -1;
+	return ll1->SetRegister(regaddr, regval) | ll2->SetRegister(regaddr, regval);
+}
+
+int CamaroDual::GetRegister(uint16_t regaddr, uint16_t& regval)
+{
+	auto ll1 = std::dynamic_pointer_cast<ILowlevelControl>(videoStreams[0]);
+	auto ll2 = std::dynamic_pointer_cast<ILowlevelControl>(videoStreams[1]);
+	if (ll1 == nullptr || ll2 == nullptr)
+		return -1;
+	return ll1->GetRegister(regaddr, regval) | ll2->GetRegister(regaddr, regval);
+}
+
 void CamaroDual::Notify(std::vector<IVideoFramePtr>& payload)
 {
 	if (fnCb)
