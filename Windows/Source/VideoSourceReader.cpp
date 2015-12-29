@@ -79,7 +79,7 @@ VideoSourceReader::VideoSourceReader() :
 	m_nRefCount(1),
 	m_pReader(nullptr)
 {
-	InitializeCriticalSection(&m_critsec);
+	//InitializeCriticalSection(&m_critsec);
 }
 
 //-------------------------------------------------------------------
@@ -92,7 +92,7 @@ VideoSourceReader::~VideoSourceReader()
 
 	//m_draw.DestroyDevice();
 
-	DeleteCriticalSection(&m_critsec);
+	//DeleteCriticalSection(&m_critsec);
 }
 
 //-------------------------------------------------------------------
@@ -103,11 +103,11 @@ VideoSourceReader::~VideoSourceReader()
 
 HRESULT VideoSourceReader::CloseDevice()
 {
-	EnterCriticalSection(&m_critsec);
-
+	//EnterCriticalSection(&m_critsec);
+	std::lock_guard<std::mutex> lg(mtx);
 	System::SafeRelease(&m_pReader);
 
-	LeaveCriticalSection(&m_critsec);
+	//LeaveCriticalSection(&m_critsec);
 	return S_OK;
 }
 
@@ -124,7 +124,7 @@ bool VideoSourceReader::SetCurrentFormat(uint32_t index, int formatIndex)
 		return false;
 	auto &stream = streams[index];
 
-	EnterCriticalSection(&m_critsec);
+	std::lock_guard<std::mutex> lg(mtx);
 
 	IMFMediaType *pType;
 	auto hr = m_pReader->GetNativeMediaType(index, formatIndex, &pType);
@@ -136,18 +136,20 @@ bool VideoSourceReader::SetCurrentFormat(uint32_t index, int formatIndex)
 		MFHelper::GetDefaultStride(pType, stream.defaultStride);
 	}
 	System::SafeRelease(&pType);
-	LeaveCriticalSection(&m_critsec);
 	return SUCCEEDED(hr);
 }
 
 HRESULT VideoSourceReader::OpenMediaSource(IMFMediaSource* pSource)
 {
-	IMFAttributes   *pAttributes = nullptr;
-
-	EnterCriticalSection(&m_critsec);
+	IMFAttributes *pAttributes = nullptr;
 
 	// Release the current device, if any.
 	auto hr = CloseDevice();
+
+	std::lock_guard<std::mutex> lg(mtx);
+
+	
+	
 
 	//
 	// Create the source reader.
@@ -195,8 +197,6 @@ HRESULT VideoSourceReader::OpenMediaSource(IMFMediaSource* pSource)
 	}
 
 	System::SafeRelease(&pAttributes);
-
-	LeaveCriticalSection(&m_critsec);
 	return hr;
 }
 
@@ -205,7 +205,7 @@ void VideoSourceReader::EnumerateStreams(bool onlyFirst)
 	if (m_pReader == nullptr)
 		return;
 
-	EnterCriticalSection(&m_critsec);
+	std::lock_guard<std::mutex> lg(mtx);
 
 	m_pReader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, TRUE);
 
@@ -225,8 +225,6 @@ void VideoSourceReader::EnumerateStreams(bool onlyFirst)
 		System::SafeRelease(&pType);
 		i++;
 	}
-
-	LeaveCriticalSection(&m_critsec);
 }
 
 void VideoSourceReader::EnumerateFormats(uint32_t index, std::vector<VideoFormat> &videoFormats) const
@@ -272,7 +270,7 @@ bool VideoSourceReader::StartStream(uint32_t index)
 
 	StopStream(index);
 
-	EnterCriticalSection(&m_critsec);
+	std::lock_guard<std::mutex> lg(mtx);
 
 	streams[index].isRunning = true;
 	auto hr = m_pReader->ReadSample(
@@ -283,8 +281,6 @@ bool VideoSourceReader::StartStream(uint32_t index)
 			nullptr,
 			nullptr
 			);
-	
-	LeaveCriticalSection(&m_critsec);
 	return hr==S_OK;
 }
 
@@ -292,11 +288,10 @@ bool VideoSourceReader::StopStream(uint32_t index)
 {
 	if (streams.find(index) == streams.end())
 		return false;
-	EnterCriticalSection(&m_critsec);
+	std::unique_lock<std::mutex> lck(mtx);
 	streams[index].isRunning = false;
-	LeaveCriticalSection(&m_critsec);
-	while (streams[index].streamOn)
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	cv.wait_for(lck, std::chrono::milliseconds(500));
+	streams[index].streamOn = false;
 	return true;
 }
 
@@ -376,7 +371,7 @@ HRESULT VideoSourceReader::OnReadSample(
 	auto hr = S_OK;
 	IMFMediaBuffer *pBuffer = nullptr;
 
-	EnterCriticalSection(&m_critsec);
+	std::lock_guard<std::mutex> lg(mtx);
 
 	if (pSample)
 	{
@@ -408,19 +403,19 @@ HRESULT VideoSourceReader::OnReadSample(
 			);
 		stream.streamOn = true;
 	}
-	else
-	{
-		stream.isRunning = false;
-		stream.streamOn = false;
-	}
+	//else
+	//{
+	//	stream.isRunning = false;
+	//	stream.streamOn = false;
+	//}
 
 	if (FAILED(hr))
 	{
 		NotifyError(hr);
 	}
 	System::SafeRelease(&pBuffer);
-
-	LeaveCriticalSection(&m_critsec);
+	if (!stream.isRunning)
+		cv.notify_one();
 	return hr;
 }
 
@@ -438,7 +433,6 @@ void VideoSourceReader::RegisterReaderCallback(uint32_t index, const ReaderCallb
 {
 	if (streams.find(index) == streams.end())
 		return;
-	EnterCriticalSection(&m_critsec);
+	std::lock_guard<std::mutex> lg(mtx);
 	streams[index].fncb = fn;
-	LeaveCriticalSection(&m_critsec);
 }

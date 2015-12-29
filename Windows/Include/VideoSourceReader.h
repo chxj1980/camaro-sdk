@@ -12,6 +12,8 @@
 #include "IVideoStream.h"
 #include "VideoFormat.h"
 #include "IMultiVideoSource.h"
+#include <mutex>
+#include <condition_variable>
 
 namespace TopGear
 {
@@ -84,7 +86,9 @@ namespace TopGear
 			}
 
 			long                    m_nRefCount;        // Reference count.
-			CRITICAL_SECTION        m_critsec;
+			std::mutex mtx;
+			std::condition_variable cv;
+			//CRITICAL_SECTION        m_critsec;
 
 			//HWND                    m_hwndVideo;        // Video window.
 			//HWND                    m_hwndEvent;        // Application window to receive events. 
