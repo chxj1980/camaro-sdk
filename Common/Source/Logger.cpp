@@ -15,7 +15,8 @@ namespace TopGear
 	{
 		try
 		{
-			spdlog::set_async_mode(1048576); //queue size must be power of 2
+			spdlog::set_async_mode(1048576, spdlog::async_overflow_policy::discard_log_msg,
+				nullptr, std::chrono::milliseconds(1000)); //queue size must be power of 2
 			logger = std::make_shared<spdlog::logger>(LoggerName, dist_sink);
 			spdlog::register_logger(logger);
 			dist_sink->add_sink(std_sink);
@@ -62,6 +63,7 @@ namespace TopGear
 			break;
 		default: break;
 		}
+		//instance->logger->flush();
 	}
 
 	bool Logger::ConfigSink(bool enable, spdlog::sink_ptr &sink, bool &original) const
