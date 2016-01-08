@@ -9,6 +9,7 @@
 #include "CamaroDual.h"
 #include "ExtensionVCDevice.h"
 #include <Logger.h>
+#include <ImpalaE.h>
 
 namespace TopGear
 {
@@ -95,9 +96,31 @@ namespace TopGear
 			return{};
 		}
 
+		template <>
+		template <>
+		inline std::shared_ptr<IVideoStream> CameraFactory<ImpalaE>::
+			CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
+		{
+			auto exDevice = std::dynamic_pointer_cast<IDiscernible<IExtensionLite>>(device);
+			if (exDevice == nullptr)
+				return{};
+
+			auto streams = VideoSourceReader::CreateVideoStreams(device);
+			if (streams.size()==0)
+				return{};
+
+			auto validator = std::dynamic_pointer_cast<ExtensionFilterBase>(exDevice->GetValidator());
+			if (validator == nullptr)
+				return{};
+			auto ex = std::static_pointer_cast<IExtensionAccess>(
+				std::make_shared<ExtensionAccess>(validator));
+
+			return std::make_shared<ImpalaE>(streams, ex);
+		}
+
 		template<class T>
 		template<class U>
-		inline std::shared_ptr<IVideoStream> CameraFactory<T>::CreateInstance(U& device)
+		std::shared_ptr<IVideoStream> CameraFactory<T>::CreateInstance(U& device)
 		{
 			throw std::exception("Unimplementation");
 			//return{};
