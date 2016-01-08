@@ -429,8 +429,9 @@ bool Camaro::StartStream()
 
 bool Camaro::StopStream()
 {
-	CameraSoloBase::StopStream();
-	SetControl("Trigger", PropertyData<uint8_t>(0));
+	auto result = CameraSoloBase::StopStream();
+	if (result)
+		SetControl("Trigger", PropertyData<uint8_t>(0));
 	//SetSensorTrigger(0);
-	return true;
+	return result;
 }

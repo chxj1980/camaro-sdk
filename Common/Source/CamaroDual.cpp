@@ -132,15 +132,14 @@ bool CamaroDual::StartStream()
 
 bool CamaroDual::StopStream()
 {
-	videoStreams[1]->StopStream();
-	videoStreams[0]->StopStream();
+	auto result = videoStreams[1]->StopStream() && videoStreams[0]->StopStream();
 	if (frameWatchThread.joinable())
 	{
 		frameBuffer.Discard();
 		frameWatchThread.join();
 	}
 	threadOn = false;
-	return true;
+	return result;
 }
 
 bool CamaroDual::IsStreaming() const
@@ -238,11 +237,8 @@ void CamaroDual::FrameWatcher()
 	auto dropped = 0;
 	std::vector<IVideoFramePtr> frameVector[2];
 	std::pair<int, IVideoFramePtr> frameEx;
-	while (true)
+	while (frameBuffer.Pop(frameEx))
 	{
-		if (!frameBuffer.Pop(frameEx))
-			break;
-
         frameVector[frameEx.first].emplace_back(std::move(frameEx.second));
 
 		auto found = false;
