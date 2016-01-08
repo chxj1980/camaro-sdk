@@ -72,6 +72,9 @@
     <ClCompile Include="..\..\..\Common\Source\Logger.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\Common\Source\ImpalaE.cpp">
+      <Filter>Source Files\Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Common\Include\BufferQueue.h">
@@ -219,6 +222,9 @@
       <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\Common\Include\Logger.h">
+      <Filter>Header Files\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\Common\Include\ImpalaE.h">
       <Filter>Header Files\Common</Filter>
     </ClInclude>
   </ItemGroup>

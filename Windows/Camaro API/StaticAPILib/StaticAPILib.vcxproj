@@ -157,6 +157,7 @@
     <ClCompile Include="..\..\..\Common\Source\CameraProfile.cpp" />
     <ClCompile Include="..\..\..\Common\Source\DeepCamAPI.cpp" />
     <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\ImpalaE.cpp" />
     <ClCompile Include="..\..\..\Common\Source\jsoncpp.cpp" />
     <ClCompile Include="..\..\..\Common\Source\Logger.cpp" />
     <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp" />
@@ -192,6 +193,7 @@
     <ClInclude Include="..\..\..\Common\Include\IExtensionLite.h" />
     <ClInclude Include="..\..\..\Common\Include\IGenericVCDevice.h" />
     <ClInclude Include="..\..\..\Common\Include\ILowlevelControl.h" />
+    <ClInclude Include="..\..\..\Common\Include\ImpalaE.h" />
     <ClInclude Include="..\..\..\Common\Include\IMultiVideoSource.h" />
     <ClInclude Include="..\..\..\Common\Include\IMultiVideoStream.h" />
     <ClInclude Include="..\..\..\Common\Include\IProcessor.h" />
