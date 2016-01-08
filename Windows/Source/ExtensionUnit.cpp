@@ -71,8 +71,7 @@ ExtensionUnit::~ExtensionUnit()
 	System::SafeRelease(&pKsControl);
 }
 
-HRESULT ExtensionUnit::get_InfoSize(
-	ULONG *pulSize)
+HRESULT ExtensionUnit::get_InfoSize(ULONG *pulSize) const
 {
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
 	auto hr = S_OK;
@@ -105,7 +104,7 @@ HRESULT ExtensionUnit::get_InfoSize(
 
 HRESULT ExtensionUnit::get_Info(
 	ULONG ulSize,
-	BYTE pInfo[])
+	BYTE pInfo[]) const
 {
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
 	auto hr = S_OK;
@@ -131,7 +130,7 @@ HRESULT ExtensionUnit::get_Info(
 
 HRESULT ExtensionUnit::get_PropertySize(
 	ULONG PropertyId,
-	ULONG *pulSize)
+	ULONG *pulSize) const
 {
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
 	auto hr = S_OK;
@@ -164,7 +163,7 @@ HRESULT ExtensionUnit::get_PropertySize(
 HRESULT ExtensionUnit::get_Property(
 	ULONG PropertyId,
 	ULONG ulSize,
-	BYTE pValue[])
+	BYTE pValue[]) const
 {
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
 	auto hr = S_OK;
@@ -190,7 +189,7 @@ HRESULT ExtensionUnit::get_Property(
 HRESULT ExtensionUnit::put_Property(
 	ULONG PropertyId,
 	ULONG ulSize,
-	BYTE pValue[])
+	BYTE pValue[]) const
 {
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
 	auto hr = S_OK;
@@ -219,7 +218,7 @@ HRESULT ExtensionUnit::get_PropertyRange(
 	BYTE pMin[],
 	BYTE pMax[],
 	BYTE pSteppingDelta[],
-	BYTE pDefault[])
+	BYTE pDefault[]) const
 {
 	// IHV may add code here, current stub just returns S_OK
 	return S_OK;

@@ -26,25 +26,25 @@ namespace TopGear
 			static std::shared_ptr<ExtensionUnit> CreateXU(IUnknown* pUnkOuter, const GUID &xCode);
 			~ExtensionUnit();
 			HRESULT get_InfoSize(
-				/* [out] */ ULONG *pulSize);
+				/* [out] */ ULONG *pulSize) const;
 
 			HRESULT get_Info(
 				/* [in] */ ULONG ulSize,
-				/* [size_is][out][in] */ BYTE pInfo[]);
+				/* [size_is][out][in] */ BYTE pInfo[]) const;
 
 			HRESULT get_PropertySize(
 				/* [in] */ ULONG PropertyId,
-				/* [out] */ ULONG *pulSize);
+				/* [out] */ ULONG *pulSize) const;
 
 			HRESULT get_Property(
 				/* [in] */ ULONG PropertyId,
 				/* [in] */ ULONG ulSize,
-				/* [size_is][out][in] */ BYTE pValue[]);
+				/* [size_is][out][in] */ BYTE pValue[]) const;
 
 			HRESULT put_Property(
 				/* [in] */ ULONG PropertyId,
 				/* [in] */ ULONG ulSize,
-				/* [size_is][out][in] */ BYTE pValue[]);
+				/* [size_is][out][in] */ BYTE pValue[]) const;
 
 			HRESULT get_PropertyRange(
 				/* [in] */ ULONG PropertyId,
@@ -52,7 +52,7 @@ namespace TopGear
 				/* [size_is][out][in] */ BYTE pMin[],
 				/* [size_is][out][in] */ BYTE pMax[],
 				/* [size_is][out][in] */ BYTE pSteppingDelta[],
-				/* [size_is][out][in] */ BYTE pDefault[]);
+				/* [size_is][out][in] */ BYTE pDefault[]) const;
 		private:
 			IKsControl *pKsControl;
 			DWORD dwNodeId;
