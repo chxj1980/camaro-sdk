@@ -16,7 +16,7 @@ namespace TopGear
 		virtual bool IsStreaming() const override;
 		virtual int GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc) override;
 		virtual int GetMatchedFormatIndex(const VideoFormat& format) const override;
-		virtual bool SetCurrentFormat(uint32_t formatIndex);
+		virtual bool SetCurrentFormat(uint32_t formatIndex) override;
 		virtual const std::vector<VideoFormat>& GetAllFormats() const override
 		{
 			return formats;

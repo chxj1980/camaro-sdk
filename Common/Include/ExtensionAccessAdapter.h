@@ -133,7 +133,10 @@ namespace TopGear
 			return true;
 		}
 
-		IExtensionAccess &Source() { return *extension; }
+		IExtensionAccess &Source() const
+		{
+			return *extension;
+		}
 	private:
 		std::shared_ptr<IExtensionAccess> extension;
 	};
