@@ -63,8 +63,9 @@ namespace TopGear
 				std::vector<VideoFormat> formats;
 				ReaderCallbackFn fncb = nullptr;
 				long defaultStride = 0;
-				int frameWidth = 0;
-				int frameHeight = 0;
+				int currentFormatIndex = 0;
+				//int frameWidth = 0;
+				//int frameHeight = 0;
 				bool isRunning = false;
 				bool streamOn = false;
 			};

@@ -130,9 +130,9 @@ bool VideoSourceReader::SetCurrentFormat(uint32_t index, int formatIndex)
 	auto hr = m_pReader->GetNativeMediaType(index, formatIndex, &pType);
 	if (SUCCEEDED(hr))
 	{
-		//stream.currentFormatIndex = formatIndex;
+		stream.currentFormatIndex = formatIndex;
 		hr = m_pReader->SetCurrentMediaType(index, nullptr, pType);
-		MFHelper::GetAttributeSize(pType, stream.frameWidth, stream.frameHeight);
+		//MFHelper::GetAttributeSize(pType, stream.frameWidth, stream.frameHeight);
 		MFHelper::GetDefaultStride(pType, stream.defaultStride);
 	}
 	System::SafeRelease(&pType);
@@ -268,9 +268,12 @@ bool VideoSourceReader::StartStream(uint32_t index)
 	if (streams.find(index) == streams.end())
 		return false;
 
-	StopStream(index);
+	std::unique_lock<std::mutex> lk(mtx);
 
-	std::lock_guard<std::mutex> lg(mtx);
+	//Stop
+	streams[index].isRunning = false;
+	auto result = cv.wait_for(lk, std::chrono::milliseconds(100)) != std::cv_status::timeout;
+	streams[index].streamOn = false;
 
 	streams[index].isRunning = true;
 	auto hr = m_pReader->ReadSample(
@@ -290,9 +293,9 @@ bool VideoSourceReader::StopStream(uint32_t index)
 		return false;
 	std::unique_lock<std::mutex> lck(mtx);
 	streams[index].isRunning = false;
-	cv.wait_for(lck, std::chrono::milliseconds(500));
+	auto result = cv.wait_for(lck, std::chrono::milliseconds(100))!=std::cv_status::timeout;
 	streams[index].streamOn = false;
-	return true;
+	return result;
 }
 
 bool VideoSourceReader::IsStreaming(uint32_t index)
@@ -378,20 +381,20 @@ HRESULT VideoSourceReader::OnReadSample(
 		//OutputDebugStringW(L"Frame Arrival\n");
 		// Get the video frame buffer from the sample.
 
-		hr = pSample->GetBufferByIndex(streamIndex, &pBuffer);
+		hr = pSample->GetBufferByIndex(0, &pBuffer);
 
 		// Draw the frame.
 		if (SUCCEEDED(hr) && stream.fncb !=nullptr)
 		{
 			std::shared_ptr<IVideoFrame> frame = std::make_shared<VideoBufferLock>(
-					pBuffer, timeStamp, stream.defaultStride, stream.frameWidth, stream.frameHeight);
+					pBuffer, timeStamp, stream.defaultStride, stream.formats[stream.currentFormatIndex]);
 			//Invoke callback handler
 			stream.fncb(frame);
 		}
 	}
 
 	// Request the next frame.
-	if (SUCCEEDED(hr) && stream.isRunning)
+	if (stream.isRunning)
 	{
 		hr = m_pReader->ReadSample(
 			streamIndex,
