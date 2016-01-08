@@ -6,7 +6,6 @@
 
 // ReSharper disable once CppUnusedIncludeDirective
 #include <condition_variable>
-#include <thread>
 #include <queue>
 #include <mutex>
 
@@ -51,7 +50,8 @@ namespace TopGear
 		auto result = false;
 		if (sizeLimit == 0 || queue.size() < sizeLimit)
 		{
-			queue.push(std::move(item));
+			discarded = false;
+			queue.emplace(item);
 			cond.notify_one();
 			result = true;
 		}
@@ -70,17 +70,13 @@ namespace TopGear
 	}
 
 	template <class T>
-	inline bool BufferQueue<T>::Pop(T &item)
+	bool BufferQueue<T>::Pop(T &item)
 	{
 		std::unique_lock<std::mutex> lk(mtx);
-		discarded = false;
-        while (queue.empty())
-		{
-			cond.wait(lk);
-			if (discarded)
-				return false;
-        }
-        item = std::move(queue.front());
+		cond.wait(lk, [this]() { return !queue.empty() || discarded; });
+		if (discarded)
+			return false;
+		item = std::move(queue.front());
 		queue.pop();
 		return true;
 	}
