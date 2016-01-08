@@ -2,7 +2,7 @@
 #include "DeviceFactory.h"
 #include "GenericVCDevice.h"
 #include "DGExtensionFilter.h"
-//#include "EtronExtensionFilter.h"
+#include "EtronExtensionFilter.h"
 #include "CameraFactory.h"
 #include "StandardUVC.h"
 #include "Camaro.h"
@@ -66,7 +66,7 @@ namespace TopGear
 				inventory = DeviceFactory<ExtensionVCDevice<DGExtensionFilter>>::EnumerateDevices();
 				break;
 			case DeviceType::Etron:
-				//inventory = DeviceFactory<ExtensionVCDevice<EtronExtensionFilter>>::EnumerateDevices();
+				inventory = DeviceFactory<ExtensionVCDevice<EtronExtensionFilter>>::EnumerateDevices();
 				break;
 			default:
 				break;
@@ -281,7 +281,17 @@ namespace TopGear
 			if (vs)
 				Logger::Write(spdlog::level::info, "Camaro stereo camera created");
 			break;
-		case Camera::Etron3D:
+		case Camera::ImpalaE:
+			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceType::Etron);
+			for (auto device : inventory)
+			{
+				vs = CameraFactory<ImpalaE>::CreateInstance(device);
+				if (vs)
+				{
+					Logger::Write(spdlog::level::info, "ImpalaE stereo camera created");
+					break;
+				}
+			}
 			break;
 		default:
 			break;

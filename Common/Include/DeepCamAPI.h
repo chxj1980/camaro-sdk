@@ -43,7 +43,7 @@ namespace TopGear
 		StandardUVC,
 		Camaro,
 		CamaroDual,
-		Etron3D,
+		ImpalaE ,
 	};
 
 	enum class Level
