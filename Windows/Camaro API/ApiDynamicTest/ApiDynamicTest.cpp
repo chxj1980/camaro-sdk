@@ -134,26 +134,25 @@ void OnFrameCB(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFramePt
 
 	frame->LockBuffer(&pData, &stride, &pExtra);		//Lock memory
 	std::cout << "FrameIdx: " << int(frame->GetFrameIdx()) << std::endl;
-	int w, h;
-	frame->GetSize(w, h);
+	auto format = frame->GetFormat();
 	if (pixel == nullptr)
-		pixel = std::unique_ptr<uint8_t[]>(new uint8_t[w*h]);
-	RawToGrey(pData, pixel.get(), w, h);
+		pixel = std::unique_ptr<uint8_t[]>(new uint8_t[format.Width*format.Height]);
+	RawToGrey(pData, pixel.get(), format.Width, format.Height);
 
 	constexpr auto lamda1 = 1.0f;
 	constexpr auto lamda2 = 1 - lamda1;
 	float sum1 = 0;
 	float sum2 = 0;
 	
-	for (auto i = 1; i < h - 1; ++i)
-		for (auto j = 1; j < w - 1;++j)
+	for (auto i = 1; i < format.Height - 1; ++i)
+		for (auto j = 1; j < format.Width - 1;++j)
 		{
 			float max = 0;
-			auto g = Gradient(pixel.get(), j, i, w, max);
+			auto g = Gradient(pixel.get(), j, i, format.Width, max);
 			sum1 += g;
 			sum2 += max;
 		}
-	auto pval = (sum1*lamda1+sum2*lamda2)/((h - 2)*(w - 2));
+	auto pval = (sum1*lamda1+sum2*lamda2)/((format.Height - 2)*(format.Width - 2));
 	std::cout << "P = "<< pval << std::endl;
 	//std::cout << static_cast<int>(frame->GetTimestamp().tv_usec) << std::endl;
 	//Do something...
@@ -170,7 +169,8 @@ public:
 	}
 	void OnFrameMember(TopGear::IVideoStream &stream, std::vector<TopGear::IVideoFramePtr> &frames) const
 	{
-		OnFrameCB(stream, frames);
+		//OnFrameCB(stream, frames);
+		std::cout << "Frame Arrival " << frames[0]->GetFrameIdx() << std::endl;
 	}
 };
 
@@ -188,9 +188,10 @@ void Loop()
 	}
 }
 
-#define CAMARO_DUAL 
-#define CAMARO_SOLO
+//#define CAMARO_DUAL 
+//#define CAMARO_SOLO
 //#define STD_UVC
+#define IMPALA
 
 void main()
 {
@@ -289,6 +290,17 @@ void main()
 		dual->StartStream();
 		Loop();
 		dual->StopStream();
+	}
+#elif defined IMPALA
+
+	auto impala = TopGear::DeepCamAPI::CreateCamera(TopGear::Camera::ImpalaE);
+	if (impala)
+	{
+		TopGear::IVideoStream::RegisterFrameCallback(*impala, &FrameDemo::OnFrameMember, &demo);
+		impala->SetCurrentFormat(0);
+		impala->StartStream();
+		Loop();
+		impala->StopStream();
 	}
 #endif
 
