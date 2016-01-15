@@ -14,6 +14,7 @@
 #include "IMultiVideoSource.h"
 #include <mutex>
 #include <condition_variable>
+#include <atomic>
 
 namespace TopGear
 {
@@ -71,8 +72,9 @@ namespace TopGear
 			};
 
 			std::map<uint32_t, StreamState> streams;
+			std::atomic<int> error = 0;
 
-			//bool IsFormatSupported(const GUID &subtype) const;
+				//bool IsFormatSupported(const GUID &subtype) const;
 			HRESULT OpenMediaSource(IMFMediaSource *pSource);
 
 			void EnumerateStreams(bool onlyFirst = false);
@@ -81,10 +83,10 @@ namespace TopGear
 			VideoSourceReader();
 			
 
-			void NotifyError(HRESULT hr) const
-			{
+			void NotifyError(HRESULT hr);
+			//{
 				//PostMessage(m_hwndEvent, WM_APP_PREVIEW_ERROR, static_cast<WPARAM>(hr), 0L);
-			}
+			//}
 
 			long                    m_nRefCount;        // Reference count.
 			std::mutex mtx;

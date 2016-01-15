@@ -82,6 +82,11 @@ VideoSourceReader::VideoSourceReader() :
 	//InitializeCriticalSection(&m_critsec);
 }
 
+void VideoSourceReader::NotifyError(HRESULT hr)
+{
+	error.store(hr);
+}
+
 //-------------------------------------------------------------------
 //  destructor
 //-------------------------------------------------------------------
@@ -147,10 +152,6 @@ HRESULT VideoSourceReader::OpenMediaSource(IMFMediaSource* pSource)
 	auto hr = CloseDevice();
 
 	std::lock_guard<std::mutex> lg(mtx);
-
-	
-	
-
 	//
 	// Create the source reader.
 	//
@@ -284,6 +285,8 @@ bool VideoSourceReader::StartStream(uint32_t index)
 			nullptr,
 			nullptr
 			);
+	if (FAILED(hr))
+		NotifyError(hr);
 	return hr==S_OK;
 }
 
@@ -294,6 +297,7 @@ bool VideoSourceReader::StopStream(uint32_t index)
 	std::unique_lock<std::mutex> lck(mtx);
 	streams[index].isRunning = false;
 	auto result = cv.wait_for(lck, std::chrono::milliseconds(100))!=std::cv_status::timeout;
+	result = result && error == 0;
 	streams[index].streamOn = false;
 	return result;
 }
