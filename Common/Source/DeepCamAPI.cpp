@@ -28,7 +28,6 @@
 
 namespace TopGear
 {
-
 	template<typename T>
 	const std::chrono::milliseconds DeviceFactory<T>::InitialTime = std::chrono::milliseconds(100);
 
@@ -91,7 +90,8 @@ namespace TopGear
 			case Camera::CamaroDual:
 				vs = CameraFactory<CamaroDual>::CreateInstance(source);
 				break;
-			case Camera::Etron3D:
+			case Camera::ImpalaE:
+				vs = CameraFactory<ImpalaE>::CreateInstance(source);
 				break;
 			default:
 				break;
@@ -170,19 +170,21 @@ namespace TopGear
 
 	std::unique_ptr<DeepCamAPI> DeepCamAPIInternal::Instance;
 
-	DEEPCAM_API void DeepCamAPI::Initialize()
+	DEEPCAM_API DeepCamAPI &DeepCamAPI::Instance()
 	{
 		if (DeepCamAPIInternal::Instance == nullptr)
 			DeepCamAPIInternal::Instance = std::unique_ptr<DeepCamAPI>(new DeepCamAPI);
-		//return *DeepCamAPIInternal::Instance;
+		return *DeepCamAPIInternal::Instance;
 	}
 
-	DEEPCAM_API void DeepCamAPI::SetLogLevel(Level level)
+	// ReSharper disable once CppMemberFunctionMayBeStatic
+	DEEPCAM_API void DeepCamAPI::SetLogLevel(Level level) const
 	{
 		spdlog::set_level(spdlog::level::level_enum(int(level)));
 	}
 
-	DEEPCAM_API void DeepCamAPI::EnableLog(uint8_t flag)
+	// ReSharper disable once CppMemberFunctionMayBeStatic
+	DEEPCAM_API void DeepCamAPI::EnableLog(uint8_t flag) const
 	{
 		Logger::SwitchStdout((flag & LogType::Standard) != 0);
 		Logger::SwitchDaily((flag & LogType::DailyFile) != 0);
@@ -191,14 +193,14 @@ namespace TopGear
 #endif
 	}
 
-	DEEPCAM_API void DeepCamAPI::WriteLog(Level level, const std::string &text)
+	// ReSharper disable once CppMemberFunctionMayBeStatic
+	DEEPCAM_API void DeepCamAPI::WriteLog(Level level, const std::string &text) const
 	{
 		Logger::Write(spdlog::level::level_enum(int(level)), text);
 	}
 
 	DeepCamAPI::DeepCamAPI()
 	{
-		//std::cout << "Initialize" << std::endl;
 #ifdef _WIN32
 		System::Initialize();
 #endif
@@ -208,7 +210,6 @@ namespace TopGear
 
 	DeepCamAPI::~DeepCamAPI()
 	{
-		//std::cout << "Uninitialize" << std::endl;
 #ifdef _WIN32
 		System::Dispose();
 #endif

@@ -43,7 +43,7 @@ namespace TopGear
 		StandardUVC,
 		Camaro,
 		CamaroDual,
-		ImpalaE ,
+		ImpalaE,
 	};
 
 	enum class Level
@@ -70,27 +70,22 @@ namespace TopGear
 	class DEEPCAM_API DeepCamAPI
 	{
 	public:
-		static void Initialize();
+		static DeepCamAPI &Instance();
 
-		static std::shared_ptr<IVideoStream> CreateCamera(Camera camera);
+		std::shared_ptr<IVideoStream> CreateCamera(Camera camera);
 
-		static void SetLogLevel(Level level);
-		static void EnableLog(uint8_t flag);
-		static void WriteLog(Level level, const std::string &text);
+		void SetLogLevel(Level level) const;
+		void EnableLog(uint8_t flag) const;
+		void WriteLog(Level level, const std::string &text) const;
 
 		template<class T>
 		static std::shared_ptr<T> QueryInterface(std::shared_ptr<IVideoStream> &vs);
-
-		template<class T>
-		static bool GetProperty(std::shared_ptr<IVideoStream> &stream, std::string name, T &value);
-
-		template<class T>
-		static bool SetProperty(std::shared_ptr<IVideoStream> &stream, std::string name, T &value);
 
 		~DeepCamAPI();
 	private:
 		DeepCamAPI();
 		DeepCamAPI(DeepCamAPI &) = delete;
 	};
+
 	// ReSharper restore CppFunctionIsNotImplemented
 }
