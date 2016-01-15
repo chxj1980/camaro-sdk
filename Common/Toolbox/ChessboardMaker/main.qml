@@ -63,6 +63,11 @@ Window {
     }
 
     MainForm {
+        id: mainForm1
+        anchors.rightMargin: 0
+        anchors.bottomMargin: 0
+        anchors.leftMargin: 0
+        anchors.topMargin: 0
         anchors.fill: parent
         mouseArea.onClicked: {
             socket.sendTextMessage(qsTr("Hello Server!"));
@@ -70,20 +75,25 @@ Window {
 
         Row {
             id: row1
-            spacing: 50
             x: 170
-            y: 295
-            width: 354
+            spacing: 50
+            y: 314
+            width: 380
             height: 42
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 40
+            anchors.right: parent.right
+            anchors.rightMargin: 60
 
             Row {
+                width: 185
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: 5
                 Label {
                     id: label3
-                    width: 120
+                    width: 140
                     text: qsTr("Remote Control")
-                    horizontalAlignment: Text.AlignRight
+                    horizontalAlignment: Text.AlignHCenter
                 }
                 Switch {
                     checked: false
@@ -107,121 +117,156 @@ Window {
 
         GroupBox {
             id: groupBox1
-            x: 61
-            y: 87
-            width: 463
-            height: 181
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 110
+            anchors.right: parent.right
+            anchors.rightMargin: 60
+            anchors.left: parent.left
+            anchors.leftMargin: 60
+            anchors.top: parent.top
+            anchors.topMargin: 80
             title: qsTr("Chessboard")
 
-            Label {
-                id: label10
-                x: 44
-                y: 74
-                text: qsTr("Rows")
-                horizontalAlignment: Text.AlignRight
+            ColumnLayout {
+                id: columnLayout1
+                anchors.bottomMargin: 10
+                anchors.topMargin: 10
+                anchors.right: parent.right
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                anchors.top: parent.top
+
+                RowLayout {
+                    id: rowLayout1
+                    width: 100
+                    height: 100
+                    spacing: 20
+
+                    Label {
+                        id: label2
+                        text: qsTr("Columns")
+                        Layout.preferredWidth: 100
+                        horizontalAlignment: Text.AlignRight
+                    }
+
+                    Slider {
+                        id: sliderW
+                        width: 250
+                        Layout.preferredWidth: 250
+                        tickmarksEnabled: true
+                        minimumValue: 2
+                        value: 9
+                        stepSize: 1
+                        maximumValue: 20
+                        onValueChanged: textW.text = value.toString()
+                    }
+
+                    TextField {
+                        id: textW
+                        width: 40
+                        text: "9"
+                        Layout.preferredWidth: 40
+                        readOnly: true
+                    }
+                }
+
+                RowLayout {
+                    id: rowLayout2
+                    width: 100
+                    height: 100
+                    spacing: 20
+
+                    Label {
+                        id: label10
+                        text: qsTr("Rows")
+                        Layout.preferredWidth: 100
+                        horizontalAlignment: Text.AlignRight
+                    }
+
+                    Slider {
+                        id: sliderH
+                        width: 250
+                        Layout.preferredWidth: 250
+                        value: 6
+                        minimumValue: 2
+                        stepSize: 1
+                        maximumValue: 20
+                        tickmarksEnabled: true
+                        onValueChanged: textH.text = value.toString()
+                    }
+
+                    TextField {
+                        id: textH
+                        width: 40
+                        text: "6"
+                        Layout.preferredWidth: 40
+                        readOnly: true
+                    }
+                }
+
+                RowLayout {
+                    id: rowLayout3
+                    width: 100
+                    height: 100
+                    spacing: 20
+
+                    Label {
+                        id: label4
+                        width: 84
+                        height: 16
+                        text: qsTr("Side Length")
+                        Layout.preferredWidth: 120
+                        horizontalAlignment: Text.AlignRight
+                    }
+
+                    TextField {
+                        id: textSide
+                        width: 40
+                        placeholderText: "0"
+                        Layout.preferredWidth: 60
+                    }
+
+                    Label {
+                        id: label5
+                        text: qsTr("MM")
+                    }
+                }
             }
 
-            TextField {
-                id: textSide
-                x: 97
-                y: 103
-                width: 40
-                placeholderText: qsTr("0")
-            }
+        }
+
+        RowLayout {
+            id: rowLayout4
+            width: 257
+            height: 26
+            anchors.left: parent.left
+            anchors.leftMargin: 60
+            anchors.top: parent.top
+            anchors.topMargin: 40
+            spacing: 20
+            transformOrigin: Item.Center
 
             Label {
-                id: label4
-                x: 0
-                y: 105
-                width: 84
+                id: label1
+                width: 128
                 height: 16
-                text: qsTr("Side Length")
-                horizontalAlignment: Text.AlignRight
+                text: qsTr("Display Diagonal: ")
+                Layout.preferredWidth: 130
             }
 
             Label {
-                id: label2
-                x: 26
-                y: 41
-                text: qsTr("Columns")
-                horizontalAlignment: Text.AlignRight
+                id: labelDL
+                width: 60
+                text: "0 in"
+                Layout.preferredWidth: 80
+                horizontalAlignment: Text.AlignLeft
             }
-
-            TextField {
-                id: textH
-                x: 358
-                y: 74
-                width: 40
-                readOnly: true
-                placeholderText: qsTr("0")
-            }
-
-            TextField {
-                id: textW
-                x: 358
-                y: 41
-                width: 40
-                readOnly: true
-                placeholderText: qsTr("0")
-            }
-
-            Label {
-                id: label5
-                x: 158
-                y: 105
-                text: qsTr("MM")
-            }
-
-            Slider {
-                id: sliderW
-                x: 97
-                y: 38
-                width: 250
-                tickmarksEnabled: true
-                minimumValue: 2
-                value: 9
-                stepSize: 1
-                maximumValue: 20
-                onValueChanged: textW.text = value.toString()
-            }
-
-            Slider {
-                id: sliderH
-                x: 97
-                y: 71
-                width: 250
-                value: 6
-                minimumValue: 2
-                stepSize: 1
-                maximumValue: 20
-                tickmarksEnabled: true
-                onValueChanged: textH.text = value.toString()
-            }
-
-        }
-
-        Label {
-            id: label1
-            x: 61
-            y: 55
-            width: 128
-            height: 16
-            text: qsTr("Display Diagonal: ")
-        }
-
-        Label {
-            id: labelDL
-            x: 195
-            y: 55
-            width: 60
-            text: "0 in"
-            horizontalAlignment: Text.AlignHCenter
         }
     }
 
     Component.onCompleted: {
-//        root.setX(50)
-//        root.setY(50)
+        //        root.setX(50)
+        //        root.setY(50)
     }
 
     onScreenChanged: screenSwitch = true
