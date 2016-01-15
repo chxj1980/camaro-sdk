@@ -21,10 +21,15 @@ ExtensionFilterBase::~ExtensionFilterBase()
 {
 }
 
-uint32_t ExtensionFilterBase::GetLen(int index) const
+uint32_t ExtensionFilterBase::GetLen(int index, bool live) const
 {
 	if (index < 1 || index>31)
 		return 0;
+	if (live)
+	{
+		ULONG ulSize;
+		return (pXu->get_PropertySize(index, &ulSize) == S_OK) ? ulSize : 0;
+	}
 	return controlLens[index];
 }
 

@@ -9,13 +9,13 @@ ExtensionAccess::ExtensionAccess(std::shared_ptr<ExtensionFilterBase> &validator
 	pXu = extensionAgent->GetExtensionUnit();
 }
 
-std::unique_ptr<uint8_t[]> ExtensionAccess::GetProperty(int index, int& len)
+std::unique_ptr<uint8_t[]> ExtensionAccess::GetProperty(int index, int& len, bool dynamicLen)
 {
-	len = extensionAgent->GetLen(index);
+	len = extensionAgent->GetLen(index, dynamicLen);
 	std::unique_ptr<uint8_t[]> data(new uint8_t[len]{ 0 });
 	auto res = pXu->get_Property(index, len, data.get());
 	if (res != S_OK)
-		return std::unique_ptr<uint8_t[]>();
+		return {};
 	return data;
 }
 
