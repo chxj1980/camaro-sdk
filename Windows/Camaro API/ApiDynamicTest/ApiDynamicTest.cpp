@@ -196,10 +196,10 @@ void Loop()
 void main()
 {
 	FrameDemo demo;
-	TopGear::DeepCamAPI::Initialize();
+	auto &api = TopGear::DeepCamAPI::Instance();
 	//TopGear::DeepCamAPI::EnableLog(TopGear::LogType::Standard | TopGear::LogType::DailyFile);
-	TopGear::DeepCamAPI::SetLogLevel(TopGear::Level::Info);
-	TopGear::DeepCamAPI::WriteLog(TopGear::Level::Info, "Initialized");
+	api.SetLogLevel(TopGear::Level::Info);
+	api.WriteLog(TopGear::Level::Info, "Initialized");
 #ifdef STD_UVC
 	//auto uvcDevices = deepcam.EnumerateDevices(TopGear::DeviceType::Standard);
 	std::shared_ptr<TopGear::IVideoStream> uvc;
@@ -293,7 +293,7 @@ void main()
 	}
 #elif defined IMPALA
 
-	auto impala = TopGear::DeepCamAPI::CreateCamera(TopGear::Camera::ImpalaE);
+	auto impala = api.CreateCamera(TopGear::Camera::ImpalaE);
 	if (impala)
 	{
 		TopGear::IVideoStream::RegisterFrameCallback(*impala, &FrameDemo::OnFrameMember, &demo);

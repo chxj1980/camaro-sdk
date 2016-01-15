@@ -68,7 +68,7 @@ void Loop()
 void main()
 {
 	//FrameDemo demo;
-	TopGear::DeepCamAPI::Initialize();
+	auto & api= TopGear::DeepCamAPI::Instance();
 #ifdef STD_UVC
 	auto uvcDevices = deepcam.EnumerateDevices(TopGear::DeviceType::Standard);
 	std::shared_ptr<TopGear::IVideoStream> uvc;
