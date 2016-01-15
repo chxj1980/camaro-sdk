@@ -3,9 +3,12 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <array>
 
 namespace TopGear
 {
+	int fast_abs(int value);
+
 	struct CameraParameters
 	{
 		std::pair<float, float> SensorSize;	//In mm
@@ -88,8 +91,10 @@ namespace TopGear
 		struct CalibrationResult
 		{
 			bool Completed;
+			int Pairs;
 			double RMS;
 			double EpipolarError;
+			std::array<int, 4> ROI;
 		};
 
 		explicit ImageAnalysis(std::function<void(const std::string &)> &&logFn) 
@@ -101,15 +106,15 @@ namespace TopGear
 		void ConvertGrayToRGB(uint8_t *gray, uint8_t* rgb, int w, int h);
 		void ConvertYUVToRGB(uint8_t *yuv2, uint8_t* rgb, int w, int h);
 
-		void ConvertRawGB12ToGray(uint16_t *raw, uint8_t *rgb, int w, int h, uint8_t *gray = nullptr);
-		float Sharpness(uint8_t *data, int w, int h);
-		Result Process(uint8_t *data, int w, int h, int cb_x, int cb_y, bool fast) const;
-		bool WriteImage(uint8_t *data, int w, int h, const std::string &filename) const;
-		CalibrationResult StereoCalibrate(CameraParameters& params, const std::string &output_dirpath="") const;
+		void ConvertRawGB12ToGray(uint16_t *raw, uint8_t *gray, int w, int h, uint8_t *rgb= nullptr);
+		float Sharpness(std::shared_ptr<uint8_t> pixel, int w, int h);
+		Result Process(std::shared_ptr<uint8_t> pixel, int w, int h, int cb_x, int cb_y, bool fast) const;
+		bool WriteImage(uint8_t *data, int w, int h, const std::string &filename, int ch=3) const;
+		CalibrationResult StereoCalibrate(CameraParameters& params, const std::string &dirpath ="") const;
 	private:
 		std::function<void(const std::string &)> WriteLog;
 		static float SharpnessInternal(uint8_t *data, int w, int h);
-		static void FindImagePairs(std::vector<std::string> &filelist);
+		static void FindImagePairs(std::vector<std::string> &filelist, const std::string &path = "");
 	};
 
 }

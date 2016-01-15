@@ -14,6 +14,7 @@
 
 #ifdef _WIN32
 #include <codecvt>
+#include <cwchar>
 #include <Windows.h>
 #include <strsafe.h>
 #elif defined(__linux__)
@@ -27,19 +28,13 @@
 
 namespace TopGear
 {
-	inline int fast_abs(int value)
+	int fast_abs(int value)
 	{
 		uint32_t temp = value >> 31;     // make a mask of the sign bit
 		value ^= temp;                   // toggle the bits if value is negative
 		value += temp & 1;               // add one if value was negative
 		return value;
 	}
-
-	//inline void atomic_float_add(std::atomic<float> &var, float val)
-	//{
-	//	auto current = var.load();
-	//	while (!var.compare_exchange_weak(current, current + val)) {}
-	//}
 
 	float gradient(uint8_t *pixel, int x, int y, uint32_t stride, float &max, int ch = 1)
 	{
@@ -61,7 +56,7 @@ namespace TopGear
 		return g;
 	}
 
-	void ImageAnalysis::ConvertRawGB12ToGray(uint16_t* raw, uint8_t* rgb, int w, int h, uint8_t *gray)
+	void ImageAnalysis::ConvertRawGB12ToGray(uint16_t* raw, uint8_t* gray, int w, int h, uint8_t *rgb)
 	{
 		tbb::parallel_for(0, w*h, [&](int i) {
 			raw[i] <<= 4;
@@ -71,24 +66,36 @@ namespace TopGear
 		cv::demosaicing(src, dst, cv::COLOR_BayerGB2GRAY);
 		tbb::parallel_for(0, w*h, [&](int i) {
 			uint8_t val = (reinterpret_cast<uint16_t *>(dst.data)[i]) >> 8;
-			rgb[i * 3] = rgb[i * 3 + 1] = rgb[i * 3 + 2] = val;
-			if (gray)
-				gray[i] = val;
+			if (rgb)
+				rgb[i * 3] = rgb[i * 3 + 1] = rgb[i * 3 + 2] = val;
+			gray[i] = val;
 		});
 	}
 
 	void ImageAnalysis::ConvertGrayToRGB(uint8_t *gray, uint8_t* rgb, int w, int h)
 	{
-		cv::Mat src(h, w, CV_8UC1, gray);
+		//
+		cv::Mat src(h, w, CV_8UC1);
+		tbb::parallel_for(0, w*h, [&](int i) {
+			src.data[i] = 255-gray[i];
+		});
+
 		cv::Mat dst(h, w, CV_8UC3, rgb);
-		cv::cvtColor(src, dst, cv::COLOR_GRAY2RGB);
+		cv::applyColorMap(src, dst, cv::COLORMAP_JET);
+		//cv::cvtColor(src, dst, cv::COLOR_HSV2RGB);
+		//tbb::parallel_for(0, w*h, [&](int i) {
+		//	dst.data[i * 3] = gray[i];
+		//	dst.data[i * 3 + 1] = 0;
+		//	dst.data[i * 3 + 2] = 255;
+		//});
+		//cv::cvtColor(src, dst, cv::COLOR_GRAY2RGB);
 	}
 
 	void ImageAnalysis::ConvertYUVToRGB(uint8_t *yuv2, uint8_t* rgb, int w, int h)
 	{
 		cv::Mat src(h, w, CV_8UC2, yuv2);
 		cv::Mat dst(h, w, CV_8UC3, rgb);
-		cv::cvtColor(src, dst, cv::COLOR_YUV2RGB_YUY2);
+		cv::cvtColor(src, dst, cv::COLOR_YUV2BGR_YUY2);
 	}
 
 	float ImageAnalysis::SharpnessInternal(uint8_t* data, int w, int h)
@@ -120,15 +127,23 @@ namespace TopGear
 		return (sum1*lamda1 + sum2*lamda2) / ((h - 2)*(w - 2) * 10);
 	}
 
-	void ImageAnalysis::FindImagePairs(std::vector<std::string>& filelist)
+	void ImageAnalysis::FindImagePairs(std::vector<std::string>& filelist, const std::string &path)
 	{
 		std::map<std::string, uint8_t> filemap;
 #ifdef _WIN32
 		//setup converter
 		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
 
-		auto dir = new wchar_t[MAX_PATH];
-		GetCurrentDirectory(MAX_PATH, dir);
+		auto dir = new wchar_t[MAX_PATH] {0};
+		if (path.empty())
+		{
+			GetCurrentDirectory(MAX_PATH, dir);
+		}
+		else
+		{
+			std::wstring wide(path.begin(), path.end());
+			wcsncpy(dir, wide.c_str(), wide.size());
+		}
 		StringCchCat(dir, MAX_PATH, TEXT("\\*.png"));
 
 		WIN32_FIND_DATA ffd;
@@ -164,16 +179,16 @@ namespace TopGear
 		}
 	}
 
-	float ImageAnalysis::Sharpness(uint8_t* data, int w, int h)
+	float ImageAnalysis::Sharpness(std::shared_ptr<uint8_t> pixel, int w, int h)
 	{
-		std::unique_ptr<uint8_t[]> pixel(data);
-		return SharpnessInternal(data, w, h);
+		//std::unique_ptr<uint8_t[]> pixel(data);
+		return SharpnessInternal(pixel.get(), w, h);
 	}
 
-	ImageAnalysis::Result ImageAnalysis::Process(uint8_t *data, int w, int h, int cb_x, int cb_y, bool fast) const
+	ImageAnalysis::Result ImageAnalysis::Process(std::shared_ptr<uint8_t> pixel, int w, int h, int cb_x, int cb_y, bool fast) const
 	{
 		Result result;
-		std::unique_ptr<uint8_t[]> pixel(data);
+		//std::unique_ptr<uint8_t[]> pixel(data);
 		auto sharp = std::async(&SharpnessInternal, pixel.get(), w, h);
 		std::vector<cv::Point2f> corners;
 		cv::Mat img(h, w, CV_8UC1, pixel.get());
@@ -189,11 +204,12 @@ namespace TopGear
 		return result;
 	}
 
-	bool ImageAnalysis::WriteImage(uint8_t* data, int w, int h, const std::string& filename) const
+	bool ImageAnalysis::WriteImage(uint8_t* data, int w, int h, const std::string& filename, int ch) const
 	{
 		try
 		{
-			cv::Mat img(h, w, CV_8UC3, data);
+			auto type = (ch == 1) ? CV_8UC1 : CV_8UC3;
+			cv::Mat img(h, w, type, data);
 			cv::imwrite(filename + ".png", img);
 			if (WriteLog)
 				WriteLog("File" + filename + ".png saved.");
@@ -207,14 +223,43 @@ namespace TopGear
 		return true;
 	}
 
-	ImageAnalysis::CalibrationResult ImageAnalysis::StereoCalibrate(CameraParameters& params, const std::string &output_dirpath) const
-		//int w, int h, int cb_x, int cb_y, float squareSize) const
+	static bool FindCorners(const std::string filename, std::vector<cv::Point2f> &corners, const cv::Size &size)
+	{
+		auto src = cv::imread(filename);
+		if (src.empty())
+			return false;
+		//if (imageSize != src.size())
+		//	break;
+		if (src.channels() == 3)
+		{
+			cv::Mat img;
+			cv::cvtColor(src, img, cv::COLOR_BGR2GRAY);
+			if (!findChessboardCorners(img, size, corners,
+				cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE))
+				return false;
+			cornerSubPix(img, corners, cv::Size(11, 11), cv::Size(-1, -1),
+				cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01));
+		}
+		else if (src.channels() == 1)
+		{
+			if (!findChessboardCorners(src, size, corners,
+				cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE))
+				return false;
+			cornerSubPix(src, corners, cv::Size(11, 11), cv::Size(-1, -1),
+				cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01));
+		}
+		else
+			return false;
+		return true;
+	}
+
+	ImageAnalysis::CalibrationResult ImageAnalysis::StereoCalibrate(CameraParameters& params, const std::string &dirpath) const
 	{
 		CalibrationResult result;
 		result.Completed = true;
 
 		std::vector<std::string> filelist;
-		FindImagePairs(filelist);
+		FindImagePairs(filelist, dirpath);
 
 		// collect image pairs
 		std::vector<std::vector<cv::Point2f> > imagePoints[2];
@@ -228,31 +273,21 @@ namespace TopGear
 		try
 		{
 			auto count = 0;
+			auto cbSize = cv::Size(params.ChessboardDimension.first, params.ChessboardDimension.second);
 			for (auto &filename : filelist)
 			{
 				int k;
-				for (k = 0; k < 2; k++) {
-					auto src = cv::imread(filename + (k == 0 ? "L.png" : "R.png"));
-					if (src.empty())
+				for (k = 0; k < 2; k++) 
+				{
+					if (!FindCorners(dirpath + filename + (k == 0 ? "L.png" : "R.png"), imagePoints[k][count], cbSize))
 						break;
-					if (imageSize != src.size())
-						break;
-					cv::Mat img;
-					cv::cvtColor(src, img, cv::COLOR_BGR2GRAY);
-					auto &corners = imagePoints[k][count];
-					auto found = findChessboardCorners(img, 
-						cv::Size(params.ChessboardDimension.first, params.ChessboardDimension.second), corners,
-						cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE);
-					if (found)
-						cornerSubPix(img, corners, cv::Size(11, 11), cv::Size(-1, -1),
-							cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01));
 				}
 				if (k == 2)
 					++count;
 			}
 			if (WriteLog)
 				WriteLog(std::to_string(count) + " pairs of images have been successfully detected.");
-			nimages = count;
+			result.Pairs = nimages = count;
 			if (nimages < 2)
 			{
 				if (WriteLog)
@@ -283,20 +318,19 @@ namespace TopGear
 			cameraMatrix[1].at<double>(1, 1) = f;
 
 			cv::Mat R, T, E, F;
-
-			auto rms =
-				stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
-					cameraMatrix[0], distCoeffs[0], cameraMatrix[1], distCoeffs[1],
-					imageSize, R, T, E, F,
-					CV_CALIB_FIX_ASPECT_RATIO +
-					//CV_CALIB_ZERO_TANGENT_DIST +
-					CV_CALIB_SAME_FOCAL_LENGTH +
-					CV_CALIB_RATIONAL_MODEL,// +
-					//CV_CALIB_FIX_K3 + CV_CALIB_FIX_K4 + CV_CALIB_FIX_K5,
-					cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 100, 1e-5));
+			result.RMS = stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
+				cameraMatrix[0], distCoeffs[0], cameraMatrix[1], distCoeffs[1],
+				imageSize, R, T, E, F,
+				cv::CALIB_FIX_ASPECT_RATIO +
+				//CALIB_ZERO_TANGENT_DIST +
+				cv::CALIB_USE_INTRINSIC_GUESS +
+				cv::CALIB_SAME_FOCAL_LENGTH +
+				cv::CALIB_RATIONAL_MODEL,//+
+				//CALIB_FIX_K3 + CALIB_FIX_K4 + CALIB_FIX_K5,
+				cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 100, 1e-5));
 
 			if (WriteLog)
-				WriteLog("RMS error=" + std::to_string(rms));
+				WriteLog("RMS error=" + std::to_string(result.RMS));
 
 			// CALIBRATION QUALITY CHECK
 			// because the output fundamental matrix implicitly
@@ -326,18 +360,20 @@ namespace TopGear
 				}
 				npoints += npt;
 			}
+
+			result.EpipolarError = err / npoints;
 			if (WriteLog)
-				WriteLog("Average epipolar error = " + std::to_string(err / npoints));
+				WriteLog("Average epipolar error = " + std::to_string(result.EpipolarError));
 
 			// save intrinsic parameters
-			cv::FileStorage fs(output_dirpath + "intrinsics.yml", cv::FileStorage::WRITE);
+			cv::FileStorage fs(dirpath + "intrinsics.yml", cv::FileStorage::WRITE);
 			if (fs.isOpened())
 			{
 				fs << "M1" << cameraMatrix[0] << "D1" << distCoeffs[0] << "M2"
 					<< cameraMatrix[1] << "D2" << distCoeffs[1];
 				fs.release();
 				if (WriteLog)
-					WriteLog("Success to save the intrinsic parameters in '" + output_dirpath + "intrinsics.yml'");
+					WriteLog("Success to save the intrinsic parameters in '" + dirpath + "intrinsics.yml'");
 			}
 			else
 			{
@@ -354,15 +390,21 @@ namespace TopGear
 						  imageSize, R, T, R1, R2, P1, P2, Q,
 						  cv::CALIB_ZERO_DISPARITY, 1, imageSize, &validRoi[0], &validRoi[1]);
 
+			auto visibleRoi = validRoi[0] & validRoi[1];
+			result.ROI[0] = visibleRoi.x;
+			result.ROI[1] = visibleRoi.y;
+			result.ROI[2] = visibleRoi.width;
+			result.ROI[3] = visibleRoi.height;
+
 			// save extrinsic parameters
-			fs.open(output_dirpath + "extrinsics.yml", cv::FileStorage::WRITE);
+			fs.open(dirpath + "extrinsics.yml", cv::FileStorage::WRITE);
 			if (fs.isOpened())
 			{
 				fs << "R" << R << "T" << T << "R1" << R1 << "R2" << R2 << "P1" << P1
 					<< "P2" << P2 << "Q" << Q;
 				fs.release();
 				if (WriteLog)
-					WriteLog("Success to save the extrinsics parameters in '" + output_dirpath + "extrinsics.yml'");
+					WriteLog("Success to save the extrinsics parameters in '" + dirpath + "extrinsics.yml'");
 			}
 			else
 			{
@@ -374,23 +416,25 @@ namespace TopGear
 				WriteLog("Stereo calibration done!");
 
 			// OR ELSE HARTLEY'S METHOD
-				// use intrinsic parameters of each camera, but
-				// compute the rectification transformation directly
-				// from the fundamental matrix
-			std::vector<cv::Point2f> allimgpt[2];
-			for (auto k = 0; k < 2; k++)
-			{
-				for (auto i = 0; i < nimages; i++)
-					std::copy(imagePoints[k][i].begin(), imagePoints[k][i].end(), std::back_inserter(allimgpt[k]));
-			}
-			F = cv::findFundamentalMat(cv::Mat(allimgpt[0]), cv::Mat(allimgpt[1]), cv::FM_8POINT, 0, 0);
-			cv::Mat H1, H2;
-			stereoRectifyUncalibrated(cv::Mat(allimgpt[0]), cv::Mat(allimgpt[1]), F, imageSize, H1, H2, 3);
+			// use intrinsic parameters of each camera, but
+			// compute the rectification transformation directly
+			// from the fundamental matrix
+			//{
+			//	std::vector<cv::Point2f> allimgpt[2];
+			//	for (auto k = 0; k < 2; k++)
+			//	{
+			//		for (auto i = 0; i < nimages; i++)
+			//			std::copy(imagePoints[k][i].begin(), imagePoints[k][i].end(), std::back_inserter(allimgpt[k]));
+			//	}
+			//	F = cv::findFundamentalMat(cv::Mat(allimgpt[0]), cv::Mat(allimgpt[1]), cv::FM_8POINT, 0, 0);
+			//	cv::Mat H1, H2;
+			//	stereoRectifyUncalibrated(cv::Mat(allimgpt[0]), cv::Mat(allimgpt[1]), F, imageSize, H1, H2, 3);
 
-			R1 = cameraMatrix[0].inv()*H1*cameraMatrix[0];
-			R2 = cameraMatrix[1].inv()*H2*cameraMatrix[1];
-			P1 = cameraMatrix[0];
-			P2 = cameraMatrix[1];
+			//	R1 = cameraMatrix[0].inv()*H1*cameraMatrix[0];
+			//	R2 = cameraMatrix[1].inv()*H2*cameraMatrix[1];
+			//	P1 = cameraMatrix[0];
+			//	P2 = cameraMatrix[1];
+			//}
 
 			cv::Mat rmap[2][2];
 
@@ -398,23 +442,23 @@ namespace TopGear
 			initUndistortRectifyMap(cameraMatrix[0], distCoeffs[0], R1, P1, imageSize, CV_32FC1, rmap[0][0], rmap[0][1]);
 			initUndistortRectifyMap(cameraMatrix[1], distCoeffs[1], R2, P2, imageSize, CV_32FC1, rmap[1][0], rmap[1][1]);
 
-			cv::Mat image[2];
+			//cv::Mat image[2];
 			cv::Mat rimg;
-			//for (auto &filename : filelist)
+			for (auto &filename : filelist)
 			{
-				//image[0] = cv::imread(filename + "L.png" );
-				image[0] = cv::imread("test1.png");
-				remap(image[0], rimg, rmap[0][0], rmap[0][1], CV_INTER_LINEAR);
-				imwrite("left.png", rimg);
-				//image[1] = cv::imread(filename + "R.png");
-				image[1] = cv::imread("test2.png");
-				remap(image[1], rimg, rmap[1][0], rmap[1][1], CV_INTER_LINEAR);
-				imwrite("right.png", rimg);
-				//break;
+				auto image = cv::imread(dirpath + filename + "L.png" );
+				//image[0] = cv::imread("test1.png");
+				remap(image, rimg, rmap[0][0], rmap[0][1], CV_INTER_LINEAR);
+				imwrite(dirpath + "left.png", rimg);
+				image = cv::imread(dirpath + filename + "R.png");
+				//image[1] = cv::imread("test2.png");
+				remap(image, rimg, rmap[1][0], rmap[1][1], CV_INTER_LINEAR);
+				imwrite(dirpath + "right.png", rimg);
+				break;
 			}
 
 			std::fstream file;
-			file.open("map.dat", std::ios::binary | std::ios::out | std::ios::trunc);
+			file.open(dirpath + "map.dat", std::ios::binary | std::ios::out | std::ios::trunc);
 
 			file.write(reinterpret_cast<char *>(rmap[0][0].data), rmap[0][0].cols*rmap[0][0].rows*sizeof(float));
 			file.write(reinterpret_cast<char *>(rmap[0][1].data), rmap[0][1].cols*rmap[0][1].rows*sizeof(float));
@@ -423,43 +467,43 @@ namespace TopGear
 
 			file.close();
 
-			//-- 1. Read the images
-			auto imgLeft = cv::imread("left.png", cv::IMREAD_GRAYSCALE);
-			auto imgRight = cv::imread("right.png", cv::IMREAD_GRAYSCALE);
-			//-- And create the image in which we will save our disparities
-			auto imgDisparity16S = cv::Mat(imgLeft.rows, imgLeft.cols, CV_16S);
-			auto imgDisparity8U = cv::Mat(imgLeft.rows, imgLeft.cols, CV_8UC1);
+			////-- 1. Read the images
+			//auto imgLeft = cv::imread("left.png", cv::IMREAD_GRAYSCALE);
+			//auto imgRight = cv::imread("right.png", cv::IMREAD_GRAYSCALE);
+			////-- And create the image in which we will save our disparities
+			//auto imgDisparity16S = cv::Mat(imgLeft.rows, imgLeft.cols, CV_16S);
+			//auto imgDisparity8U = cv::Mat(imgLeft.rows, imgLeft.cols, CV_8UC1);
 
-			if (imgLeft.empty() || imgRight.empty())
-			{
-				std::cout << " --(!) Error reading images " << std::endl; 
-				throw std::exception();
-			}
+			//if (imgLeft.empty() || imgRight.empty())
+			//{
+			//	std::cout << " --(!) Error reading images " << std::endl; 
+			//	throw std::exception();
+			//}
 
-			//-- 2. Call the constructor for StereoBM
-			auto ndisparities = 16 * 5;   /**< Range of disparity */
-			auto SADWindowSize = 21; /**< Size of the block window. Must be odd */
+			////-- 2. Call the constructor for StereoBM
+			//auto ndisparities = 16 * 5;   /**< Range of disparity */
+			//auto SADWindowSize = 21; /**< Size of the block window. Must be odd */
 
-			auto sbm = cv::StereoBM::create(ndisparities, SADWindowSize);
+			//auto sbm = cv::StereoBM::create(ndisparities, SADWindowSize);
 
-			//-- 3. Calculate the disparity image
-			sbm->compute(imgLeft, imgRight, imgDisparity16S);
+			////-- 3. Calculate the disparity image
+			//sbm->compute(imgLeft, imgRight, imgDisparity16S);
 
-			//-- Check its extreme values
-			double minVal; double maxVal;
+			////-- Check its extreme values
+			//double minVal; double maxVal;
 
-			minMaxLoc(imgDisparity16S, &minVal, &maxVal);
+			//minMaxLoc(imgDisparity16S, &minVal, &maxVal);
 
-			printf("Min disp: %f Max value: %f \n", minVal, maxVal);
+			//printf("Min disp: %f Max value: %f \n", minVal, maxVal);
 
-			//-- 4. Display it as a CV_8UC1 image
-			imgDisparity16S.convertTo(imgDisparity8U, CV_8UC1, 255 / (maxVal - minVal));
+			////-- 4. Display it as a CV_8UC1 image
+			//imgDisparity16S.convertTo(imgDisparity8U, CV_8UC1, 255 / (maxVal - minVal));
 
-			//cv::namedWindow("Disparity", cv::WINDOW_NORMAL);
-			//imshow("Disparity", imgDisparity8U);
+			////cv::namedWindow("Disparity", cv::WINDOW_NORMAL);
+			////imshow("Disparity", imgDisparity8U);
 
-			//-- 5. Save the image
-			imwrite("SBM_sample.png", imgDisparity16S);
+			////-- 5. Save the image
+			//imwrite("SBM_sample.png", imgDisparity16S);
 
 			////get intersection of both rois or use target image roi, if you know the target image
 			//cv::Rect visibleRoi = roiLeft & roiRight;
@@ -545,7 +589,7 @@ namespace TopGear
 			std::sqrt(targetSize.second*targetSize.second / 4 + params.TargetDistance*params.TargetDistance));
 		calLocations.clear();
 		auto center = std::make_pair(stereoViewInPixel.first / 2, stereoViewInPixel.second / 2);
-		//calLocations.push_back(center);
+		calLocations.push_back(center);
 		auto deltaX = center.first - targetInPixel.first/2;// *std::cos(anglePan) / 2;
 		auto deltaY = center.second - targetInPixel.second/2;// *std::cos(angleTilt) / 2;
 		calLocations.emplace_back(std::make_pair(
