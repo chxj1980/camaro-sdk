@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>MainForm.ui.qml</file>
+        <file>Chessboard.qml</file>
+        <file>cbLogic.js</file>
+        <file>chess-logo.png</file>
+    </qresource>
+</RCC>
