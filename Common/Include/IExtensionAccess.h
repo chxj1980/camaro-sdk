@@ -20,7 +20,7 @@ namespace TopGear
 			return SetProperty(index, reinterpret_cast<uint8_t *>(&prop), sizeof(T));
 		}
 		virtual int SetProperty(int index, const uint8_t *data, size_t size) = 0;
-		virtual std::unique_ptr<uint8_t[]> GetProperty(int index, int &len) = 0;
+		virtual std::unique_ptr<uint8_t[]> GetProperty(int index, int &len, bool dynamicLen = false) = 0;
 	};
 }
 

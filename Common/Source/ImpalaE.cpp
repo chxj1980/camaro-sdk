@@ -1,11 +1,11 @@
 #include "ImpalaE.h"
-#include <iostream>
+//#include <iostream>
 #include <VideoFrameEx.h>
 
 namespace TopGear
 {
 	ImpalaE::ImpalaE(std::vector<std::shared_ptr<IVideoStream>>& vs,std::shared_ptr<IExtensionAccess> &ex)
-		: CameraBase(vs), extensionAdapter(ex)
+		: CameraBase(vs), xuAccess(ex)
 	{
 		VideoFormat format;
 		format.Width = 640;
@@ -45,6 +45,89 @@ namespace TopGear
 		//std::cout << i << std::endl;
 		if (frameWatchThread.joinable())
 			frameBuffer.Push(std::make_pair(i, std::move(frames[0])));
+	}
+
+	bool ImpalaE::SetControl(std::string name, IPropertyData& val)
+	{
+		return false;
+	}
+
+	bool ImpalaE::SetControl(std::string name, IPropertyData&& val)
+	{
+		return false;
+	}
+
+	bool ImpalaE::GetControl(std::string name, IPropertyData& val)
+	{
+		if (name != "zdtable")
+			return false;
+		if (val.GetTypeHash() != typeid(std::vector<float>).hash_code())
+			return false;
+
+		auto len = 0;
+
+		//Get handle
+		auto data = xuAccess->GetProperty(0x0a, len);
+		auto handle = data[0];
+
+		xuAccess->SetProperty(0x0b, std::array<uint8_t, 0x10> {
+			handle, 0x41, 0x05, 0x10, 0x00, 0x00, 0x00, 0x01,
+			0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
+		data = xuAccess->GetProperty(0x0c, len, true);
+
+		xuAccess->SetProperty(0x0b, std::array<uint8_t, 0x10> {
+			handle, 0x41, 0x05, 0x10, 0x00, 0x00, 0x00, 0x02,
+			0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
+		data = xuAccess->GetProperty(0x0c, len, true);
+
+		//Get length of total data
+		xuAccess->SetProperty(0x0b, std::array<uint8_t, 0x10> {
+			handle, 0x41, 0x05, 0x10, 0x00, 0x00, 0x32, 0x03,
+			0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
+		data = xuAccess->GetProperty(0x0c, len, true);
+		if (len != 2)
+		{
+			xuAccess->SetProperty(0x0a, handle);
+			return false;
+		}
+		uint32_t bytesLen = data[0] << 8 | data[1];
+		std::unique_ptr<uint8_t[]> bytes(new uint8_t[bytesLen]);
+
+		auto payload = std::array<uint8_t, 0x10> {
+			handle, 0x41, 0x05, 0x00, 0x00, 0x32, 0x00, 0x00,
+			0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+		uint32_t offset = 0;
+		//Read data by segment
+		while (offset < bytesLen)
+		{
+			payload[6] = (offset >> 8) & 0xff;
+			payload[7] = offset & 0xff;
+			//Set offset
+			xuAccess->SetProperty(0x0b, payload);
+			//Read data with length reloaded
+			data = xuAccess->GetProperty(0x0c, len, true);
+			if (data==nullptr)	//Read failed
+			{
+				xuAccess->SetProperty(0x0a, handle);
+				return false;
+			}
+			std::memcpy(bytes.get() + offset, data.get(), len);
+			offset += len;
+		}
+		//Release handle
+		xuAccess->SetProperty(0x0a, handle);
+
+		//Convert bytes to float array
+		auto &floatVal = *reinterpret_cast<PropertyData<std::vector<float>> *>(&val);
+		for (uint32_t i = 0; i < bytesLen;i+=2)
+		{
+			if (i == 0)
+				floatVal.Payload.push_back(0);
+			else
+				floatVal.Payload.push_back((bytes[i] << 8 | bytes[i + 1]) / 1000.0f);
+		}
+
+		return true;
 	}
 
 	bool ImpalaE::StartStream()
@@ -157,9 +240,9 @@ namespace TopGear
 					auto depthTime = depthFrame->GetTimestamp();
 					if (abs((rgbTime.tv_sec - depthTime.tv_sec)*1000000+(rgbTime.tv_usec - depthTime.tv_usec))<=delta)
 					{
-						std::stringstream ss;
-						ss << " Frame " << depthTime.tv_sec << "." << depthTime.tv_usec / 1000 << std::endl;
-						OutputDebugStringA(ss.str().c_str());
+						//std::stringstream ss;
+						//ss << " Frame " << depthTime.tv_sec << "." << depthTime.tv_usec / 1000 << std::endl;
+						//OutputDebugStringA(ss.str().c_str());
 						auto rgbEx = std::make_shared<VideoFrameEx>(rgbFrame, 0, 0, rgbFrame->GetFormat().Width, rgbFrame->GetFormat().Height,
 							index, 0, 0);
 						auto depthEx = std::make_shared<VideoFrameEx>(depthFrame, 0, 0, depthFrame->GetFormat().Width * 2, depthFrame->GetFormat().Height,

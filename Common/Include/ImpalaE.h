@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CameraBase.h"
-#include "ILowlevelControl.h"
+#include "IDeviceControl.h"
 #include "ExtensionAccessAdapter.h"
 #include <thread>
 #include "BufferQueue.h"
@@ -10,9 +10,13 @@
 namespace TopGear
 {
 	class ImpalaE
-		: public CameraBase
+		: public CameraBase,
+		 public IDeviceControl
 	{
 	public:
+		virtual bool SetControl(std::string name, IPropertyData& val) override;
+		virtual bool SetControl(std::string name, IPropertyData&& val) override;
+		virtual bool GetControl(std::string name, IPropertyData& val) override;
 		virtual bool StartStream() override;
 		virtual bool StopStream() override;
 		virtual bool IsStreaming() const override;
@@ -29,7 +33,7 @@ namespace TopGear
 		virtual ~ImpalaE() {}
 	protected:
 		void OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr> &frames);
-		ExtensionAccessAdapter extensionAdapter;
+		std::shared_ptr<IExtensionAccess> xuAccess;
 		VideoFrameCallbackFn fnCb = nullptr;
 		std::vector<VideoFormat> formats;
 		std::vector<int> selectedFormats;
