@@ -1,6 +1,9 @@
 #include "DGExtensionFilter.h"
 #include "ExtensionRepository.h"
-#include <iostream>
+
+using namespace TopGear;
+
+#ifdef __linux__
 
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -12,10 +15,12 @@
 #include <linux/usb/video.h>
 #include <linux/media.h>
 #include "v4l2helper.h"
-
-
-using namespace TopGear;
 using namespace Linux;
+#elif defined(_WIN32)
+using namespace Win;
+#endif
+
+
 
 DGExtensionFilter::DGExtensionFilter(std::shared_ptr<IGenericVCDevice> &device)
     : ExtensionFilterBase(device, ExtensionRepository::DGXuCode)
@@ -29,6 +34,7 @@ std::string DGExtensionFilter::GetDeviceInfo()
         return {};
     if (deviceInfo.empty())
     {
+#ifdef __linux__
         std::unique_ptr<uint8_t[]> data(new uint8_t[controlLens[DeviceInfoCode]]);
         std::memset(data.get(),0,controlLens[DeviceInfoCode]);
         uvc_xu_control_query qry;
@@ -44,6 +50,18 @@ std::string DGExtensionFilter::GetDeviceInfo()
         }
         else
             deviceInfo = std::string(reinterpret_cast<char *>(data.get()));
+#elif defined(_WIN32)
+        std::unique_ptr<uint8_t[]> data(new uint8_t[controlLens[DeviceInfoCode]]{ 0 });
+        auto res = pXu->get_Property(DeviceInfoCode, controlLens[DeviceInfoCode], data.get());
+
+        if (FAILED(res))
+        {
+            //printf("Unable to get property value\n");
+            deviceInfo.clear();
+        }
+        else
+            deviceInfo = std::string(reinterpret_cast<char *>(data.get()));
+#endif
     }
     return deviceInfo;
 }
