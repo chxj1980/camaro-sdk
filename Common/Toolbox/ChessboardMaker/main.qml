@@ -69,9 +69,9 @@ Window {
         anchors.leftMargin: 0
         anchors.topMargin: 0
         anchors.fill: parent
-        mouseArea.onClicked: {
-            socket.sendTextMessage(qsTr("Hello Server!"));
-        }
+//        mouseArea.onClicked: {
+//            socket.sendTextMessage(qsTr("Hello Server!"));
+//        }
 
         Row {
             id: row1
@@ -158,7 +158,11 @@ Window {
                         value: 9
                         stepSize: 1
                         maximumValue: 20
-                        onValueChanged: textW.text = value.toString()
+                        onValueChanged: {
+                            if (textW)
+                                textW.text = value.toString()
+                        }
+
                     }
 
                     TextField {
@@ -192,7 +196,10 @@ Window {
                         stepSize: 1
                         maximumValue: 20
                         tickmarksEnabled: true
-                        onValueChanged: textH.text = value.toString()
+                        onValueChanged: {
+                            if (textH)
+                                textH.text = value.toString()
+                        }
                     }
 
                     TextField {
