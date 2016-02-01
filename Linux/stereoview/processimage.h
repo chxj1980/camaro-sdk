@@ -75,7 +75,7 @@ private:
     int saved_frames;
     int max_save;
 
-    TopGear::VideoFormat format;
+    //TopGear::VideoFormat format;
 
     std::shared_ptr<TopGear::IVideoStream> camera;
     std::shared_ptr<TopGear::ICameraControl> cameraControl;

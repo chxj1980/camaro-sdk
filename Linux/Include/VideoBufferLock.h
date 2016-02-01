@@ -23,19 +23,23 @@ namespace TopGear
 			{
 				if (!m_bLocked)
 					return 0;
-                return defaultStride*height;
+                return defaultStride*videoFormat.Height;
 			}
+
+            virtual VideoFormat GetFormat() const override
+            {
+                return videoFormat;
+            }
 
             explicit VideoBufferLock(int dev, int index, unsigned char *pdata,
                 timeval timestamp, //In 100-nanosecond
-                int lDefaultStride, int dwWidthInPixels, int dwHeightInPixels)
+                int lDefaultStride, const VideoFormat &format)
                 : handle(dev),
                   bufferIndex(index),
                   pBuffer(pdata),
 				  m_bLocked(false),
-				  defaultStride(lDefaultStride),
-				  width(dwWidthInPixels),
-                  height(dwHeightInPixels),
+                  defaultStride(lDefaultStride),
+                  videoFormat(format),
                   tm(timestamp)
             {
 			}
@@ -84,8 +88,7 @@ namespace TopGear
             unsigned char *pBuffer;
             bool m_bLocked;
 			long defaultStride;
-			long width;
-			long height;
+            const VideoFormat videoFormat;
 			timeval tm;
 		};
 	}

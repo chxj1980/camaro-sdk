@@ -40,7 +40,7 @@ namespace TopGear
 	private:
 		void FrameWatcher();
 		std::thread frameWatchThread;
-		std::atomic<bool> streaming = false;
+        std::atomic<bool> streaming;
 		BufferQueue<std::pair<int, IVideoFramePtr>> frameBuffer;
 	};
 }

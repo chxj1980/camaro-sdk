@@ -104,12 +104,10 @@ bool CamaroDual::StartStream()
 {
 	if (masterDC && slaveDC)
 	{
-		//masterDC->SetSensorTrigger(0);
-		//masterDC->SetResyncNumber(RESYNC_NUM);
-		//slaveDC->SetResyncNumber(RESYNC_NUM);
+        uint16_t num = RESYNC_NUM;
 		masterDC->SetControl("Trigger", PropertyData<uint8_t>(0));
-		masterDC->SetControl("Resync", PropertyData<uint16_t>(RESYNC_NUM));
-		slaveDC->SetControl("Resync", PropertyData<uint16_t>(RESYNC_NUM));
+        masterDC->SetControl("Resync", PropertyData<uint16_t>(num));
+        slaveDC->SetControl("Resync", PropertyData<uint16_t>(num));
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		auto camera0 = std::dynamic_pointer_cast<CameraSoloBase>(videoStreams[0]);
 		auto camera1 = std::dynamic_pointer_cast<CameraSoloBase>(videoStreams[1]);
@@ -123,7 +121,6 @@ bool CamaroDual::StartStream()
 		}
 		frameWatchThread = std::thread(&CamaroDual::FrameWatcher, this);
 		threadOn = frameWatchThread.joinable();
-		//masterDC->SetSensorTrigger(1);
 		masterDC->SetControl("Trigger", PropertyData<uint8_t>(1));
 		return true;
 	}

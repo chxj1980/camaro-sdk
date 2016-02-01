@@ -7,6 +7,7 @@
 #include "StandardUVC.h"
 #include "Camaro.h"
 #include "CamaroDual.h"
+#include "ImpalaE.h"
 #include "IMultiVideoStream.h"
 #include "StandardVCDevice.h"
 #include "CameraProfile.h"

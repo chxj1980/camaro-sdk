@@ -6,6 +6,8 @@
 #include "IProcessor.h"
 #include "ILowlevelControl.h"
 
+#include <thread>
+
 namespace TopGear
 {
 	class CamaroDual :

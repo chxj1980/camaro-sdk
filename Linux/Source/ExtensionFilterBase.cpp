@@ -26,10 +26,24 @@ ExtensionFilterBase::~ExtensionFilterBase()
 {
 }
 
-uint32_t ExtensionFilterBase::GetLen(int index) const
+uint32_t ExtensionFilterBase::GetLen(int index, bool live)
 {
     if (index < 1 || index>31)
         return 0;
+    if (live)
+    {
+        uint16_t len;
+        uvc_xu_control_query qry;
+        qry.unit = pInfo->UnitId;//XU unit id
+        qry.selector = index;
+        qry.size = 2;
+        qry.query = UVC_GET_LEN;
+        qry.data = reinterpret_cast<uint8_t *>(&len);
+        if (ioctl(handle,UVCIOC_CTRL_QUERY, &qry)==0)
+            controlLens[index] = len;
+        else
+            return 0;
+    }
     return controlLens[index];
 }
 

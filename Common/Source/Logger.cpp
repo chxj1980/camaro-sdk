@@ -10,7 +10,7 @@ namespace TopGear
 		: dist_sink(std::make_shared<spdlog::sinks::dist_sink_mt>()),
 		std_sink(std::make_shared<spdlog::sinks::stdout_sink_mt>())
 #ifdef __linux__
-		,sys_sink(std::make_shared<spdlog::sinks::syslog_sink_mt>())
+        ,sys_sink()
 #endif
 	{
 		try

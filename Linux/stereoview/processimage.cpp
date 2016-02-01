@@ -239,7 +239,7 @@ ProcessImage::ProcessImage(QWidget *parent)
             this, SLOT(handledeviceexception(int)),
             Qt::QueuedConnection );
 
-    auto deepcam = TopGear::DeepCamAPI::Instance();
+    auto &deepcam = TopGear::DeepCamAPI::Instance();
     camera = deepcam.CreateCamera(TopGear::Camera::CamaroDual);
     if (camera)
     {
@@ -251,6 +251,7 @@ ProcessImage::ProcessImage(QWidget *parent)
                &ProcessImage::onGetStereoFrame, this);
         //labeldevinfo->setText(QString("devinfo:%1").arg(item->GetDeviceInfo().c_str()));
         //Get optimized video format
+        TopGear::VideoFormat format;
         auto index = camera->GetOptimizedFormatIndex(format);
 
         prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
@@ -416,6 +417,7 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
     master->LockBuffer(&raw1,&stride);
     slave->LockBuffer(&raw2,&stride);
 
+    auto format = master->GetFormat();
 
     static int framecount = 0;
     static int ccc = 0;

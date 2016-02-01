@@ -17,7 +17,7 @@ namespace TopGear
 
             virtual bool IsValid() const override { return isValid; }
             virtual const std::shared_ptr<ExtensionInfo>& GetExtensionInfo() const override { return pInfo; }
-            virtual uint32_t GetLen(int index) const override;
+            virtual uint32_t GetLen(int index, bool live = false) override;
         protected:
             int controlLens[32]{ 0 };
             int handle;

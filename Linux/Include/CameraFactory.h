@@ -100,7 +100,8 @@ namespace TopGear
         template<class U>
         inline std::shared_ptr<IVideoStream> CameraFactory<T>::CreateInstance(U& device)
         {
-            throw std::exception("Unimplementation");
+            (void)device;
+            throw std::invalid_argument("Unimplementation");
             //return{};
         }
 	}

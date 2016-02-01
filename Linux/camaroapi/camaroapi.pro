@@ -63,7 +63,6 @@ HEADERS += \
     ../../Common/Include/VideoSourceProxy.h \
     ../Include/CameraFactory.h \
     ../Include/DeviceFactory.h \
-    ../Include/DGExtensionFilter.h \
     ../Include/ExtensionAccess.h \
     ../Include/ExtensionFilterBase.h \
     ../Include/LSource.h \
@@ -73,14 +72,17 @@ HEADERS += \
     ../../Common/Include/ExtensionAccessAdapter.h \
     ../../Common/Include/json.h \
     ../../Common/Include/json-forwards.h \
-    ../../Common/Include/CameraProfile.h
+    ../../Common/Include/CameraProfile.h \
+    ../../Common/Include/DGExtensionFilter.h \
+    ../../Common/Include/EtronExtensionFilter.h \
+    ../../Common/Include/ImpalaE.h \
+    ../../Common/Include/Logger.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \
     ../../Common/Source/CamaroDual.cpp \
     ../../Common/Source/ExtensionRepository.cpp \
     ../../Common/Source/VideoSourceProxy.cpp \
-    ../Source/DGExtensionFilter.cpp \
     ../Source/ExtensionAccess.cpp \
     ../Source/ExtensionFilterBase.cpp \
     ../Source/GenericVCDevice.cpp \
@@ -89,4 +91,7 @@ SOURCES += \
     ../Source/VideoSourceReader.cpp \
     ../../Common/Source/CameraProfile.cpp \
     ../../Common/Source/jsoncpp.cpp \
-    ../../Common/Source/DeepCamAPI.cpp
+    ../../Common/Source/DeepCamAPI.cpp \
+    ../../Common/Source/DGExtensionFilter.cpp \
+    ../../Common/Source/ImpalaE.cpp \
+    ../../Common/Source/Logger.cpp

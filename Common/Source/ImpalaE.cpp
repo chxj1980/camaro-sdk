@@ -5,7 +5,7 @@
 namespace TopGear
 {
 	ImpalaE::ImpalaE(std::vector<std::shared_ptr<IVideoStream>>& vs,std::shared_ptr<IExtensionAccess> &ex)
-		: CameraBase(vs), xuAccess(ex)
+        : CameraBase(vs), xuAccess(ex), streaming(false)
 	{
 		VideoFormat format;
 		format.Width = 640;
@@ -18,7 +18,7 @@ namespace TopGear
 		{
 			stream->RegisterFrameCallback(*stream, &ImpalaE::OnFrame, this);
 			auto f = stream->GetAllFormats();
-			for (auto index = 0; index < f.size(); ++index)
+            for (uint index = 0; index < f.size(); ++index)
 			{
 				if (f[index].Height != 480 || f[index].Width == 640 || std::memcmp(f[index].PixelFormat, "YUY2", 4) != 0)
 					continue;
@@ -34,7 +34,7 @@ namespace TopGear
 	{
 		if (!streaming)
 			return;
-		auto i = 0;
+        uint i = 0;
 		for (i = 0; i < videoStreams.size();++i)
 		{
 			if (&parent == videoStreams[i].get())
@@ -49,11 +49,15 @@ namespace TopGear
 
 	bool ImpalaE::SetControl(std::string name, IPropertyData& val)
 	{
+        (void)name;
+        (void)val;
 		return false;
 	}
 
 	bool ImpalaE::SetControl(std::string name, IPropertyData&& val)
 	{
+        (void)name;
+        (void)val;
 		return false;
 	}
 
@@ -175,6 +179,7 @@ namespace TopGear
 
 	int ImpalaE::GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc)
 	{
+        (void)fourcc;
 		format = formats[0];
 		return 0;
 	}

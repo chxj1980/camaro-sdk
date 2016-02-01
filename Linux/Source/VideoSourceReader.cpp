@@ -180,8 +180,7 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
                                        vbuffers[queue_buf.index].first,
                                        queue_buf.timestamp,
                                        streams[handle].defaultStride,
-                                       streams[handle].frameWidth,
-                                       streams[handle].frameHeight));
+                                       streams[handle].formats[streams[handle].currentFormatIndex]));
 
     return frame;
 }
@@ -265,8 +264,7 @@ bool VideoSourceReader::SetCurrentFormat(uint32_t handle, int formatIndex)
         return false;
     //currentFormatIndex = formatIndex;
     VideoFormat& format = videoFormats[formatIndex];
-    streams[handle].frameHeight = format.Height;
-    streams[handle].frameWidth = format.Width;
+    streams[handle].currentFormatIndex = formatIndex;
 
     //Set frame format
     v4l2_format fmt;
@@ -301,7 +299,10 @@ bool VideoSourceReader::StartStream(uint32_t handle)
     StopStream(handle);
     Initmmap(handle);
 
-    streams[handle].defaultStride = streams[handle].vbuffers[0].second / streams[handle].frameHeight;
+    auto format = streams[handle].formats[streams[handle].currentFormatIndex];
+
+    streams[handle].defaultStride =
+            streams[handle].vbuffers[0].second / format.Height;
     streams[handle].isRunning = true;
     streams[handle].streamThread = std::thread(&VideoSourceReader::OnReadWorker, this, handle);
     streams[handle].streamOn = streams[handle].streamThread.joinable();
