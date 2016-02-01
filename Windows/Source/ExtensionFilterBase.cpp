@@ -21,14 +21,17 @@ ExtensionFilterBase::~ExtensionFilterBase()
 {
 }
 
-uint32_t ExtensionFilterBase::GetLen(int index, bool live) const
+uint32_t ExtensionFilterBase::GetLen(int index, bool live)
 {
 	if (index < 1 || index>31)
 		return 0;
 	if (live)
 	{
 		ULONG ulSize;
-		return (pXu->get_PropertySize(index, &ulSize) == S_OK) ? ulSize : 0;
+		if (pXu->get_PropertySize(index, &ulSize) == S_OK)
+			controlLens[index] = ulSize;
+		else
+			return 0;
 	}
 	return controlLens[index];
 }

@@ -160,12 +160,12 @@
     <ClCompile Include="..\..\..\Common\Source\CamaroDual.cpp" />
     <ClCompile Include="..\..\..\Common\Source\CameraProfile.cpp" />
     <ClCompile Include="..\..\..\Common\Source\DeepCamAPI.cpp" />
+    <ClCompile Include="..\..\..\Common\Source\DGExtensionFilter.cpp" />
     <ClCompile Include="..\..\..\Common\Source\ExtensionRepository.cpp" />
     <ClCompile Include="..\..\..\Common\Source\ImpalaE.cpp" />
     <ClCompile Include="..\..\..\Common\Source\jsoncpp.cpp" />
     <ClCompile Include="..\..\..\Common\Source\Logger.cpp" />
     <ClCompile Include="..\..\..\Common\Source\VideoSourceProxy.cpp" />
-    <ClCompile Include="..\..\Source\DGExtensionFilter.cpp" />
     <ClCompile Include="..\..\Source\ExtensionAccess.cpp" />
     <ClCompile Include="..\..\Source\ExtensionFilterBase.cpp" />
     <ClCompile Include="..\..\Source\ExtensionUnit.cpp" />
@@ -183,6 +183,8 @@
     <ClInclude Include="..\..\..\Common\Include\CameraSoloBase.h" />
     <ClInclude Include="..\..\..\Common\Include\DeepCamAPI.h" />
     <ClInclude Include="..\..\..\Common\Include\DeviceDecorator.h" />
+    <ClInclude Include="..\..\..\Common\Include\DGExtensionFilter.h" />
+    <ClInclude Include="..\..\..\Common\Include\EtronExtensionFilter.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionAccessAdapter.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionInfo.h" />
     <ClInclude Include="..\..\..\Common\Include\ExtensionRepository.h" />
@@ -215,8 +217,6 @@
     <ClInclude Include="..\..\..\Common\Include\VideoSourceProxy.h" />
     <ClInclude Include="..\..\Include\CameraFactory.h" />
     <ClInclude Include="..\..\Include\DeviceFactory.h" />
-    <ClInclude Include="..\..\Include\DGExtensionFilter.h" />
-    <ClInclude Include="..\..\Include\EtronExtensionFilter.h" />
     <ClInclude Include="..\..\Include\ExtensionAccess.h" />
     <ClInclude Include="..\..\Include\ExtensionFilterBase.h" />
     <ClInclude Include="..\..\Include\ExtensionUnit.h" />

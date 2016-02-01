@@ -30,7 +30,7 @@ DGExtensionFilter::DGExtensionFilter(std::shared_ptr<IGenericVCDevice> &device)
 
 std::string DGExtensionFilter::GetDeviceInfo()
 {
-    if (pInfo==nullptr || isValid==false)
+    if (pInfo==nullptr || !IsValid())
         return {};
     if (deviceInfo.empty())
     {

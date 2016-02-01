@@ -18,7 +18,7 @@ namespace TopGear
 		{
 			stream->RegisterFrameCallback(*stream, &ImpalaE::OnFrame, this);
 			auto f = stream->GetAllFormats();
-            for (uint index = 0; index < f.size(); ++index)
+            for (uint32_t index = 0; index < f.size(); ++index)
 			{
 				if (f[index].Height != 480 || f[index].Width == 640 || std::memcmp(f[index].PixelFormat, "YUY2", 4) != 0)
 					continue;
@@ -34,7 +34,7 @@ namespace TopGear
 	{
 		if (!streaming)
 			return;
-        uint i = 0;
+		uint32_t i = 0;
 		for (i = 0; i < videoStreams.size();++i)
 		{
 			if (&parent == videoStreams[i].get())
