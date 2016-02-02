@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/StereoCalibration">
-        <file>Resources/53_warning-64.png</file>
-        <file>Resources/connect-64.png</file>
-        <file>Resources/disconnect-64.png</file>
-        <file>Resources/glasses_cinema_dimensional-64.png</file>
-    </qresource>
-</RCC>

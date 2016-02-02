@@ -13,7 +13,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ApiDynamicTest", "ApiDynami
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CamView", "CamView\CamView.vcxproj", "{B12702AD-ABFB-343A-A199-8E24837244A3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StereoCalibration", "StereoCalibration\StereoCalibration.vcxproj", "{C81A0E26-42E0-41F1-BB74-1BC7113CC687}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StereoCalibration", "..\..\Common\Toolbox\StereoCalibration\StereoCalibration.vcxproj", "{C81A0E26-42E0-41F1-BB74-1BC7113CC687}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
