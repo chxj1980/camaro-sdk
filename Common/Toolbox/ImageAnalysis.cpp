@@ -168,7 +168,43 @@ namespace TopGear
 			}
 		} while (FindNextFile(hFind, &ffd));
 #elif defined(__linux__)
-		//To do
+        char cCurrentPath[FILENAME_MAX];
+        if (path.empty())
+        {
+            getcwd(cCurrentPath, sizeof(cCurrentPath));
+            cCurrentPath[sizeof(cCurrentPath) - 1] = '\0';
+        }
+        else
+        {
+            path.copy(cCurrentPath,path.length());
+            cCurrentPath[path.length()] = '\0';
+        }
+        dirent *dirp;
+        DIR *dp = opendir(cCurrentPath);
+        if (dp == nullptr)
+        {
+            //cout << "Error(" << errno << ") opening " << dir << endl;
+            return;
+        }
+        const std::string suffix = ".png";
+        while ((dirp = readdir(dp)) != nullptr)
+        {
+            if (dirp->d_type == DT_DIR)
+                continue;
+            auto filename = std::string(dirp->d_name);
+            int offset = filename.length() - suffix.length();
+            if (offset < 0 || filename.substr(offset) != suffix)
+                continue;
+            auto ch = filename[offset-1];
+            filename = filename.substr(0, offset-1);
+            if (filemap.find(filename) == filemap.end())
+                filemap[filename] = 0;
+            if (ch == 'L')
+                filemap[filename] |= 1;
+            else if (ch == 'R')
+                filemap[filename] |= 2;
+        }
+        closedir(dp);
 #endif
 		filelist.clear();
 		for (auto &element : filemap)
