@@ -1,33 +1,57 @@
 #include "ImpalaE.h"
 //#include <iostream>
 #include <VideoFrameEx.h>
+#include <utility>
 
 namespace TopGear
 {
 	ImpalaE::ImpalaE(std::vector<std::shared_ptr<IVideoStream>>& vs,std::shared_ptr<IExtensionAccess> &ex)
         : CameraBase(vs), xuAccess(ex), streaming(false)
 	{
-		VideoFormat format;
-		format.Width = 640;
-		format.Height = 480;
-		format.MaxRate = 30;
-		std::memcpy(format.PixelFormat, "YUY2", 4);
-		formats.push_back(format);
+        VideoFormat format;
+        format.Width = 640;
+        format.Height = 480;
+        format.MaxRate = 30;
+        std::memcpy(format.PixelFormat, "YUY2", 4);
+        formats.push_back(format);
+        format.Width = 640;
+        format.Height = 400;
+        format.MaxRate = 30;
+        std::memcpy(format.PixelFormat, "YUY2", 4);
+        formats.push_back(format);
 
-		for (auto &stream : videoStreams)
-		{
-			stream->RegisterFrameCallback(*stream, &ImpalaE::OnFrame, this);
-			auto f = stream->GetAllFormats();
+        selectedFormats.push_back(std::make_pair(0,0));
+        selectedFormats.push_back(std::make_pair(0,0));
+
+        auto i = 0;
+        for (auto &stream : videoStreams)
+        {
+            stream->RegisterFrameCallback(*stream, &ImpalaE::OnFrame, this);
+            auto f = stream->GetAllFormats();
             for (uint32_t index = 0; index < f.size(); ++index)
-			{
-				if (f[index].Height != 480 || f[index].Width == 640 || std::memcmp(f[index].PixelFormat, "YUY2", 4) != 0)
-					continue;
-				selectedFormats.emplace_back(index);
-				break;
-			}
-		}
+            {
+                if (f[index].Width == 640 || f[index].Width == 320)
+                {
+                    if (f[index].Height == 480)
+                    {
+                        if (i==0)
+                            selectedFormats[0].first = index;
+                        else
+                            selectedFormats[0].second = index;
+                    }
+                    else if (f[index].Height == 400)
+                    {
+                        if (i==0)
+                            selectedFormats[1].first = index;
+                        else
+                            selectedFormats[1].second = index;
+                    }
+                }
+            }
+            ++i;
+        }
 
-		ImpalaE::SetCurrentFormat(0);
+        //ImpalaE::SetCurrentFormat(0);
 	}
 
 	void ImpalaE::OnFrame(IVideoStream& parent, std::vector<IVideoFramePtr>& frames)
@@ -74,6 +98,8 @@ namespace TopGear
 		auto data = xuAccess->GetProperty(0x0a, len);
 		auto handle = data[0];
 
+#ifdef _WIN32
+
 		xuAccess->SetProperty(0x0b, std::array<uint8_t, 0x10> {
 			handle, 0x41, 0x05, 0x10, 0x00, 0x00, 0x00, 0x01,
 			0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
@@ -118,6 +144,32 @@ namespace TopGear
 			std::memcpy(bytes.get() + offset, data.get(), len);
 			offset += len;
 		}
+#elif defined(__linux__)
+        uint32_t bytesLen = 512;
+        std::unique_ptr<uint8_t[]> bytes(new uint8_t[bytesLen]);
+        auto payload = std::array<uint8_t, 0x10>
+            { handle, 0x41, 0x05, 0x01, 0x00, 0x32, 0x00, 0x00, 0x00,
+              0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        uint32_t offset = 0;
+        //Read data by segment
+        while (offset < bytesLen)
+        {
+            payload[6] = (offset >> 8) & 0xff;
+            payload[7] = offset & 0xff;
+            //Set offset
+            xuAccess->SetProperty(0x0b, payload);
+            //Read data with length reloaded
+            len = 32;
+            data = xuAccess->GetProperty(0x0c, len, true);
+            if (data==nullptr)	//Read failed
+            {
+                xuAccess->SetProperty(0x0a, handle);
+                return false;
+            }
+            std::memcpy(bytes.get() + offset, data.get(), len);
+            offset += len;
+        }
+#endif
 		//Release handle
 		xuAccess->SetProperty(0x0a, handle);
 
@@ -202,10 +254,10 @@ namespace TopGear
 
 	bool ImpalaE::SetCurrentFormat(uint32_t formatIndex)
 	{
-		if (formatIndex != 0)
+        if (videoStreams.size() != 2)
 			return false;
-		for (auto i = 0; i < videoStreams.size();++i)
-			videoStreams[i]->SetCurrentFormat(selectedFormats[i]);
+        videoStreams[0]->SetCurrentFormat(selectedFormats[formatIndex].first);
+        videoStreams[1]->SetCurrentFormat(selectedFormats[formatIndex].second);
 		return true;
 	}
 

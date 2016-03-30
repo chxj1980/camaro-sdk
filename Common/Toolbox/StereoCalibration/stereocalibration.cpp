@@ -305,7 +305,7 @@ void StereoCalibration::MarkView(QPainter& paint, QRect& rect, const QBrush& bru
 	paint.drawRect(rect);
 	
 	auto &positions = camFactor.GetCalLocations();
-	for (auto i = 0; i < positions.size(); ++i)
+    for (auto i = 0u; i < positions.size(); ++i)
 	{
 		if (captureChecklist[i])
 			paint.setPen(QPen(Qt::red, 3));
@@ -329,6 +329,7 @@ void StereoCalibration::MarkView(QPainter& paint, QRect& rect, const QBrush& bru
 
 void StereoCalibration::display_error(QString err)
 {
+    (void)err;
 	//QMessageBox::warning(this,tr("error"), err,QMessageBox::Yes);
 	//qDebug() << err;
 }
@@ -544,13 +545,14 @@ void StereoCalibration::OnExposureSet() const
 	auto cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camera);
 	if (cameraControl == nullptr)
 		return;
-	unsigned short shutter;
+    unsigned short shutter = 0;
 	ParseText(*ui.textEx, shutter);
 	cameraControl->SetExposure(shutter);
 }
 
 void StereoCalibration::handledeviceexception(int err)
 {
+    (void)err;
 	CloseCamera();
 	QMessageBox msgBox;
 	msgBox.setText("----Device Lost!!!!!");
@@ -661,7 +663,7 @@ void StereoCalibration::ShowFrames(std::shared_ptr<uint8_t> gray1, std::shared_p
 		auto offsetY = h - camFactor.GetStereoViewInPixel().second;
 		auto &positions = camFactor.GetCalLocations();
 		auto allDone = true;
-		for (auto i = 0; i < positions.size();++i)
+        for (auto i = 0u; i < positions.size();++i)
 		{
 			if (captureChecklist[i])
 				continue;

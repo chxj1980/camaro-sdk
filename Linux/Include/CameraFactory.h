@@ -7,6 +7,7 @@
 #include "IVideoStream.h"
 #include "StandardUVC.h"
 #include "Camaro.h"
+#include "ImpalaE.h"
 #include "ExtensionAccess.h"
 #include "VideoSourceReader.h"
 #include "CamaroDual.h"
@@ -67,6 +68,32 @@ namespace TopGear
             if (it!=CameraProfile::Repository.end())
                 return std::make_shared<Camaro>(reader, ex, it->second);
             return std::make_shared<Camaro>(reader, ex);
+        }
+
+        template <>
+        template <>
+        inline std::shared_ptr<IVideoStream> CameraFactory<ImpalaE>::
+        CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
+        {
+
+            auto exDevice = std::dynamic_pointer_cast<IDiscernible<IExtensionLite>>(device);
+            if (exDevice == nullptr)
+                return{};
+
+            auto streams = VideoSourceReader::CreateVideoStreams(device);
+            if (streams.size()==0)
+                return{};
+
+            auto validator = std::dynamic_pointer_cast<ExtensionFilterBase>(exDevice->GetValidator());
+            if (validator == nullptr)
+                return{};
+            auto lsource = std::dynamic_pointer_cast<LSource>(device->GetSource());
+            if (lsource == nullptr)
+                return{};
+            auto ex = std::static_pointer_cast<IExtensionAccess>(
+                        std::make_shared<ExtensionAccess>(lsource->GetHandle(), validator));
+
+            return std::make_shared<ImpalaE>(streams, ex);
         }
 
 

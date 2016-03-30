@@ -18,7 +18,8 @@ ExtensionAccess::ExtensionAccess(int dev, std::shared_ptr<ExtensionFilterBase> &
 
 std::unique_ptr<uint8_t[]> ExtensionAccess::GetProperty(int index, int& len, bool dynamicLen)
 {
-    len = extensionAgent->GetLen(index,dynamicLen);
+    if (!dynamicLen)
+        len = extensionAgent->GetLen(index, false);
     std::unique_ptr<uint8_t[]> data(new uint8_t[len]);
     std::memset(data.get(),0,len);
     uvc_xu_control_query qry;
@@ -37,7 +38,6 @@ int ExtensionAccess::SetProperty(int index, const uint8_t* data, size_t size)
     auto len = extensionAgent->GetLen(index);
     if (len<size)
         return -1;
-
     uvc_xu_control_query qry;
     qry.unit = unitId;//XU unit id
     qry.selector = index;

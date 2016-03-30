@@ -219,7 +219,7 @@ void VideoSourceReader::EnumerateFormats(uint32_t handle)
         fsize.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         while(ioctl(handle, VIDIOC_ENUM_FRAMESIZES, &fsize) == 0)
         {
-            int rate, width, height;
+            int rate, width=0, height=0;
             // Copy the frame size attributes
             if(fsize.type == V4L2_FRMSIZE_TYPE_DISCRETE)
             {

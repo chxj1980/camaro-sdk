@@ -36,7 +36,7 @@ namespace TopGear
 		std::shared_ptr<IExtensionAccess> xuAccess;
 		VideoFrameCallbackFn fnCb = nullptr;
 		std::vector<VideoFormat> formats;
-		std::vector<int> selectedFormats;
+        std::vector<std::pair<int,int>> selectedFormats;
 	private:
 		void FrameWatcher();
 		std::thread frameWatchThread;

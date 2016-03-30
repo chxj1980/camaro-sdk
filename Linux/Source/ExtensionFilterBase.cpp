@@ -51,15 +51,22 @@ bool ExtensionFilterBase::ObtainInfo()
 {
     uint16_t len;
     uvc_xu_control_query qry;
-    for (auto i = 1; i <= pInfo->NumControls; ++i)
+    qry.unit = pInfo->UnitId;//XU unit id
+    qry.selector = 0;
+    qry.size = 2;
+    qry.query = UVC_GET_LEN;
+    qry.data = reinterpret_cast<uint8_t *>(&len);
+
+    auto count = 0;
+    for (auto i = 0; i < pInfo->ControlSize<<3; ++i)
     {
-        qry.unit = pInfo->UnitId;//XU unit id
-        qry.selector = i;
-        qry.size = 2;
-        qry.query = UVC_GET_LEN;
-        qry.data = reinterpret_cast<uint8_t *>(&len);
-        if (ioctl(handle,UVCIOC_CTRL_QUERY, &qry)==0)
-            controlLens[i] = len;
+        if ((pInfo->Controls[i >> 3] & 1 << (i & 0x7)) == 0)
+            continue;
+        qry.selector = i+1;
+        if (ioctl(handle, UVCIOC_CTRL_QUERY, &qry)==0)
+            controlLens[i+1] = len;
+        if (++count >= pInfo->NumControls)
+            break;
     }
     return true;
 }
