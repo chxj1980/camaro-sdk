@@ -6,15 +6,20 @@
 namespace TopGear
 {
     class EtronExtensionFilter
-        #ifdef __linux__
+#ifdef __linux__
                     : public Linux::ExtensionFilterBase
-        #elif defined(_WIN32)
+#elif defined(_WIN32)
                     : public Win::ExtensionFilterBase
-        #endif
+#endif
     {
     public:
         explicit EtronExtensionFilter(std::shared_ptr<IGenericVCDevice> &device)
-            : ExtensionFilterBase(device, ExtensionRepository::EtronXuCode)
+#ifdef __linux__
+                    : ExtensionFilterBase(device, ExtensionRepository::EtronXuCode, std::vector<uint8_t> {0x0c})
+#elif defined(_WIN32)
+                    : ExtensionFilterBase(device, ExtensionRepository::EtronXuCode)
+#endif
+
         {}
         virtual ~EtronExtensionFilter() {}
         virtual std::string GetDeviceInfo() override { return{}; }

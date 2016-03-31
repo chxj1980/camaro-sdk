@@ -38,6 +38,7 @@ int ExtensionAccess::SetProperty(int index, const uint8_t* data, size_t size)
     auto len = extensionAgent->GetLen(index);
     if (len<size)
         return -1;
+//    auto len = size;
     uvc_xu_control_query qry;
     qry.unit = unitId;//XU unit id
     qry.selector = index;

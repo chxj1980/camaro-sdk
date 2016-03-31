@@ -5,7 +5,9 @@
 using namespace TopGear;
 using namespace Linux;
 
-ExtensionFilterBase::ExtensionFilterBase(std::shared_ptr<IGenericVCDevice> &device, const std::array<uint8_t, 16> &xucode)
+ExtensionFilterBase::ExtensionFilterBase(std::shared_ptr<IGenericVCDevice> &device,
+                                         const std::array<uint8_t, 16> &xucode,
+                                         std::vector<uint8_t> &&ignore)
 {
     auto source = std::dynamic_pointer_cast<LSource>(device->GetSource());
     if (source == nullptr)
@@ -17,7 +19,7 @@ ExtensionFilterBase::ExtensionFilterBase(std::shared_ptr<IGenericVCDevice> &devi
         if (std::memcmp(pInfo->ExtensionCode,xucode.data(),16)==0)
         {
             isValid = true;
-            ObtainInfo();
+            ObtainInfo(ignore);
         }
     }
 }
@@ -47,7 +49,7 @@ uint32_t ExtensionFilterBase::GetLen(int index, bool live)
     return controlLens[index];
 }
 
-bool ExtensionFilterBase::ObtainInfo()
+bool ExtensionFilterBase::ObtainInfo(std::vector<uint8_t> &ignore)
 {
     uint16_t len;
     uvc_xu_control_query qry;
@@ -63,6 +65,17 @@ bool ExtensionFilterBase::ObtainInfo()
         if ((pInfo->Controls[i >> 3] & 1 << (i & 0x7)) == 0)
             continue;
         qry.selector = i+1;
+        //Ignore some xu controls
+        auto pass = false;
+        for(auto p : ignore)
+            if (qry.selector==p)
+            {
+                pass =true;
+                break;
+            }
+        if (pass)
+            continue;
+
         if (ioctl(handle, UVCIOC_CTRL_QUERY, &qry)==0)
             controlLens[i+1] = len;
         if (++count >= pInfo->NumControls)
