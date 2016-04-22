@@ -6,6 +6,8 @@
 #include <iostream>
 #include <functional>
 #include <thread>
+#include <condition_variable>
+#include <future>
 
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -22,6 +24,7 @@
 using namespace TopGear;
 using namespace Linux;
 
+//#define USER_POINTER
 
 std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &device)
 {
@@ -90,7 +93,6 @@ void VideoSourceReader::EnumerateStreams(const LSource &one)
     }
 }
 
-
 void VideoSourceReader::Initmmap(uint32_t handle)
 {
     auto it = streams.find(handle);
@@ -104,16 +106,39 @@ void VideoSourceReader::Initmmap(uint32_t handle)
     std::memset(&req,0,sizeof(req));
     req.count = FRAMEQUEUE_SIZE;
     req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+#ifdef USER_POINTER
+    req.memory = V4L2_MEMORY_USERPTR;
+#else
     req.memory = V4L2_MEMORY_MMAP;
+#endif
+
     if (ioctl(handle, VIDIOC_REQBUFS, &req)==-1)
     {
         fprintf(stderr, "xxx VIDIOC_REQBUFS fail %s\n", strerror(errno));
     }
+#ifdef USER_POINTER
+    v4l2_format fmt;
+    std::memset(&fmt,0,sizeof(fmt));
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    ioctl(handle, VIDIOC_G_FMT, &fmt);
+    /* Buggy driver paranoia. */
+    auto min = fmt.fmt.pix.width * 2;
+    if (fmt.fmt.pix.bytesperline < min)
+        fmt.fmt.pix.bytesperline = min;
+    min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
+    if (fmt.fmt.pix.sizeimage < min)
+        fmt.fmt.pix.sizeimage = min;
+    uint32_t imageSize = fmt.fmt.pix.sizeimage;
+#endif
 
     //query buffer , mmap , and enqueue  afterwards
-    for(auto i = 0; i < FRAMEQUEUE_SIZE; ++i)
+    for(auto i = 0u; i < FRAMEQUEUE_SIZE; ++i)
     {
-        //int j = i + FRAMEQUEUE_SIZE * handle;
+#ifdef USER_POINTER
+        vbuffers[i].first = new uint8_t[imageSize];
+        vbuffers[i].second = imageSize;
+        ReleaseFrame(handle, i);
+#else
         v4l2_buffer buf;
         std::memset(&buf,0,sizeof(buf));
         buf.index = i;
@@ -144,6 +169,7 @@ void VideoSourceReader::Initmmap(uint32_t handle)
                 fprintf(stderr,"xxx VIDIOC_QBUF %s\n", strerror(errno));
             }
         }
+#endif
     }//for
 }
 
@@ -152,9 +178,14 @@ void VideoSourceReader::Uninitmmap(uint32_t handle)
     auto it = streams.find(handle);
     if (it == streams.end())
         return;
+
     for(int i = 0; i < FRAMEQUEUE_SIZE; ++i)
     {
+#ifdef USER_POINTER
+        delete[] (it->second).vbuffers[i].first;
+#else
         munmap((it->second).vbuffers[i].first, (it->second).vbuffers[i].second);
+#endif
     }
 }
 
@@ -165,7 +196,11 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
     v4l2_buffer queue_buf;
     std::memset(&queue_buf,0,sizeof(queue_buf));
     queue_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+#ifdef USER_POINTER
+    queue_buf.memory = V4L2_MEMORY_USERPTR;
+#else
     queue_buf.memory = V4L2_MEMORY_MMAP;
+#endif
     queue_buf.flags = V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN;
 
     if(ioctl(handle, VIDIOC_DQBUF, &queue_buf) == -1)
@@ -186,12 +221,19 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
 }
 
 bool VideoSourceReader::ReleaseFrame(int handle, int index)
-{
+{    
     v4l2_buffer queue_buf;
     std::memset(&queue_buf,0,sizeof(queue_buf));
     queue_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    queue_buf.memory = V4L2_MEMORY_MMAP;
     queue_buf.index = index;
+#ifdef USER_POINTER
+    auto vbuffers = streams[handle].vbuffers;
+    queue_buf.memory = V4L2_MEMORY_USERPTR;
+    queue_buf.m.userptr = (unsigned long)vbuffers[index].first;
+    queue_buf.length = vbuffers[index].second;
+#else
+    queue_buf.memory = V4L2_MEMORY_MMAP;
+#endif
 
     return ioctl(handle, VIDIOC_QBUF, &queue_buf)==0;
 }
@@ -245,7 +287,7 @@ void VideoSourceReader::EnumerateFormats(uint32_t handle)
             while(ioctl(handle, VIDIOC_ENUM_FRAMEINTERVALS, &frameval)==0)
             {
                 rate = (int)(frameval.discrete.denominator/frameval.discrete.numerator);
-                VideoFormat format = { width,height,rate,0 };
+                VideoFormat format { width,height,rate,0 };
                 memcpy(format.PixelFormat, &fmt.pixelformat, 4);
                 videoFormats.emplace_back(format);
                 frameval.index++;
@@ -297,6 +339,10 @@ bool VideoSourceReader::StartStream(uint32_t handle)
     if (streams.find(handle) == streams.end())
         return false;
     StopStream(handle);
+
+    if (streams[handle].currentFormatIndex<0)
+        return false;
+
     Initmmap(handle);
 
     auto format = streams[handle].formats[streams[handle].currentFormatIndex];
@@ -339,16 +385,48 @@ bool VideoSourceReader::IsStreaming(uint32_t handle)
 
 void VideoSourceReader::OnReadWorker(uint32_t handle)
 {
-    int index;
+    int index = -1;
+    std::pair<std::weak_ptr<IVideoFrame>, bool> framesRef[FRAMEQUEUE_SIZE];
+    std::future<void> result;
     while (streams[handle].isRunning)
     {
-        auto frame = RequestFrame(handle, index);
-        if (frame && streams[handle].fncb)
+        //Check mmap and release used frame
+        for(int i=0;i<FRAMEQUEUE_SIZE;++i)
         {
-            //Invoke callback handler
-            streams[handle].fncb(frame);
-            ReleaseFrame(handle, index); //Release immediately if no callback
-            //std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            if (framesRef[i].second && framesRef[i].first.use_count()==0)
+            {
+                ReleaseFrame(handle, i);
+                framesRef[i].second = false;
+            }
+        }
+        //Check callback completion
+        if (result.valid())
+        {
+            auto status = result.wait_for(std::chrono::milliseconds(0));
+            if (status!=std::future_status::ready)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
+        }
+        auto frame = RequestFrame(handle, index);
+        if (frame && index>=0)
+        {
+            framesRef[index].second = true;
+            framesRef[index].first = frame;
+            //Invoke callback handler async
+            if (streams[handle].fncb)
+            {
+                std::promise<bool> prom;
+                std::future<bool> fut = prom.get_future();
+                result = std::async(std::launch::async, [&]()
+                {
+                    auto f = framesRef[index].first.lock();
+                    prom.set_value(true);
+                    streams[handle].fncb(f);
+                });
+                fut.get();
+            }
         }
         else
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -363,9 +441,3 @@ void VideoSourceReader::RegisterReaderCallback(uint32_t handle, const ReaderCall
         return;
     (it->second).fncb = fn;
 }
-
-//bool VideoSourceReader::IsFormatSupported(const GUID &subtype) const
-//{
-//	//Do we support this type directly ?
-//	return true;
-//}

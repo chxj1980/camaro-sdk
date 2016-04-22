@@ -216,16 +216,16 @@ int CamaroDual::GetRegister(uint16_t regaddr, uint16_t& regval)
 	return ll1->GetRegister(regaddr, regval) | ll2->GetRegister(regaddr, regval);
 }
 
-void CamaroDual::Notify(std::vector<IVideoFramePtr>& payload)
-{
-	if (fnCb)
-		fnCb(*this, payload);
-}
+//void CamaroDual::Notify(std::vector<IVideoFramePtr>& payload)
+//{
+//	if (fnCb)
+//		fnCb(*this, payload);
+//}
 
-void CamaroDual::Register(std::shared_ptr<IProcessor>& p)
-{
-	processor = p;
-}
+//void CamaroDual::Register(std::shared_ptr<IProcessor>& p)
+//{
+//	processor = p;
+//}
 
 void CamaroDual::FrameWatcher()
 {
@@ -267,9 +267,9 @@ void CamaroDual::FrameWatcher()
 					auto vector = std::vector<IVideoFramePtr>{ mFrame, sFrame };
 					if (fnCb)
 					{
-						if (processor)
-							processor->Process(*this, vector);
-						else
+//						if (processor)
+//							processor->Process(*this, vector);
+//						else
 							fnCb(*this, vector);
 					}
 					frameVector[1].erase(frameVector[1].begin(), sit + 1);

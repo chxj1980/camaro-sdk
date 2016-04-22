@@ -33,7 +33,7 @@ namespace TopGear
             void EnumerateStreams(const LSource &one);
             void EnumerateFormats(uint32_t handle);
         private:
-            static const int FRAMEQUEUE_SIZE = 4;
+            static const int FRAMEQUEUE_SIZE = 10;
 
             struct StreamState
             {
@@ -44,7 +44,7 @@ namespace TopGear
                 bool isRunning = false;
                 bool streamOn = false;
                 std::thread streamThread;
-                std::pair<uint8_t *,int> vbuffers[FRAMEQUEUE_SIZE];
+                std::pair<uint8_t *, int> vbuffers[FRAMEQUEUE_SIZE];
             };
 
             std::map<uint32_t, StreamState> streams;

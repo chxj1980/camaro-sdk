@@ -14,11 +14,70 @@
 
 #include "DeepCamAPI.h"
 #include "IVideoStream.h"
+#include "IDeviceControl.h"
 
 #define NEED_GPSIMU 1
 ////////////////////////////////////////////////////////
 
 extern int convert_raw_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, bool isGradientBasedInter, int w, int h);
+
+#define CLAMP(x)    ((x)>255?255:((x)<0)?0:(x))
+
+void convert_yuv_to_rgb_pixel(uint8_t y, uint8_t u, uint8_t v, uint8_t *rgb)
+{
+    int r = int(y + (1.370705 * (v-128)));
+    int g = int(y - (0.698001 * (v-128)) - (0.337633 * (u-128)));
+    int b = int(y + (1.732446 * (u-128)));
+    r = CLAMP(r);
+    g = CLAMP(g);
+    b = CLAMP(b);
+    rgb[0] = r * 220 / 256;
+    rgb[1] = g * 220 / 256;
+    rgb[2] = b * 220 / 256;
+}
+/*yuv格式转换为rgb格式*/
+
+void convert_yuyv_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int width, int height)
+{
+    int i,j;
+    #pragma omp parallel for shared(raw,rgb) private(i,j)
+    for(i=0;i<height;++i)
+    {
+        int offset = width*2*i;
+        int rgb_offset = width*3*i;
+        for(j=0;j<width*2;j+=4)
+        {
+            unsigned char *pixel = rgb+rgb_offset+(j>>1)*3;
+            convert_yuv_to_rgb_pixel(raw[offset+j],raw[offset+j+1],raw[offset+j+3],pixel);
+            convert_yuv_to_rgb_pixel(raw[offset+j+2],raw[offset+j+1],raw[offset+j+3],pixel+3);
+        }
+    }
+}
+
+TopGear::PropertyData<std::vector<float>> DepthTable;
+
+void convert_gray_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int width, int height)
+{
+    int i,j;
+    #pragma omp parallel for shared(raw,rgb) private(i,j)
+    for(i=0;i<height;++i)
+    {
+        int offset = width*i;
+        int rgb_offset = width*3*i;
+        for(j=0;j<width;++j)
+        {
+            //if (DepthTable.Payload.size()<256)
+                rgb[rgb_offset+j*3] = rgb[rgb_offset+j*3+1] =rgb[rgb_offset+j*3+2] = raw[offset+j];
+            //else
+            //{
+            //    uint8_t val = int(DepthTable.Payload[raw[offset+j]]*255/10);
+            //    rgb[rgb_offset+j*3] = rgb[rgb_offset+j*3+1] =rgb[rgb_offset+j*3+2] =
+            //            val==0?0:255-val;
+            //}
+        }
+    }
+}
+
 
 #define RESYNC_NUM 100
 
@@ -240,27 +299,69 @@ ProcessImage::ProcessImage(QWidget *parent)
             Qt::QueuedConnection );
 
     auto &deepcam = TopGear::DeepCamAPI::Instance();
-    camera = deepcam.CreateCamera(TopGear::Camera::CamaroDual);
-    if (camera)
+//    camera = deepcam.CreateCamera(TopGear::Camera::CamaroDual);
+//    if (camera)
+//    {
+//        ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camera);
+//        cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camera);
+//        if (cameraControl)
+//            cameraControl->Flip(true,false);
+//        TopGear::IVideoStream::RegisterFrameCallback(*camera,
+//               &ProcessImage::onGetStereoFrame, this);
+//        //labeldevinfo->setText(QString("devinfo:%1").arg(item->GetDeviceInfo().c_str()));
+//        //Get optimized video format
+//        TopGear::VideoFormat format;
+//        auto index = camera->GetOptimizedFormatIndex(format);
+
+//        prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+//        prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+
+//        //auto formats = camera->GetAllFormats();
+//        camera->SetCurrentFormat(index);
+//        camera->StartStream();
+//    }
+
+//    camera = deepcam.CreateCamera(TopGear::Camera::ImpalaE);
+//    //TopGear::PropertyData<std::vector<float>> data;
+//    if (camera)
+//    {
+//        ioControl = TopGear::DeepCamAPI::QueryInterface<TopGear::IDeviceControl>(camera);
+//        ioControl->GetControl("zdtable", DepthTable);
+//        TopGear::IVideoStream::RegisterFrameCallback(*camera,
+//                                                     &ProcessImage::onGetStereoFrame, this);
+//        auto formats = camera->GetAllFormats();
+//        prgb1 = std::unique_ptr<uchar[]>(new uchar[formats[1].Height*formats[1].Width*3]);
+//        prgb2 = std::unique_ptr<uchar[]>(new uchar[formats[1].Height*formats[1].Width*3]);
+//        camera->SetCurrentFormat(1);
+//        camera->StartStream();
+//    }
+
+    auto devices = deepcam.EnumerateDevices(TopGear::DeviceType::DeepGlint);
+    if (!devices.empty())
     {
-        ioControl = std::dynamic_pointer_cast<TopGear::IDeviceControl>(camera);
-        cameraControl = std::dynamic_pointer_cast<TopGear::ICameraControl>(camera);
-        if (cameraControl)
-            cameraControl->Flip(true,false);
-        TopGear::IVideoStream::RegisterFrameCallback(*camera,
-               &ProcessImage::onGetStereoFrame, this);
-        //labeldevinfo->setText(QString("devinfo:%1").arg(item->GetDeviceInfo().c_str()));
-        //Get optimized video format
-        TopGear::VideoFormat format;
-        auto index = camera->GetOptimizedFormatIndex(format);
+        camera = deepcam.CreateCamera(TopGear::Camera::CamaroISP, devices[0]);
+        //TopGear::PropertyData<std::vector<float>> data;
+        if (camera)
+        {
+            auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
+            cc->Flip(true, false);
 
-        prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
-        prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
-
-        //auto formats = camera->GetAllFormats();
-        camera->SetCurrentFormat(index);
-        camera->StartStream();
+            TopGear::IVideoStream::RegisterFrameCallback(*camera,
+                                                         &ProcessImage::onGetStereoFrame, this);
+            TopGear::VideoFormat format {};
+            format.Height = 1080;
+            format.Width = 1920;
+            format.MaxRate = 20;
+            prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+            prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+            auto index = camera->GetMatchedFormatIndex(format);
+            camera->SetCurrentFormat(index);
+            camera->StartStream();
+        }
     }
+
+
+    timer = nullptr;
 
     timer = new QTimer(this);
     connect(timer,SIGNAL(timeout()),this,SLOT(ontimer()));
@@ -287,9 +388,9 @@ void ProcessImage::ontimer()
 void ProcessImage::onGetStereoFrame(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFramePtr> &frames)//this is called in sub-thread
 {
     (void)sender;
-    if (frames.size()!=2)
+    if (frames.size()==0 || frames.size()>2)
         return;
-    qDebug("frameidx:  %d",frames[0]->GetFrameIdx());
+    //qDebug("frameidx:  %d",frames[0]->GetFrameIdx());
     static int lastIdx = -1;
     auto currentIdx = frames[0]->GetFrameIdx();
 
@@ -322,7 +423,10 @@ void ProcessImage::onGetStereoFrame(TopGear::IVideoStream &sender, std::vector<T
     }
 
     fc.NewFrame();
-    emit onstereoframe(frames[0], frames[1]);
+    if (frames.size()==1)
+        emit onstereoframe(frames[0], nullptr);
+    else
+        emit onstereoframe(frames[0], frames[1]);
 }
 
 void ProcessImage::onDeviceException(int err){
@@ -412,10 +516,13 @@ void ProcessImage::getInfoFromFrame(void *frame, unsigned char *info, int infole
 
 void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVideoFramePtr slave)
 {
-    uint8_t *raw1,*raw2;
-    uint32_t stride;
-    master->LockBuffer(&raw1,&stride);
-    slave->LockBuffer(&raw2,&stride);
+    uint8_t *raw1 = nullptr;
+    uint8_t *raw2 = nullptr;
+    uint32_t stride1;
+    uint32_t stride2;
+    master->LockBuffer(&raw1,&stride1);
+    if (slave)
+        slave->LockBuffer(&raw2,&stride2);
 
     auto format = master->GetFormat();
 
@@ -449,7 +556,7 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
             ccc ++;
         }
 
-        if (REC_Push(raw1, raw2, format.Height*stride, saveframe_index) <0)
+        if (REC_Push(raw1, raw2, format.Height*stride1, format.Height*stride2, saveframe_index) <0)
             qDebug("---RECORD drop %d---", saveframe_index);
 
         saveframe_index ++;
@@ -494,8 +601,19 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
 //        rgb1 = new unsigned char[sz];
 //        rgb2 = new unsigned char[sz];
 
-        convert_raw_to_rgb_buffer(raw1, prgb1.get(), false , format.Width, format.Height);
-        convert_raw_to_rgb_buffer(raw2, prgb2.get(), false , format.Width, format.Height);
+//        convert_raw_to_rgb_buffer(raw1, prgb1.get(), false , format.Width, format.Height);
+//        convert_raw_to_rgb_buffer(raw2, prgb2.get(), false , format.Width, format.Height);
+        if (raw1)
+            convert_yuyv_to_rgb_buffer(raw1, prgb1.get(), format.Width, format.Height);
+        if (raw2)
+        {
+            convert_gray_to_rgb_buffer(raw2, prgb2.get(), format.Width, format.Height);
+            auto d = raw2[format.Height/2*format.Width+format.Width/2];
+            if (DepthTable.Payload.size()==256)
+                qDebug("Disparity: %d Depth: %fm", d, d==0?0:320.0/d);//DepthTable.Payload[d]);
+            else
+                qDebug("Disparity: %d", d);
+        }
 
 
 
@@ -540,13 +658,26 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
         lblVideoLeft->setPixmap(QPixmap::fromImage(*frame,Qt::AutoColor).scaled(800,450));
         delete frame;
 
-        frame = new QImage(prgb2.get(),format.Width, format.Height,QImage::Format_RGB888);
-        lblVideoRight->setPixmap(QPixmap::fromImage(*frame,Qt::AutoColor).scaled(800,450));
-        delete frame;
+        if (raw2)
+        {
+            frame = new QImage(prgb2.get(),format.Width, format.Height,QImage::Format_RGB888);
+            lblVideoRight->setPixmap(QPixmap::fromImage(*frame,Qt::AutoColor).scaled(800,450));
+//        QPainter paint;
+//        paint.begin(&pixmap2);
+//        MarkView(paint, slaveRect, Qt::green);
+//        if (slaveCorners.size() > 0)
+//        {
+//            MarkTarget(paint, slaveCorners, Qt::blue);
+//            result = true;
+//        }
+//        paint.end();
+            delete frame;
+        }
     }
 
     master->UnlockBuffer();
-    slave->UnlockBuffer();
+    if (slave)
+        slave->UnlockBuffer();
 
 
 
@@ -847,26 +978,3 @@ void ProcessImage::radioExpoChange()
         cameraControl->SetExposure(1200);
     }
 }
-
-#if 0
-int ProcessImage::convert_yuv_to_rgb_pixel(int y, int u, int v)
-{
- unsigned int pixel32 = 0;
- unsigned char *pixel = (unsigned char *)&pixel32;
- int r, g, b;
- r = y + (1.370705 * (v-128));
- g = y - (0.698001 * (v-128)) - (0.337633 * (u-128));
- b = y + (1.732446 * (u-128));
- if(r > 255) r = 255;
- if(g > 255) g = 255;
- if(b > 255) b = 255;
- if(r < 0) r = 0;
- if(g < 0) g = 0;
- if(b < 0) b = 0;
- pixel[0] = r * 220 / 256;
- pixel[1] = g * 220 / 256;
- pixel[2] = b * 220 / 256;
- return pixel32;
-}
-/*yuv格式转换为rgb格式*/
-#endif

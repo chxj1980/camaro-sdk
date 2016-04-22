@@ -76,7 +76,14 @@ HEADERS += \
     ../../Common/Include/DGExtensionFilter.h \
     ../../Common/Include/EtronExtensionFilter.h \
     ../../Common/Include/ImpalaE.h \
-    ../../Common/Include/Logger.h
+    ../../Common/Include/Logger.h \
+    ../../Common/Include/pointgrey.h \
+    ../../Common/Include/flycapturesource.h \
+    ../../Common/Include/flycapturedevice.h \
+    ../../Common/Include/flycapturereader.h \
+    ../../Common/Include/threadpool.h \
+    ../../Common/Include/CamaroISP.h \
+    ../../Common/Include/Fovea.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \
@@ -94,4 +101,9 @@ SOURCES += \
     ../../Common/Source/DeepCamAPI.cpp \
     ../../Common/Source/DGExtensionFilter.cpp \
     ../../Common/Source/ImpalaE.cpp \
-    ../../Common/Source/Logger.cpp
+    ../../Common/Source/Logger.cpp \
+    ../../Common/Source/pointgrey.cpp \
+    ../../Common/Source/flycapturedevice.cpp \
+    ../../Common/Source/flycapturereader.cpp \
+    ../../Common/Source/CamaroISP.cpp \
+    ../../Common/Source/VideoFormat.cpp

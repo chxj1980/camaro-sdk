@@ -386,7 +386,7 @@ const std::vector<VideoFormat>& Camaro::GetAllFormats() const
 const VideoFormat &Camaro::GetCurrentFormat() const
 {
 	if (currentFormatIndex < 0)
-		return VideoFormatNull;
+        return VideoFormat::Null;
 	return formats[currentFormatIndex];
 }
 bool Camaro::SetCurrentFormat(uint32_t formatIndex)

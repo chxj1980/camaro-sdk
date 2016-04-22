@@ -7,6 +7,7 @@
 #include "IVideoStream.h"
 #include "StandardUVC.h"
 #include "Camaro.h"
+#include "CamaroISP.h"
 #include "ImpalaE.h"
 #include "ExtensionAccess.h"
 #include "VideoSourceReader.h"
@@ -42,32 +43,59 @@ namespace TopGear
             return std::make_shared<StandardUVC>(reader);
         }
 
+        bool GetUVCStream(IGenericVCDevicePtr& device,
+                            std::shared_ptr<IVideoStream> &reader,
+                            std::shared_ptr<IExtensionAccess> &ex)
+        {
+            auto exDevice = std::dynamic_pointer_cast<IDiscernible<IExtensionLite>>(device);
+            if (exDevice == nullptr)
+                return false;
+
+            reader = VideoSourceReader::CreateVideoStream(device);
+            if (reader == nullptr)
+                return false;
+
+            auto validator = std::dynamic_pointer_cast<ExtensionFilterBase>(exDevice->GetValidator());
+            if (validator == nullptr)
+                return false;
+            auto lsource = std::dynamic_pointer_cast<LSource>(device->GetSource());
+            if (lsource == nullptr)
+                return false;
+            ex = std::static_pointer_cast<IExtensionAccess>(
+                        std::make_shared<ExtensionAccess>(lsource->GetHandle(), validator));
+            if (ex==nullptr)
+                return false;
+            return true;
+        }
 
         template <>
         template <>
         inline std::shared_ptr<IVideoStream> CameraFactory<Camaro>::
         CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
         {
-            auto exDevice = std::dynamic_pointer_cast<IDiscernible<IExtensionLite>>(device);
-            if (exDevice == nullptr)
-                return{};
-
-            auto reader = VideoSourceReader::CreateVideoStream(device);
-            if (reader == nullptr)
-                return{};
-
-            auto validator = std::dynamic_pointer_cast<ExtensionFilterBase>(exDevice->GetValidator());
-            if (validator == nullptr)
-                return{};
-            auto lsource = std::dynamic_pointer_cast<LSource>(device->GetSource());
-            if (lsource == nullptr)
-                return{};
-            auto ex = std::static_pointer_cast<IExtensionAccess>(
-                        std::make_shared<ExtensionAccess>(lsource->GetHandle(), validator));
+            std::shared_ptr<IVideoStream> reader;
+            std::shared_ptr<IExtensionAccess> ex;
+            if (!GetUVCStream(device,reader,ex))
+                return {};
             auto it = CameraProfile::Repository.find(Camera::Camaro);
             if (it!=CameraProfile::Repository.end())
                 return std::make_shared<Camaro>(reader, ex, it->second);
             return std::make_shared<Camaro>(reader, ex);
+        }
+
+        template <>
+        template <>
+        inline std::shared_ptr<IVideoStream> CameraFactory<CamaroISP>::
+        CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
+        {
+            std::shared_ptr<IVideoStream> reader;
+            std::shared_ptr<IExtensionAccess> ex;
+            if (!GetUVCStream(device,reader,ex))
+                return {};
+            auto it = CameraProfile::Repository.find(Camera::Camaro);
+            if (it!=CameraProfile::Repository.end())
+                return std::make_shared<CamaroISP>(reader, ex, it->second);
+            return std::make_shared<CamaroISP>(reader, ex);
         }
 
         template <>

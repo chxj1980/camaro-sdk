@@ -7,8 +7,9 @@ typedef struct
 {
     unsigned char *dataleft;
     unsigned char *dataright;
-    int index;
-	int len;
+    unsigned int index;
+    unsigned int lenleft;
+    unsigned int lenright;
 }msg_t;
 
 static MSGQ_T *msgq;
@@ -22,20 +23,18 @@ static int write_taskfunc(void *data)
 {
 	msg_t msg;
 
-    FILE *fp;
+    FILE *fp = NULL;
     time_t  t_now;
     struct tm *ptm_now;
 
     data = data;
-    //sprintf(gfilename, "/home/xinghua/tmp/RAW/all.raw");
 
     char *filename_ren_index = strstr(gfilename, ".raw");
-    //int filename_no = 0;
-    frame_count_written = 0;
+    frame_count_written = FRAMECOUNT_PER_FILE;
     time(&t_now);
     ptm_now = localtime(&t_now);
-    sprintf(filename_ren_index, "_%04d%02d%02d_%02d%02d%02d.raw", ptm_now->tm_year+1900, ptm_now->tm_mon, ptm_now->tm_mday, ptm_now->tm_hour, ptm_now->tm_min, ptm_now->tm_sec);
-    fp = fopen(gfilename,"wb");
+//    sprintf(filename_ren_index, "_%04d%02d%02d_%02d%02d%02d.raw", ptm_now->tm_year+1900, ptm_now->tm_mon, ptm_now->tm_mday, ptm_now->tm_hour, ptm_now->tm_min, ptm_now->tm_sec);
+//    fp = fopen(gfilename,"wb");
     while (hWrThrdRunning)
 	{
 
@@ -48,17 +47,20 @@ static int write_taskfunc(void *data)
         if (frame_count_written >= FRAMECOUNT_PER_FILE)
         {
             //filename_no++;
-            fclose(fp);
+            if (fp)
+                fclose(fp);
             time(&t_now);
             ptm_now = localtime(&t_now);
-            sprintf(filename_ren_index, "_%04d%02d%02d_%02d%02d%02d.raw", ptm_now->tm_year+1900, ptm_now->tm_mon, ptm_now->tm_mday, ptm_now->tm_hour, ptm_now->tm_min, ptm_now->tm_sec);
+            sprintf(filename_ren_index, "_%04d%02d%02d_%02d%02d%02d.raw", ptm_now->tm_year+1900, ptm_now->tm_mon+1, ptm_now->tm_mday, ptm_now->tm_hour, ptm_now->tm_min, ptm_now->tm_sec);
             fp = fopen(gfilename,"wb");
+            fwrite(&msg.lenleft, 4, 1, fp);
+            fwrite(&msg.dataright, 4, 1, fp);
             frame_count_written = 0;
         }
 
-
-        fwrite(msg.dataleft,msg.len , 1, fp);
-        fwrite(msg.dataright,msg.len , 1, fp);
+        fwrite(&msg.index, 4, 1, fp);
+        fwrite(msg.dataleft,msg.lenleft , 1, fp);
+        fwrite(msg.dataright,msg.lenright , 1, fp);
         frame_count_written++;
 
         free(msg.dataleft);
@@ -101,16 +103,17 @@ void REC_Close()
     MSGQ_Destroy(msgq);
 }
 
-int REC_Push(unsigned char *rawleft, unsigned char *rawright, int size, int index)
+int REC_Push(unsigned char *rawleft, unsigned char *rawright, int sizel, int sizer, int index)
 {
 	msg_t msg;
-    msg.dataleft = (unsigned char *)malloc(size);
-    msg.dataright = (unsigned char *)malloc(size);
-    msg.len = size;
+    msg.dataleft = (unsigned char *)malloc(sizel);
+    msg.dataright = (unsigned char *)malloc(sizer);
+    msg.lenleft = sizel;
+    msg.lenright = sizer;
     msg.index = index;
 
-    memcpy(msg.dataleft, rawleft, size);
-    memcpy(msg.dataright, rawright, size);
+    memcpy(msg.dataleft, rawleft, sizel);
+    memcpy(msg.dataright, rawright, sizer);
 
 	if(	MSGQ_Post(msgq, &msg) <0)
 	{

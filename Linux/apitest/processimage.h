@@ -18,7 +18,7 @@
 #include "IDeviceControl.h"
 #include "ILowlevelControl.h"
 
-#include "ImageAnalysis.h"
+//#include "ImageAnalysis.h"
 
 class ProcessImage : public QWidget
 {
@@ -69,7 +69,7 @@ private:
     std::atomic<int> dropcount;
     std::unique_ptr<uchar[]> prgb;
 	std::mutex ev_mutex;
-	std::future<TopGear::ImageAnalysis::Result> image_result;
+    //std::future<TopGear::ImageAnalysis::Result> image_result;
 
     void Init();
     void onGetVideoFrames(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFramePtr> &frames);

@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include "IVideoStream.h"
+#include "IGenericVCDevice.h"
 
 // Generic helper definitions for shared library support
 #ifndef DEEPCAM_API
@@ -38,10 +39,19 @@
 
 namespace TopGear
 {
+    enum class DeviceType
+    {
+        Generic,
+        Standard,
+        DeepGlint,
+        Etron,
+    };
+
 	enum class Camera
 	{
 		StandardUVC,
 		Camaro,
+        CamaroISP,
 		CamaroDual,
 		ImpalaE,
 	};
@@ -72,7 +82,10 @@ namespace TopGear
 	public:
 		static DeepCamAPI &Instance();
 
-		std::shared_ptr<IVideoStream> CreateCamera(Camera camera);
+        std::vector<IGenericVCDevicePtr> EnumerateDevices(DeviceType type);
+
+        template<class U>
+        std::shared_ptr<IVideoStream> CreateCamera(Camera camera, U & source);
 
 		void SetLogLevel(Level level) const;
 		void EnableLog(uint8_t flag) const;
@@ -87,5 +100,14 @@ namespace TopGear
 		DeepCamAPI(DeepCamAPI &) = delete;
 	};
 
+    template<class U>
+    std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera(Camera camera, U & source)
+    {
+        (void)camera;
+        (void)source;
+        static_assert(std::is_same<IGenericVCDevicePtr, U>::value || std::is_same<std::vector<IGenericVCDevicePtr>, U>::value,
+                      "Parameter source must be type of IGenericVCDeviceRef or std::vector<IGenericVCDeviceRef>");
+        return {};
+    }
 	// ReSharper restore CppFunctionIsNotImplemented
 }

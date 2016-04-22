@@ -39,8 +39,6 @@ namespace TopGear
 			false;
 	};
 
-    static VideoFormat VideoFormatNull;
-
 	class IVideoStream
 	{
 	public:

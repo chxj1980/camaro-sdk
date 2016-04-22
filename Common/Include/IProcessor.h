@@ -10,7 +10,7 @@ namespace TopGear
 	{
 	public:
 		virtual ~IProcessor() = default;
-		virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> &source) = 0;
+        virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> &source) = 0;
 	};
 
 	class IProcessable

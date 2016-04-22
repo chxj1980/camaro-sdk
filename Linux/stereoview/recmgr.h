@@ -8,7 +8,7 @@ extern "C" {
 
 int REC_Open(char *filename);
 void REC_Close();
-int REC_Push(unsigned char *rawleft, unsigned char *rawright, int size, int i);
+int REC_Push(unsigned char *rawleft, unsigned char *rawright, int sizel, int sizer, int i);
 
 # ifdef __cplusplus
 }

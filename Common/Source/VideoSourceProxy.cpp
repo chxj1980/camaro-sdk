@@ -14,7 +14,7 @@ VideoSourceProxy::VideoSourceProxy(std::shared_ptr<IMultiVideoSource> reader, ui
 const VideoFormat& VideoSourceProxy::GetCurrentFormat() const
 {
 	if (currentFormatIndex < 0)
-		return VideoFormatNull;
+        return VideoFormat::Null;
 	return formats[currentFormatIndex];
 }
 
@@ -87,7 +87,7 @@ bool VideoSourceProxy::SetCurrentFormat(uint32_t formatIndex)
 
 int VideoSourceProxy::GetOptimizedFormatIndex(VideoFormat& format, const char *fourcc)
 {
-	auto wCurrent = 0, hCurrent = 0, rCurrent = 0;
+    auto bandwidth = 0;
 	auto index = -1;
 	auto i = -1;
 	for (auto f : formats)
@@ -95,13 +95,8 @@ int VideoSourceProxy::GetOptimizedFormatIndex(VideoFormat& format, const char *f
 		++i;
         if (std::strcmp(fourcc, "") != 0 && std::strncmp(fourcc, f.PixelFormat, 4) != 0)
 			continue;
-		if (f.Height >= hCurrent && f.MaxRate >= rCurrent)
-		{
-			wCurrent = f.Width;
-			hCurrent = f.Height;
-			rCurrent = f.MaxRate;
+        if (f.Width*f.Height*f.MaxRate > bandwidth)
 			index = i;
-		}
 	}
 	if (index >= 0)
 		format = formats[index];

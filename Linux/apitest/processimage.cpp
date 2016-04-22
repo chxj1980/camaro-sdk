@@ -297,7 +297,7 @@ ProcessImage::ProcessImage(QWidget *parent)
 //        }
 //    }
 
-    TopGear::DeepCamAPI::Initialize();
+    //TopGear::DeepCamAPI::Initialize();
     camera = TopGear::DeepCamAPI::CreateCamera(TopGear::Camera::Camaro);
     if (camera)
     {
@@ -327,8 +327,8 @@ ProcessImage::~ProcessImage()
         timer->stop();
     if (camera)
         camera->StopStream();
-	if (image_result.valid())
-		image_result.wait();
+//	if (image_result.valid())
+//		image_result.wait();
 }
 
 void ProcessImage::display_error(QString err)
@@ -399,7 +399,8 @@ void ProcessImage::showvideoframe(TopGear::IVideoFramePtr vf)
 	fc.NewFrame();
 
 	int w, h;
-	vf->GetSize(w, h);
+    w = vf->GetFormat().Width;
+    h = vf->GetFormat().Height;
 	//	camera->GetCurrentFormat();
 	//h = format.Height;
 	//w = format.Width;
@@ -411,7 +412,7 @@ void ProcessImage::showvideoframe(TopGear::IVideoFramePtr vf)
 	unsigned char *pdata;
 	uint32_t stride;
 	vf->LockBuffer(&pdata, &stride);
-	TopGear::ImageAnalysis::ConvertRawGB12ToGray(reinterpret_cast<uint16_t *>(pdata), prgb.get(), w, h);
+    //TopGear::ImageAnalysis::ConvertRawGB12ToGray(reinterpret_cast<uint16_t *>(pdata), prgb.get(), w, h);
 	vf->UnlockBuffer();
 
 	std::unique_ptr<QImage> frame(new QImage(prgb.get(), w, h, QImage::Format_RGB888));
@@ -429,18 +430,18 @@ void ProcessImage::showvideoframe(TopGear::IVideoFramePtr vf)
 	std::unique_lock<std::mutex> ul(ev_mutex, std::try_to_lock);
 	if (ul)
 	{
-		if (image_result.valid())
-		{
-			auto result = image_result.get();
-			labelMag->setText(QString::number(result.Sharpness));
-			lastCorners = std::move(result.Corners);
-		}
-		ul.unlock();
-		image_result = std::async([&, this]()
-		{
-			std::lock_guard<std::mutex> lock(ev_mutex);
-			return TopGear::ImageAnalysis::Process(prgb.release(), w, h);
-		});
+//		if (image_result.valid())
+//		{
+//			auto result = image_result.get();
+//			labelMag->setText(QString::number(result.Sharpness));
+//			lastCorners = std::move(result.Corners);
+//		}
+//		ul.unlock();
+//		image_result = std::async([&, this]()
+//		{
+//			std::lock_guard<std::mutex> lock(ev_mutex);
+//			return TopGear::ImageAnalysis::Process(prgb.release(), w, h);
+//		});
 	}
 	if (lastCorners.size() > 0)
 	{

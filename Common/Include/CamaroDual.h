@@ -3,7 +3,6 @@
 #include "IDeviceControl.h"
 #include "CameraBase.h"
 #include "BufferQueue.h"
-#include "IProcessor.h"
 #include "ILowlevelControl.h"
 
 #include <thread>
@@ -12,7 +11,6 @@ namespace TopGear
 {
 	class CamaroDual :
 		public CameraBase,
-		public IProcessable,
 		public TopGear::ICameraControl,
 		public IDeviceControl,
 		public ILowlevelControl
@@ -23,15 +21,15 @@ namespace TopGear
 		virtual int GetRegisters(uint16_t regaddr[], uint16_t regval[], int num) override;
 		virtual int SetRegister(uint16_t regaddr, uint16_t regval) override;
 		virtual int GetRegister(uint16_t regaddr, uint16_t& regval) override;
-		virtual void Notify(std::vector<IVideoFramePtr>& payload) override;
-		virtual void Register(std::shared_ptr<IProcessor>& p) override;
+//		virtual void Notify(std::vector<IVideoFramePtr>& payload) override;
+//		virtual void Register(std::shared_ptr<IProcessor>& p) override;
 	protected:
 		static const uint16_t RESYNC_NUM = 900;
 		std::shared_ptr<TopGear::ICameraControl> masterCC;
 		std::shared_ptr<TopGear::ICameraControl> slaveCC;
 		std::shared_ptr<IDeviceControl> masterDC;
 		std::shared_ptr<IDeviceControl> slaveDC;
-		std::shared_ptr<IProcessor> processor;
+        //std::shared_ptr<IProcessor> processor;
 
 		void FrameWatcher();
 		std::thread frameWatchThread;

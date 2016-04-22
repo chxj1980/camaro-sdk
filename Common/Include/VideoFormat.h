@@ -8,5 +8,9 @@ namespace TopGear
 		int Height;
 		int MaxRate;
 		char PixelFormat[4];	//FourCC
+
+        static const VideoFormat Null;
 	};
+
+    //VideoFormat VideoFormat::Null;
 }
