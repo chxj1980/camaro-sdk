@@ -35,6 +35,16 @@ namespace TopGear
         private:
             static const int FRAMEQUEUE_SIZE = 10;
 
+            struct tvcomp
+            {
+              bool operator() (const timeval& lhs, const timeval& rhs) const
+              {
+                  if (lhs.tv_sec==rhs.tv_sec)
+                      return lhs.tv_usec<rhs.tv_usec;
+                  return lhs.tv_sec<rhs.tv_sec;
+              }
+            };
+
             struct StreamState
             {
                 std::vector<VideoFormat> formats;
@@ -44,7 +54,10 @@ namespace TopGear
                 bool isRunning = false;
                 bool streamOn = false;
                 std::thread streamThread;
-                std::pair<uint8_t *, int> vbuffers[FRAMEQUEUE_SIZE];
+                std::pair<uint8_t *, int> vbuffers[FRAMEQUEUE_SIZE]; //Data pointer & size
+                std::map<timeval, int, tvcomp> timeMap;
+                std::map<uint64_t, int> frameIndexMap;
+                uint64_t frameCounter = 0;
             };
 
             std::map<uint32_t, StreamState> streams;

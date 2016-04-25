@@ -230,23 +230,6 @@ namespace TopGear
         return inventory;
     }
 
-    template<>
-    DEEPCAM_API std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera<std::vector<IGenericVCDevicePtr>>
-        (Camera camera, std::vector<IGenericVCDevicePtr> & source)
-    {
-        std::shared_ptr<IVideoStream> vs;
-        switch (camera)
-        {
-        case Camera::CamaroDual:
-            vs = CameraFactory<CamaroDual>::CreateInstance(source);
-            if (vs)
-                Logger::Write(spdlog::level::info, "Camaro stereo camera created");
-            break;
-        default:
-            break;
-        }
-        return vs;
-    }
 
     template<>
     DEEPCAM_API std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera<IGenericVCDevicePtr>
@@ -290,11 +273,42 @@ namespace TopGear
             break;
         case Camera::CamaroDual:
             break;
+        case Camera::Fovea:
+            break;
         default:
             break;
         }
         return vs;
     }
+
+    template<>
+    DEEPCAM_API std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera<std::vector<IGenericVCDevicePtr>>
+        (Camera camera, std::vector<IGenericVCDevicePtr> & source)
+    {
+        std::shared_ptr<IVideoStream> vs;
+        std::vector<std::shared_ptr<IVideoStream>> vss;
+        switch (camera)
+        {
+        case Camera::CamaroDual:
+            vs = CameraFactory<CamaroDual>::CreateInstance(source);
+            if (vs)
+                Logger::Write(spdlog::level::info, "Camaro stereo camera created");
+            break;
+        case Camera::Fovea:
+            if (source.size()<2)
+                break;
+            vss.push_back(CreateCamera(Camera::CamaroISP, source[0]));
+            vss.push_back(CreateCamera(Camera::CamaroISP, source[1]));
+            vs = CameraFactory<Fovea>::CreateInstance(vss);
+            if (vs)
+                Logger::Write(spdlog::level::info, "Fovea camera created");
+            break;
+        default:
+            break;
+        }
+        return vs;
+    }
+
 
 //	DEEPCAM_API std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera(Camera camera)
 //	{

@@ -30,14 +30,14 @@ int CamaroDual::Flip(bool vertical, bool horizontal)
 	return -1;
 }
 
-int CamaroDual::GetExposure(uint16_t& val)
+int CamaroDual::GetExposure(uint32_t& val)
 {
 	if (!masterCC)
 		return -1;
 	return masterCC->GetExposure(val);
 }
 
-int CamaroDual::SetExposure(uint16_t val)
+int CamaroDual::SetExposure(uint32_t val)
 {
 	if (masterCC && slaveCC)
 		return masterCC->SetExposure(val) |
@@ -72,33 +72,6 @@ bool CamaroDual::GetControl(std::string name, IPropertyData &val)
 {
 	return masterDC->GetControl(name, val);
 }
-
-//int CamaroDual::SetSensorTrigger(uint8_t level)
-//{
-//	if (!masterDC)
-//		return -1;
-//	return masterDC->SetSensorTrigger(level);
-//}
-//
-//int CamaroDual::SetResyncNumber(uint16_t resyncNum)
-//{
-//	if (!masterDC)
-//		return -1;
-//	return masterDC->SetResyncNumber(resyncNum);
-//}
-//
-//
-//int CamaroDual::QueryDeviceRole()
-//{
-//	return -1;
-//}
-//
-//std::string CamaroDual::QueryDeviceInfo()
-//{
-//	if (masterDC && slaveDC)
-//		return masterDC->QueryDeviceInfo() + "+" + slaveDC->QueryDeviceInfo();
-//	return "";
-//}
 
 bool CamaroDual::StartStream()
 {
@@ -216,21 +189,10 @@ int CamaroDual::GetRegister(uint16_t regaddr, uint16_t& regval)
 	return ll1->GetRegister(regaddr, regval) | ll2->GetRegister(regaddr, regval);
 }
 
-//void CamaroDual::Notify(std::vector<IVideoFramePtr>& payload)
-//{
-//	if (fnCb)
-//		fnCb(*this, payload);
-//}
-
-//void CamaroDual::Register(std::shared_ptr<IProcessor>& p)
-//{
-//	processor = p;
-//}
-
 void CamaroDual::FrameWatcher()
 {
 	//RESYNC_NUM
-	auto lastIndex = -1;
+    uint64_t lastIndex = UINT64_MAX;
 	auto dropped = 0;
 	std::vector<IVideoFramePtr> frameVector[2];
 	std::pair<int, IVideoFramePtr> frameEx;
@@ -245,33 +207,29 @@ void CamaroDual::FrameWatcher()
 			for (auto sit = frameVector[1].begin(); sit != frameVector[1].end(); ++sit)
 			{
 				auto &sFrame = *sit;
-				if (mFrame->GetFrameIdx() == sFrame->GetFrameIdx())
+                if (mFrame->GetFrameIndex() == sFrame->GetFrameIndex())
 				{
-					if (lastIndex == -1)
-						lastIndex = mFrame->GetFrameIdx();
+                    if (lastIndex == UINT64_MAX)
+                        lastIndex = mFrame->GetFrameIndex();
 					else
 					{
 						if (++lastIndex >= RESYNC_NUM)
 							lastIndex = 0;
-						if (mFrame->GetFrameIdx() >= lastIndex)
-							dropped = mFrame->GetFrameIdx() - lastIndex;
+                        if (mFrame->GetFrameIndex() >= lastIndex)
+                            dropped = mFrame->GetFrameIndex() - lastIndex;
 						else
-							dropped = RESYNC_NUM - lastIndex + mFrame->GetFrameIdx();
+                            dropped = RESYNC_NUM - lastIndex + mFrame->GetFrameIndex();
 						if (dropped > 0)
 						{
-							lastIndex = mFrame->GetFrameIdx();
+                            lastIndex = mFrame->GetFrameIndex();
 							std::cout << dropped << " Frames dropped before Index " << lastIndex << std::endl;
 						}
 					}
 					//std::cout << " Frame " << mFrame->GetFrameIdx() << std::endl;
 					auto vector = std::vector<IVideoFramePtr>{ mFrame, sFrame };
+                    Notify(vector);
 					if (fnCb)
-					{
-//						if (processor)
-//							processor->Process(*this, vector);
-//						else
-							fnCb(*this, vector);
-					}
+                        fnCb(*this, vector);
 					frameVector[1].erase(frameVector[1].begin(), sit + 1);
 					frameVector[0].erase(frameVector[0].begin(), mit + 1);
 					found = true;

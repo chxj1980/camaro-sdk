@@ -160,18 +160,27 @@ bool CamaroISP::GetControl(std::string name, IPropertyData &val)
 }
 
 /*
-* exposure time = val * 33.33us
+* exposure time : val (multiple of 33.33us)
 */
 
-inline int CamaroISP::GetExposure(uint16_t& val)
+inline int CamaroISP::GetExposure(uint32_t& val)
 {
     auto result = -1;
     try
     {
+        PropertyData<uint8_t> ae;
+        result = GetControl("AutoExposure", ae);
+        if (result && ae.Payload != 0)
+        {
+            val = 0;
+            return true;
+        }
         auto addrs = registerMap->at("Exposure").AddressArray;
         if (addrs.size() != 1)
             return result;
-        result = GetRegister(addrs[0], val);	//AR0134_RR_D P.17
+        uint16_t data;
+        result = GetRegister(addrs[0], data);	//AR0134_RR_D P.17
+        val = data*100/3;
     }
     catch (const std::out_of_range&)
     {
@@ -180,15 +189,22 @@ inline int CamaroISP::GetExposure(uint16_t& val)
     return result;
 }
 
-inline int CamaroISP::SetExposure(uint16_t val)
+inline int CamaroISP::SetExposure(uint32_t val)
 {
     auto result = -1;
     try
     {
-        auto addrs = registerMap->at("Exposure").AddressArray;
-        if (addrs.size() != 1)
-            return result;
-        result = SetRegister(addrs[0], val);
+        result = SetControl("AutoExposure", PropertyData<uint8_t>(val==0?1:0));
+        if (val>0)
+        {
+            auto addrs = registerMap->at("Exposure").AddressArray;
+            auto data = uint16_t(val * 3.0f/100 + 0.5f);
+            if (data == 0)
+                data = 1;
+            if (addrs.size() != 1)
+                return result;
+            result = SetRegister(addrs[0], val);
+        }
     }
     catch (const std::out_of_range&)
     {
@@ -196,6 +212,7 @@ inline int CamaroISP::SetExposure(uint16_t val)
     //return SetRegister(0x3012, val);
     return result;
 }
+
 
 /*
 gain:   xxx.yyyyy

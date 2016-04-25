@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IVideoFrame.h"
+#include <cstring>
 
 namespace TopGear
 {
@@ -30,7 +31,7 @@ namespace TopGear
 		{
 			frame->UnlockBuffer();
 		}
-		virtual uint16_t GetFrameIdx() const override
+        virtual uint64_t GetFrameIndex() const override
 		{
 			return idx;
 		}

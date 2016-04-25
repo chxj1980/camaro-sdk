@@ -15,6 +15,7 @@
 #include "DeepCamAPI.h"
 #include "IVideoStream.h"
 #include "IDeviceControl.h"
+#include "IMultiVideoStream.h"
 
 #define NEED_GPSIMU 1
 ////////////////////////////////////////////////////////
@@ -339,11 +340,16 @@ ProcessImage::ProcessImage(QWidget *parent)
     auto devices = deepcam.EnumerateDevices(TopGear::DeviceType::DeepGlint);
     if (!devices.empty())
     {
-        camera = deepcam.CreateCamera(TopGear::Camera::CamaroISP, devices[0]);
+        camera = deepcam.CreateCamera(TopGear::Camera::Fovea, devices);
+        //camera = deepcam.CreateCamera(TopGear::Camera::CamaroISP, devices[0]);
         //TopGear::PropertyData<std::vector<float>> data;
         if (camera)
         {
+            auto mv = TopGear::DeepCamAPI::QueryInterface<TopGear::IMultiVideoStream>(camera);
             auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
+
+            mv->SelectStream(0);
+
             cc->Flip(true, false);
 
             TopGear::IVideoStream::RegisterFrameCallback(*camera,
@@ -356,10 +362,11 @@ ProcessImage::ProcessImage(QWidget *parent)
             prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             auto index = camera->GetMatchedFormatIndex(format);
             camera->SetCurrentFormat(index);
+            mv->SelectStream(1);
+            camera->SetCurrentFormat(index);
             camera->StartStream();
         }
     }
-
 
     timer = nullptr;
 
@@ -391,12 +398,16 @@ void ProcessImage::onGetStereoFrame(TopGear::IVideoStream &sender, std::vector<T
     if (frames.size()==0 || frames.size()>2)
         return;
     //qDebug("frameidx:  %d",frames[0]->GetFrameIdx());
-    static int lastIdx = -1;
-    auto currentIdx = frames[0]->GetFrameIdx();
+    static uint64_t lastIdx = UINT64_MAX;
+    auto currentIdx = frames[0]->GetFrameIndex();
+//    timeval tm = frames[0]->GetTimestamp();
+//    qDebug("Timestamp:  %d", frames[0]->GetTimestamp());
+
+    qDebug("Frameidx:  %d  %d",frames[0]->GetFrameIndex(),frames[1]->GetFrameIndex());
 
     //lblFramecount->setText(QString("%1").arg(currentIdx));
 
-    if (lastIdx==-1)
+    if (lastIdx==UINT64_MAX)
     {
         lastIdx=currentIdx;
         dropcount = 0;
@@ -607,12 +618,13 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
             convert_yuyv_to_rgb_buffer(raw1, prgb1.get(), format.Width, format.Height);
         if (raw2)
         {
-            convert_gray_to_rgb_buffer(raw2, prgb2.get(), format.Width, format.Height);
-            auto d = raw2[format.Height/2*format.Width+format.Width/2];
-            if (DepthTable.Payload.size()==256)
-                qDebug("Disparity: %d Depth: %fm", d, d==0?0:320.0/d);//DepthTable.Payload[d]);
-            else
-                qDebug("Disparity: %d", d);
+//            convert_gray_to_rgb_buffer(raw2, prgb2.get(), format.Width, format.Height);
+//            auto d = raw2[format.Height/2*format.Width+format.Width/2];
+//            if (DepthTable.Payload.size()==256)
+//                qDebug("Disparity: %d Depth: %fm", d, d==0?0:320.0/d);//DepthTable.Payload[d]);
+//            else
+//                qDebug("Disparity: %d", d);
+            convert_yuyv_to_rgb_buffer(raw2, prgb2.get(), format.Width, format.Height);
         }
 
 

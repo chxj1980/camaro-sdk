@@ -179,6 +179,9 @@ void VideoSourceReader::Uninitmmap(uint32_t handle)
     if (it == streams.end())
         return;
 
+    (it->second).frameIndexMap.clear();
+    (it->second).timeMap.clear();
+
     for(int i = 0; i < FRAMEQUEUE_SIZE; ++i)
     {
 #ifdef USER_POINTER
@@ -214,14 +217,30 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
                                        queue_buf.index,
                                        vbuffers[queue_buf.index].first,
                                        queue_buf.timestamp,
+                                       streams[handle].frameCounter,
                                        streams[handle].defaultStride,
                                        streams[handle].formats[streams[handle].currentFormatIndex]));
-
+    streams[handle].timeMap[queue_buf.timestamp] = index;
+    streams[handle].frameIndexMap[streams[handle].frameCounter++] = index;
     return frame;
 }
 
 bool VideoSourceReader::ReleaseFrame(int handle, int index)
 {    
+    for(auto item : streams[handle].timeMap)
+    {
+        if (item.second == index)
+        {
+            streams[handle].timeMap.erase(item.first);
+            break;
+        }
+    }
+    for(auto item : streams[handle].frameIndexMap)
+    {
+        if (item.second == index)
+            streams[handle].frameIndexMap.erase(item.first);
+    }
+
     v4l2_buffer queue_buf;
     std::memset(&queue_buf,0,sizeof(queue_buf));
     queue_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;

@@ -54,6 +54,7 @@ namespace TopGear
         CamaroISP,
 		CamaroDual,
 		ImpalaE,
+        Fovea,
 	};
 
 	enum class Level

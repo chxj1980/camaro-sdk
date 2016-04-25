@@ -45,10 +45,10 @@
             ]
         },
         {
-            "control-name": "Parameters",
+            "control-name": "AutoExposure",
             "control-code": 6,
             "attribute": "rw",
-            "type": "data"
+            "type": "byte"
         }
     ],
     "register-control-code": 4,

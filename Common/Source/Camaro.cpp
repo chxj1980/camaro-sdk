@@ -211,61 +211,33 @@ bool Camaro::GetControl(std::string name, IPropertyData &val)
 	return false;
 }
 
-//int Camaro::SetSensorTrigger(uint8_t level)
-//{
-//	return extension->SetProperty(static_cast<int>(ControlCode::Trigger), level);
-//}
-//
-//int Camaro::SetResyncNumber(uint16_t resyncNum)
-//{
-//	std::array<uint8_t, 3> data;
-//	data[0] = 1;  //write registers
-//	data[1] = resyncNum >> 8;
-//	data[2] = resyncNum & 0xff;
-//	return extension->SetProperty(static_cast<int>(ControlCode::Resync), data);
-//}
-//
-//int Camaro::QueryDeviceRole()
-//{
-//	auto len = 0;
-//	auto data = extension->GetProperty(static_cast<int>(ControlCode::DeviceRole), len);
-//	if (data==nullptr || len<2)
-//		return -1;
-//	return data[1];
-//}
-//
-//std::string Camaro::QueryDeviceInfo()
-//{
-//	auto len = 0;
-//	auto data = extension->GetProperty(static_cast<int>(ControlCode::DeviceInfo), len);
-//
-//	if (data == nullptr)
-//	{
-//		//std::cout<<"Unable to get property value\n";
-//		return "";
-//	}
-//	std::string info(reinterpret_cast<char *>(data.get()));
-//	return info;
-//}
-
 //////////////////////////////////////////////////
 //    aptina specific
 //
 ///////////////////////////////////////////////////
 
 /*
-* exposure time = val * 33.33us
+* exposure time : val (multiple of 33.33us)
 */
 
-inline int Camaro::GetExposure(uint16_t& val)
+inline int Camaro::GetExposure(uint32_t& val)
 {
 	auto result = -1;
 	try
 	{
+        PropertyData<uint8_t> ae;
+        result = GetControl("AutoExposure", ae);
+        if (result && ae.Payload != 0)
+        {
+            val = 0;
+            return true;
+        }
 		auto addrs = registerMap->at("Exposure").AddressArray;
 		if (addrs.size() != 1)
 			return result;
-		result = GetRegister(addrs[0], val);	//AR0134_RR_D P.17
+        uint16_t data;
+        result = GetRegister(addrs[0], data);	//AR0134_RR_D P.17
+        val = data*100/3;
 	}
 	catch (const std::out_of_range&)
 	{
@@ -274,15 +246,22 @@ inline int Camaro::GetExposure(uint16_t& val)
 	return result;
 }
 
-inline int Camaro::SetExposure(uint16_t val)
+inline int Camaro::SetExposure(uint32_t val)
 {
 	auto result = -1;
 	try
 	{
-		auto addrs = registerMap->at("Exposure").AddressArray;
-		if (addrs.size() != 1)
-			return result;
-		result = SetRegister(addrs[0], val);
+        result = SetControl("AutoExposure", PropertyData<uint8_t>(val==0?1:0));
+        if (val>0)
+        {
+            auto addrs = registerMap->at("Exposure").AddressArray;
+            auto data = uint16_t(val * 3.0f/100 + 0.5f);
+            if (data == 0)
+                data = 1;
+            if (addrs.size() != 1)
+                return result;
+            result = SetRegister(addrs[0], val);
+        }
 	}
 	catch (const std::out_of_range&)
 	{
@@ -414,14 +393,12 @@ bool Camaro::StartStream()
 
 	SetControl("Trigger", PropertyData<uint8_t>(0));
     SetControl("Resync", PropertyData<uint16_t>(900));
-	//SetSensorTrigger(0);
-	//SetResyncNumber(900);
+
     //Flip(true, false);
 	std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	if (CameraSoloBase::StartStream())
 	{
 		SetControl("Trigger", PropertyData<uint8_t>(1));
-//		SetSensorTrigger(1);
 		return true;
 	}
 	return false;
@@ -432,6 +409,5 @@ bool Camaro::StopStream()
 	auto result = CameraSoloBase::StopStream();
 	if (result)
 		SetControl("Trigger", PropertyData<uint8_t>(0));
-	//SetSensorTrigger(0);
 	return result;
 }

@@ -45,8 +45,8 @@ namespace TopGear
         const RegisterMap * registerMap = nullptr;
     public:
         virtual int Flip(bool vertical, bool horizontal) override;
-        virtual int GetExposure(uint16_t& val) override;
-        virtual int SetExposure(uint16_t val) override;
+        virtual int GetExposure(uint32_t& val) override;
+        virtual int SetExposure(uint32_t val) override;
         virtual int GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB) override;
         virtual int SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB) override;
         CamaroISP(std::shared_ptr<IVideoStream> &vs,

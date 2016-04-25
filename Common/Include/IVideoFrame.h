@@ -24,7 +24,7 @@ namespace TopGear
 			) = 0;
 		virtual void UnlockBuffer() = 0;
 		virtual VideoFormat GetFormat() const = 0;
-		virtual uint16_t GetFrameIdx() const = 0;    //frame index, used to check frame drops
+        virtual uint64_t GetFrameIndex() const = 0;    //frame index, used to check frame drops
 		virtual timeval GetTimestamp() const = 0;    //timestamp
 		virtual uint32_t GetLength() const = 0;      //length(bytes) of actual frame buffer
 		virtual uint32_t GetExtraLength() const = 0;      //length(bytes) of extra data

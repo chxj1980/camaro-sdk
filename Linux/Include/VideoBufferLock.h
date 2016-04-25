@@ -16,7 +16,7 @@ namespace TopGear
 		{
 		public:
 			virtual uint32_t GetExtraLength() const override { return 0; }
-			virtual uint16_t GetFrameIdx() const override { return 0; }
+            virtual uint64_t GetFrameIndex() const override { return frameIndex; }
 			virtual timeval GetTimestamp() const override { return tm; }
 
 			virtual uint32_t GetLength() const override
@@ -32,7 +32,7 @@ namespace TopGear
             }
 
             explicit VideoBufferLock(int dev, int index, unsigned char *pdata,
-                timeval timestamp, //In 100-nanosecond
+                timeval timestamp, uint64_t frameNo,
                 int lDefaultStride, const VideoFormat &format)
                 : handle(dev),
                   bufferIndex(index),
@@ -40,7 +40,8 @@ namespace TopGear
 				  m_bLocked(false),
                   defaultStride(lDefaultStride),
                   videoFormat(format),
-                  tm(timestamp)
+                  tm(timestamp),
+                  frameIndex(frameNo)
             {
 			}
 
@@ -90,6 +91,7 @@ namespace TopGear
 			long defaultStride;
             const VideoFormat videoFormat;
 			timeval tm;
+            uint64_t frameIndex;
 		};
 	}
 }

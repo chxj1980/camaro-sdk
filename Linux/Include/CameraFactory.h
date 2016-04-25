@@ -9,6 +9,7 @@
 #include "Camaro.h"
 #include "CamaroISP.h"
 #include "ImpalaE.h"
+#include "Fovea.h"
 #include "ExtensionAccess.h"
 #include "VideoSourceReader.h"
 #include "CamaroDual.h"
@@ -149,6 +150,16 @@ namespace TopGear
                     return std::make_shared<CamaroDual>(master, slave);
             }
             return{};
+        }
+
+        template <>
+        template <>
+        inline std::shared_ptr<IVideoStream> CameraFactory<Fovea>::
+        CreateInstance<std::vector<std::shared_ptr<IVideoStream>>>(std::vector<std::shared_ptr<IVideoStream>> &vss)
+        {
+            if (vss.size()!=2)
+                return {};
+            return std::make_shared<Fovea>(vss[0], vss[1]);
         }
 
         template<class T>

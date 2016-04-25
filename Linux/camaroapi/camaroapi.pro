@@ -81,7 +81,6 @@ HEADERS += \
     ../../Common/Include/flycapturesource.h \
     ../../Common/Include/flycapturedevice.h \
     ../../Common/Include/flycapturereader.h \
-    ../../Common/Include/threadpool.h \
     ../../Common/Include/CamaroISP.h \
     ../../Common/Include/Fovea.h
 
@@ -106,4 +105,5 @@ SOURCES += \
     ../../Common/Source/flycapturedevice.cpp \
     ../../Common/Source/flycapturereader.cpp \
     ../../Common/Source/CamaroISP.cpp \
-    ../../Common/Source/VideoFormat.cpp
+    ../../Common/Source/VideoFormat.cpp \
+    ../../Common/Source/Fovea.cpp
