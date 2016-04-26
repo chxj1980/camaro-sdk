@@ -403,7 +403,8 @@ void ProcessImage::onGetStereoFrame(TopGear::IVideoStream &sender, std::vector<T
 //    timeval tm = frames[0]->GetTimestamp();
 //    qDebug("Timestamp:  %d", frames[0]->GetTimestamp());
 
-    qDebug("Frameidx:  %d  %d",frames[0]->GetFrameIndex(),frames[1]->GetFrameIndex());
+    //qDebug("Frameidx:  %d  %d",frames[0]->GetFrameIndex(),frames[1]->GetFrameIndex());
+    qDebug("Timestamp:  %d  %d",frames[0]->GetTimestamp(),frames[1]->GetTimestamp());
 
     //lblFramecount->setText(QString("%1").arg(currentIdx));
 

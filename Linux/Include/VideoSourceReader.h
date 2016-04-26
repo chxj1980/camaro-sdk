@@ -2,13 +2,13 @@
 #include <string>
 #include <functional>
 #include <thread>
-#include <map>
 
 #include "IVideoFrame.h"
 #include "IVideoStream.h"
 #include "VideoFormat.h"
 #include "LSource.h"
 #include "IMultiVideoSource.h"
+#include "RetrievalMap.h"
 
 
 namespace TopGear
@@ -35,15 +35,15 @@ namespace TopGear
         private:
             static const int FRAMEQUEUE_SIZE = 10;
 
-            struct tvcomp
-            {
-              bool operator() (const timeval& lhs, const timeval& rhs) const
-              {
-                  if (lhs.tv_sec==rhs.tv_sec)
-                      return lhs.tv_usec<rhs.tv_usec;
-                  return lhs.tv_sec<rhs.tv_sec;
-              }
-            };
+//            struct tvcomp
+//            {
+//              bool operator() (const timeval& lhs, const timeval& rhs) const
+//              {
+//                  if (lhs.tv_sec==rhs.tv_sec)
+//                      return lhs.tv_usec<rhs.tv_usec;
+//                  return lhs.tv_sec<rhs.tv_sec;
+//              }
+//            };
 
             struct StreamState
             {
@@ -55,8 +55,7 @@ namespace TopGear
                 bool streamOn = false;
                 std::thread streamThread;
                 std::pair<uint8_t *, int> vbuffers[FRAMEQUEUE_SIZE]; //Data pointer & size
-                std::map<timeval, int, tvcomp> timeMap;
-                std::map<uint64_t, int> frameIndexMap;
+                RetrievalMap rmap;
                 uint64_t frameCounter = 0;
             };
 
@@ -65,8 +64,8 @@ namespace TopGear
 
             void Initmmap(uint32_t handle);
             void Uninitmmap(uint32_t handle);
-            std::shared_ptr<IVideoFrame> RequestFrame(int index, int &mindex);
-            bool ReleaseFrame(int index, int mindex);
+            std::shared_ptr<IVideoFrame> RequestFrame(int handle, int &index);
+            bool ReleaseFrame(int handle, int index);
             void OnReadWorker(uint32_t handle);
 		};
 	}

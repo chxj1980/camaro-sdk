@@ -8,6 +8,7 @@
 #include <thread>
 #include <condition_variable>
 #include <future>
+#include <chrono>
 
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -69,9 +70,7 @@ VideoSourceReader::VideoSourceReader(std::shared_ptr<IGenericVCDevice> &device)
 VideoSourceReader::~VideoSourceReader()
 {
     for(auto &item: streams)
-    {
         StopStream(item.first);
-    }
 }
 
 void VideoSourceReader::EnumerateStreams(const LSource &one)
@@ -179,8 +178,7 @@ void VideoSourceReader::Uninitmmap(uint32_t handle)
     if (it == streams.end())
         return;
 
-    (it->second).frameIndexMap.clear();
-    (it->second).timeMap.clear();
+    (it->second).rmap.Clear();
 
     for(int i = 0; i < FRAMEQUEUE_SIZE; ++i)
     {
@@ -211,35 +209,25 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
         index = -1;
         return {};
     }
+    auto tm = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::high_resolution_clock::now().time_since_epoch());
     index = queue_buf.index;
     std::shared_ptr<IVideoFrame> frame(new VideoBufferLock(
                                        handle,
                                        queue_buf.index,
                                        vbuffers[queue_buf.index].first,
-                                       queue_buf.timestamp,
+                                       tm.count(),
                                        streams[handle].frameCounter,
                                        streams[handle].defaultStride,
                                        streams[handle].formats[streams[handle].currentFormatIndex]));
-    streams[handle].timeMap[queue_buf.timestamp] = index;
-    streams[handle].frameIndexMap[streams[handle].frameCounter++] = index;
+
+    streams[handle].rmap.Register(index, frame, tm.count(), streams[handle].frameCounter++);
     return frame;
 }
 
 bool VideoSourceReader::ReleaseFrame(int handle, int index)
-{    
-    for(auto item : streams[handle].timeMap)
-    {
-        if (item.second == index)
-        {
-            streams[handle].timeMap.erase(item.first);
-            break;
-        }
-    }
-    for(auto item : streams[handle].frameIndexMap)
-    {
-        if (item.second == index)
-            streams[handle].frameIndexMap.erase(item.first);
-    }
+{
+    streams[handle].rmap.Unregister(index);
 
     v4l2_buffer queue_buf;
     std::memset(&queue_buf,0,sizeof(queue_buf));

@@ -295,7 +295,7 @@ namespace TopGear
 				{
 					auto &depthFrame = *sit;
 					auto depthTime = depthFrame->GetTimestamp();
-					if (abs((rgbTime.tv_sec - depthTime.tv_sec)*1000000+(rgbTime.tv_usec - depthTime.tv_usec))<=delta)
+                    if (abs(rgbTime - depthTime)<=delta)
 					{
 						//std::stringstream ss;
 						//ss << " Frame " << depthTime.tv_sec << "." << depthTime.tv_usec / 1000 << std::endl;

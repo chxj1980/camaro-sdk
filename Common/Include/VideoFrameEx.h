@@ -35,7 +35,7 @@ namespace TopGear
 		{
 			return idx;
 		}
-		virtual timeval GetTimestamp() const override
+        virtual uint64_t GetTimestamp() const override
 		{
 			return frame->GetTimestamp();
 		}
