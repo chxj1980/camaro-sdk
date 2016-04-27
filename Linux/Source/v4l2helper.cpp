@@ -6,6 +6,7 @@
 #include <cstring>
 #include <fstream>
 #include <ios>
+#include <iostream>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -44,7 +45,7 @@ void v4l2Helper::EnumVideoDeviceSources(std::vector<SourcePair> &sources,
         std::this_thread::sleep_for(waitTime);
 }
 
-int GetDirs(std::string dir, std::vector<std::string> &list, std::string matchStr={})
+int GetDirs(std::string dir, std::vector<std::string> &list, std::string matchStr={}, bool terminal = false)
 {
     dirent *dirp;
     DIR *dp = opendir(dir.c_str());
@@ -57,13 +58,24 @@ int GetDirs(std::string dir, std::vector<std::string> &list, std::string matchSt
     list.clear();
     while ((dirp = readdir(dp)) != nullptr)
     {
-        if (dirp->d_type != DT_DIR)
+        if (dirp->d_type != DT_DIR && dirp->d_type != DT_LNK)
             continue;
         auto name = std::string(dirp->d_name);
         if (name=="." || name=="..")
             continue;
-        if (!matchStr.empty() && name.find(matchStr)==std::string::npos)
-            continue;
+        if (!matchStr.empty())
+        {
+            if (terminal)
+            {
+                auto pos = name.rfind(matchStr);
+                if (pos==std::string::npos)
+                    continue;
+                if (pos+matchStr.size()!=name.size())
+                    continue;
+            }
+            else if (name.find(matchStr)==std::string::npos)
+                continue;
+        }
         list.push_back(name);
     }
     closedir(dp);
@@ -114,12 +126,46 @@ bool SearchDir(std::string dir, std::string matchStr, std::string &result)
 
 }
 
+#define TK1
+
 std::string GetDescPathFromBusInfo(const std::string busInfo,
                                    const std::string productName)
 {
-    const std::string BUS_BASE_PATH = "/sys/devices/pci0000:00";
     const std::string DEST_FILE = "descriptors";
     const std::string PRODUCT_FILE = "product";
+
+#ifdef TK1
+    const std::string BUS_BASE_PATH = "/sys/bus/usb/devices";
+
+    auto rpos = busInfo.rfind('-');
+    if (rpos==std::string::npos)
+        return {};
+    auto terminalStr = busInfo.substr(rpos);
+    std::vector<std::string> busList;
+    GetDirs(BUS_BASE_PATH, busList, terminalStr, true);
+    for(auto busName : busList)
+    {
+        auto specficPath = BUS_BASE_PATH+"/"+busName;
+        std::cout<<specficPath<<std::endl;
+        if (!MatchPath(specficPath, S_IFDIR) && !MatchPath(specficPath, S_IFLNK))
+            continue;
+
+        auto destPath = specficPath + "/"+DEST_FILE;
+        auto prodPath = specficPath + "/"+PRODUCT_FILE;
+        if (MatchPath(destPath,S_IFREG) && MatchPath(prodPath,S_IFREG))
+        {
+            std::ifstream fp(prodPath.c_str());
+            std::string fileVal;
+            std::getline (fp, fileVal);
+            fp.close();
+            if (fileVal!=productName)
+                continue;
+            return destPath;
+        }
+    }
+#else
+    const std::string BUS_BASE_PATH = "/sys/devices/pci0000:00";
+
 
     if (!MatchPath(BUS_BASE_PATH, S_IFDIR))
         return {};
@@ -170,6 +216,7 @@ std::string GetDescPathFromBusInfo(const std::string busInfo,
             }
         }
     }
+#endif
     return {};
 }
 
@@ -181,6 +228,7 @@ std::shared_ptr<ExtensionInfo> v4l2Helper::GetXUFromBusInfo(
 {
     auto product = std::string(reinterpret_cast<const char *>(cap.card));
     auto bus = std::string(reinterpret_cast<const char *>(cap.bus_info));
+    std::cout<<cap.card<<std::endl<<cap.bus_info<<std::endl;
     auto filePath = GetDescPathFromBusInfo(bus,product);
     if (filePath.empty())
         return {};

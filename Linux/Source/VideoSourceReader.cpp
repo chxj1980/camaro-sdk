@@ -25,7 +25,7 @@
 using namespace TopGear;
 using namespace Linux;
 
-//#define USER_POINTER
+#define USER_POINTER
 
 std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &device)
 {

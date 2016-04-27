@@ -112,8 +112,10 @@ int Fovea::GetCurrentStream(std::shared_ptr<IVideoStream> &current)
 
 void Fovea::StartStreams()
 {
-    for(auto &item : videoStreams)
-        item->StartStream();
+//    for(auto &item : videoStreams)
+//        item->StartStream();
+    videoStreams[0]->StartStream();
+    videoStreams[1]->StartStream();
     frameWatchThread = std::thread(&Fovea::FrameWatcher, this);
     threadOn = frameWatchThread.joinable();
 }

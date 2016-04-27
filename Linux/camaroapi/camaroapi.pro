@@ -78,9 +78,9 @@ HEADERS += \
     ../../Common/Include/ImpalaE.h \
     ../../Common/Include/Logger.h \
     ../../Common/Include/pointgrey.h \
-    ../../Common/Include/flycapturesource.h \
-    ../../Common/Include/flycapturedevice.h \
-    ../../Common/Include/flycapturereader.h \
+#    ../../Common/Include/flycapturesource.h \
+#    ../../Common/Include/flycapturedevice.h \
+#    ../../Common/Include/flycapturereader.h \
     ../../Common/Include/CamaroISP.h \
     ../../Common/Include/Fovea.h \
     ../../Common/Include/RetrievalMap.h
@@ -102,9 +102,9 @@ SOURCES += \
     ../../Common/Source/DGExtensionFilter.cpp \
     ../../Common/Source/ImpalaE.cpp \
     ../../Common/Source/Logger.cpp \
-    ../../Common/Source/pointgrey.cpp \
-    ../../Common/Source/flycapturedevice.cpp \
-    ../../Common/Source/flycapturereader.cpp \
+#    ../../Common/Source/pointgrey.cpp \
+#    ../../Common/Source/flycapturedevice.cpp \
+#    ../../Common/Source/flycapturereader.cpp \
     ../../Common/Source/CamaroISP.cpp \
     ../../Common/Source/VideoFormat.cpp \
     ../../Common/Source/Fovea.cpp \
