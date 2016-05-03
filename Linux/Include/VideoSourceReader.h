@@ -33,17 +33,8 @@ namespace TopGear
             void EnumerateStreams(const LSource &one);
             void EnumerateFormats(uint32_t handle);
         private:
-            static const int FRAMEQUEUE_SIZE = 10;
-
-//            struct tvcomp
-//            {
-//              bool operator() (const timeval& lhs, const timeval& rhs) const
-//              {
-//                  if (lhs.tv_sec==rhs.tv_sec)
-//                      return lhs.tv_usec<rhs.tv_usec;
-//                  return lhs.tv_sec<rhs.tv_sec;
-//              }
-//            };
+            static const int BUFFER_SIZE = 4;
+            static const int FRAMEQUEUE_SIZE = 50;
 
             struct StreamState
             {
@@ -54,7 +45,10 @@ namespace TopGear
                 bool isRunning = false;
                 bool streamOn = false;
                 std::thread streamThread;
-                std::pair<uint8_t *, int> vbuffers[FRAMEQUEUE_SIZE]; //Data pointer & size
+                uint32_t imageSize = 0;
+                uint8_t *mbuffers[BUFFER_SIZE];   //Mapping mmap memory
+                uint8_t *vbuffers[FRAMEQUEUE_SIZE]; //User memory buffer
+                std::pair<std::weak_ptr<IVideoFrame>, bool> framesRef[FRAMEQUEUE_SIZE];
                 RetrievalMap rmap;
                 uint64_t frameCounter = 0;
             };

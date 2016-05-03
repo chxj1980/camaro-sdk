@@ -25,7 +25,7 @@
 using namespace TopGear;
 using namespace Linux;
 
-#define USER_POINTER
+//#define USER_POINTER
 
 std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &device)
 {
@@ -99,25 +99,20 @@ void VideoSourceReader::Initmmap(uint32_t handle)
         return;
 
     auto vbuffers = (it->second).vbuffers;
+    auto mbuffers = (it->second).mbuffers;
 
     //request buffer
     v4l2_requestbuffers req;
     std::memset(&req,0,sizeof(req));
-    req.count = FRAMEQUEUE_SIZE;
+    req.count = BUFFER_SIZE;
     req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-#ifdef USER_POINTER
-    req.memory = V4L2_MEMORY_USERPTR;
-#else
     req.memory = V4L2_MEMORY_MMAP;
-#endif
 
-    if (ioctl(handle, VIDIOC_REQBUFS, &req)==-1)
-    {
+    if (ioctl(handle, VIDIOC_REQBUFS, &req) == -1)
         fprintf(stderr, "xxx VIDIOC_REQBUFS fail %s\n", strerror(errno));
-    }
-#ifdef USER_POINTER
+
     v4l2_format fmt;
-    std::memset(&fmt,0,sizeof(fmt));
+    std::memset(&fmt, 0, sizeof(fmt));
     fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     ioctl(handle, VIDIOC_G_FMT, &fmt);
     /* Buggy driver paranoia. */
@@ -127,48 +122,42 @@ void VideoSourceReader::Initmmap(uint32_t handle)
     min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
     if (fmt.fmt.pix.sizeimage < min)
         fmt.fmt.pix.sizeimage = min;
-    uint32_t imageSize = fmt.fmt.pix.sizeimage;
-#endif
+
+    (it->second).defaultStride = fmt.fmt.pix.bytesperline;
+    (it->second).imageSize = fmt.fmt.pix.sizeimage;
+//#endif
+
+    for(auto i = 0u; i < FRAMEQUEUE_SIZE; ++i)
+        vbuffers[i] = new uint8_t[(it->second).imageSize];
 
     //query buffer , mmap , and enqueue  afterwards
-    for(auto i = 0u; i < FRAMEQUEUE_SIZE; ++i)
+    for(auto i = 0u; i < BUFFER_SIZE; ++i)
     {
-#ifdef USER_POINTER
-        vbuffers[i].first = new uint8_t[imageSize];
-        vbuffers[i].second = imageSize;
-        ReleaseFrame(handle, i);
-#else
         v4l2_buffer buf;
-        std::memset(&buf,0,sizeof(buf));
+        std::memset(&buf, 0, sizeof(buf));
         buf.index = i;
         buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         buf.memory = V4L2_MEMORY_MMAP;
-        if(-1 == ioctl(handle, VIDIOC_QUERYBUF, &buf))
-        {
+        if (-1 == ioctl(handle, VIDIOC_QUERYBUF, &buf))
             fprintf(stderr, "xxx VIDIOC_QUERYBUF  %s\n", strerror(errno));
-        }
         void *ptr = mmap(NULL, // start anywhere
                        buf.length,
                        PROT_READ | PROT_WRITE,
                        MAP_SHARED,
                        handle, buf.m.offset);
 
-        if(ptr == MAP_FAILED)
+        if (ptr == MAP_FAILED)
         {
             fprintf(stderr, "mmap fail %s ", strerror(errno));
-            vbuffers[i].first = nullptr;
-            vbuffers[i].second = 0;
+            mbuffers[i] = nullptr;
         }
         else
         {
-            vbuffers[i].first = reinterpret_cast<uint8_t *>(ptr);
-            vbuffers[i].second = buf.length;
-            if (ioctl(handle, VIDIOC_QBUF, &buf)<0)//enqueue
-            {
+            mbuffers[i] = reinterpret_cast<uint8_t *>(ptr);
+            if (ioctl(handle, VIDIOC_QBUF, &buf)<0)     //enqueue
                 fprintf(stderr,"xxx VIDIOC_QBUF %s\n", strerror(errno));
-            }
         }
-#endif
+//#endif
     }//for
 }
 
@@ -182,46 +171,61 @@ void VideoSourceReader::Uninitmmap(uint32_t handle)
 
     for(int i = 0; i < FRAMEQUEUE_SIZE; ++i)
     {
-#ifdef USER_POINTER
-        delete[] (it->second).vbuffers[i].first;
-#else
-        munmap((it->second).vbuffers[i].first, (it->second).vbuffers[i].second);
-#endif
+        delete[] (it->second).vbuffers[i];
+        (it->second).vbuffers[i] = nullptr;
+    }
+
+    for(int i = 0; i < BUFFER_SIZE; ++i)
+    {
+        munmap((it->second).mbuffers[i], (it->second).imageSize);
+        (it->second).mbuffers[i] = nullptr;
     }
 }
 
 std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &index) //DQBUF
 {
     auto vbuffers = streams[handle].vbuffers;
+    auto mbuffers = streams[handle].mbuffers;
 
     v4l2_buffer queue_buf;
     std::memset(&queue_buf,0,sizeof(queue_buf));
     queue_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-#ifdef USER_POINTER
-    queue_buf.memory = V4L2_MEMORY_USERPTR;
-#else
     queue_buf.memory = V4L2_MEMORY_MMAP;
-#endif
     queue_buf.flags = V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN;
 
+    index = -1;
+
     if(ioctl(handle, VIDIOC_DQBUF, &queue_buf) == -1)
-    {
-        index = -1;
         return {};
-    }
+
     auto tm = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::high_resolution_clock::now().time_since_epoch());
-    index = queue_buf.index;
+
+    for(int i=0;i<FRAMEQUEUE_SIZE;++i)
+        if (!streams[handle].framesRef[i].second)
+        {
+            index = i;
+            break;
+        }
+    if (index<0)    //unavailable buffer
+        return {};
+
+    //Copy mmap buffer to user buffer
+    std::memcpy(vbuffers[index], mbuffers[queue_buf.index], queue_buf.length);
+    ReleaseFrame(handle, queue_buf.index);
+
     std::shared_ptr<IVideoFrame> frame(new VideoBufferLock(
                                        handle,
-                                       queue_buf.index,
-                                       vbuffers[queue_buf.index].first,
+                                       index,
+                                       streams[handle].vbuffers[index].first,
                                        tm.count(),
                                        streams[handle].frameCounter,
                                        streams[handle].defaultStride,
                                        streams[handle].formats[streams[handle].currentFormatIndex]));
 
     streams[handle].rmap.Register(index, frame, tm.count(), streams[handle].frameCounter++);
+
+    ++streams[handle].frameCounter;
     return frame;
 }
 
@@ -230,18 +234,10 @@ bool VideoSourceReader::ReleaseFrame(int handle, int index)
     streams[handle].rmap.Unregister(index);
 
     v4l2_buffer queue_buf;
-    std::memset(&queue_buf,0,sizeof(queue_buf));
+    std::memset(&queue_buf, 0, sizeof(queue_buf));
     queue_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     queue_buf.index = index;
-#ifdef USER_POINTER
-    auto vbuffers = streams[handle].vbuffers;
-    queue_buf.memory = V4L2_MEMORY_USERPTR;
-    queue_buf.m.userptr = (unsigned long)vbuffers[index].first;
-    queue_buf.length = vbuffers[index].second;
-#else
     queue_buf.memory = V4L2_MEMORY_MMAP;
-#endif
-
     return ioctl(handle, VIDIOC_QBUF, &queue_buf)==0;
 }
 
@@ -352,10 +348,6 @@ bool VideoSourceReader::StartStream(uint32_t handle)
 
     Initmmap(handle);
 
-    auto format = streams[handle].formats[streams[handle].currentFormatIndex];
-
-    streams[handle].defaultStride =
-            streams[handle].vbuffers[0].second / format.Height;
     streams[handle].isRunning = true;
     streams[handle].streamThread = std::thread(&VideoSourceReader::OnReadWorker, this, handle);
     streams[handle].streamOn = streams[handle].streamThread.joinable();
@@ -393,19 +385,13 @@ bool VideoSourceReader::IsStreaming(uint32_t handle)
 void VideoSourceReader::OnReadWorker(uint32_t handle)
 {
     int index = -1;
-    std::pair<std::weak_ptr<IVideoFrame>, bool> framesRef[FRAMEQUEUE_SIZE];
     std::future<void> result;
     while (streams[handle].isRunning)
     {
         //Check mmap and release used frame
         for(int i=0;i<FRAMEQUEUE_SIZE;++i)
-        {
-            if (framesRef[i].second && framesRef[i].first.use_count()==0)
-            {
-                ReleaseFrame(handle, i);
+            if (framesRef[i].second && framesRef[i].first.expaired())
                 framesRef[i].second = false;
-            }
-        }
         //Check callback completion
         if (result.valid())
         {
