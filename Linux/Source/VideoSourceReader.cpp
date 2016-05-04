@@ -180,6 +180,16 @@ void VideoSourceReader::Uninitmmap(uint32_t handle)
         munmap((it->second).mbuffers[i], (it->second).imageSize);
         (it->second).mbuffers[i] = nullptr;
     }
+
+    //request buffer
+    v4l2_requestbuffers req;
+    std::memset(&req,0,sizeof(req));
+    req.count = 0;
+    req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    req.memory = V4L2_MEMORY_MMAP;
+
+    if (ioctl(handle, VIDIOC_REQBUFS, &req) == -1)
+        fprintf(stderr, "xxx VIDIOC_REQBUFS fail %s\n", strerror(errno));
 }
 
 std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &index) //DQBUF
@@ -217,7 +227,7 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
     std::shared_ptr<IVideoFrame> frame(new VideoBufferLock(
                                        handle,
                                        index,
-                                       streams[handle].vbuffers[index].first,
+                                       vbuffers[index],
                                        tm.count(),
                                        streams[handle].frameCounter,
                                        streams[handle].defaultStride,
@@ -231,8 +241,6 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
 
 bool VideoSourceReader::ReleaseFrame(int handle, int index)
 {
-    streams[handle].rmap.Unregister(index);
-
     v4l2_buffer queue_buf;
     std::memset(&queue_buf, 0, sizeof(queue_buf));
     queue_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -385,13 +393,17 @@ bool VideoSourceReader::IsStreaming(uint32_t handle)
 void VideoSourceReader::OnReadWorker(uint32_t handle)
 {
     int index = -1;
+    auto framesRef = streams[handle].framesRef;
     std::future<void> result;
     while (streams[handle].isRunning)
     {
         //Check mmap and release used frame
         for(int i=0;i<FRAMEQUEUE_SIZE;++i)
-            if (framesRef[i].second && framesRef[i].first.expaired())
+            if (framesRef[i].second && framesRef[i].first.expired())
+            {
+                streams[handle].rmap.Unregister(i);
                 framesRef[i].second = false;
+            }
         //Check callback completion
         if (result.valid())
         {
