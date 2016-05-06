@@ -116,4 +116,5 @@ SOURCES += \
     ../../Common/Source/CamaroISP.cpp \
     ../../Common/Source/VideoFormat.cpp \
     ../../Common/Source/Fovea.cpp \
-    ../../Common/Source/RetrievalMap.cpp
+    ../../Common/Source/RetrievalMap.cpp \
+    ../../Common/Source/IProcessor.cpp

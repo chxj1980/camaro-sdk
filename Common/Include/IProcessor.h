@@ -29,44 +29,16 @@ namespace TopGear
 		virtual void Notify(std::vector<IVideoFramePtr> &payload) = 0;
     };
 
+
     class ProcessorContainer
             : public IProcessable
     {
     public:
-        ProcessorContainer(IProcessable *owner = nullptr) :
-            host(owner?*owner:*this), done(false)
-        {}
-        virtual ~ProcessorContainer()
-        {
-            done = true;
-            std::unique_lock<std::mutex> lck(mtx);
-            cv.notify_all();
-            for(auto &p : processors)
-                if (p.second.joinable())
-                    p.second.join();
-        }
+        explicit ProcessorContainer(IProcessable *owner = nullptr);
+        virtual ~ProcessorContainer();
 
-        virtual void Register(std::shared_ptr<IProcessor> &processor) override
-        {
-            for(auto &p : processors)
-                if (p.first == processor)
-                    return;
-            parameters.emplace_back(std::vector<IVideoFramePtr>());
-            processors.emplace_back(std::make_pair(processor,
-                std::thread(&ProcessorContainer::ProcessWorker, this, count, std::ref(parameters[count]))));
-            ++count;
-        }
-        virtual void Notify(std::vector<IVideoFramePtr> &payload) override
-        {
-            if (processors.empty())
-                return;
-            std::unique_lock<std::mutex> lck(mtx);
-            for(auto &p : parameters)
-            {
-                p = payload;
-            }
-            cv.notify_all();
-        }
+        virtual void Register(std::shared_ptr<IProcessor> &processor) override;
+        virtual void Notify(std::vector<IVideoFramePtr> &payload) override;
     private:
         IProcessable &host;
         std::vector<std::pair<std::shared_ptr<IProcessor>, std::thread>> processors;
@@ -76,54 +48,36 @@ namespace TopGear
         std::condition_variable cv;
         int count = 0;
 
-        void ProcessWorker(int index, std::vector<IVideoFramePtr> &payload)
-        {
-            while (!done)
-            {
-                std::unique_lock<std::mutex> lck(mtx);
-                cv.wait(lck); //, [&]() { return !payload.empty();});
-                if (payload.empty())
-                    continue;
-                std::vector<IVideoFramePtr> frames = std::move(payload);
-                payload = std::vector<IVideoFramePtr>();
-                lck.release();
-                processors[index].first->Process(host, frames);
-            }
-        }
+        void ProcessWorker(int index, std::vector<IVideoFramePtr> &payload);
+    };
+
+    class ProcessorFork final
+            : public IProcessor
+    {
+    public:
+        explicit ProcessorFork(std::shared_ptr<IProcessor> &p);
+        virtual ~ProcessorFork() = default;
+
+        void AddDescendant(std::shared_ptr<IProcessor> &p);
+        virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source) override;
+    private:
+        std::shared_ptr<IProcessor> processor;
+        std::vector<std::shared_ptr<IProcessor>> processorList;
+        ThreadPool pool;
     };
 
     class ProcessorNode final
             : public IProcessor
     {
     public:
-        explicit ProcessorNode(std::shared_ptr<IProcessor> &p) :
-            processor(p)
-        {}
-
+        explicit ProcessorNode(std::shared_ptr<IProcessor> &p);
         virtual ~ProcessorNode() = default;
 
-        void AddDescendant(std::shared_ptr<IProcessor> &p)
-        {
-            processorList.push_back(p);
-            pool.AddThread();
-        }
-
-        virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source) override
-        {
-            auto suc = processor->Process(sender, source);
-            if (!suc)
-                return false;
-            auto ipr =  std::dynamic_pointer_cast<IProcessorResult>(processor);
-            if (ipr)
-                ipr->GetResult(source);
-            for(size_t i = 0 ; i<processorList.size(); ++i)
-                pool.Submit(std::bind(&IProcessor::Process, processorList[i].get(), std::ref(sender), source), i);
-            return true;
-        }
+        void AddDescendant(std::shared_ptr<IProcessor> &p);
+        virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source);
 
     private:
         std::shared_ptr<IProcessor> processor;
-        std::vector<std::shared_ptr<IProcessor>> processorList;
-        ThreadPool pool;
+        std::shared_ptr<IProcessor> next;
     };
 }
