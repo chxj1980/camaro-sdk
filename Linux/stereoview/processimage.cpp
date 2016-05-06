@@ -337,7 +337,7 @@ ProcessImage::ProcessImage(QWidget *parent)
 //        camera->StartStream();
 //    }
 
-    auto devices = deepcam.EnumerateDevices(TopGear::DeviceType::DeepGlint);
+    auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::DeepGlint);
     qDebug("Devices:  %d",devices.size());
     if (!devices.empty())
     {

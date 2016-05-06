@@ -1,4 +1,5 @@
 #pragma once
+
 #include <memory>
 #include <vector>
 #include "IVideoStream.h"
@@ -39,7 +40,7 @@
 
 namespace TopGear
 {
-    enum class DeviceType
+    enum class DeviceCategory
     {
         Generic,
         Standard,
@@ -83,7 +84,7 @@ namespace TopGear
 	public:
 		static DeepCamAPI &Instance();
 
-        std::vector<IGenericVCDevicePtr> EnumerateDevices(DeviceType type);
+        std::vector<IGenericVCDevicePtr> EnumerateDevices(DeviceCategory type);
 
         template<class U>
         std::shared_ptr<IVideoStream> CreateCamera(Camera camera, U & source);

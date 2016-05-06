@@ -207,21 +207,21 @@ namespace TopGear
 		return std::dynamic_pointer_cast<IMultiVideoStream>(vs);
 	}
 
-    DEEPCAM_API std::vector<IGenericVCDevicePtr> DeepCamAPI::EnumerateDevices(DeviceType type)
+    DEEPCAM_API std::vector<IGenericVCDevicePtr> DeepCamAPI::EnumerateDevices(DeviceCategory type)
     {
         std::vector<IGenericVCDevicePtr> inventory;
         switch (type)
         {
-        case DeviceType::Generic:
+        case DeviceCategory::Generic:
             inventory = DeviceFactory<GenericVCDevice>::EnumerateDevices();
             break;
-        case DeviceType::Standard:
+        case DeviceCategory::Standard:
             inventory = DeviceFactory<StandardVCDevice>::EnumerateDevices();
             break;
-        case DeviceType::DeepGlint:
+        case DeviceCategory::DeepGlint:
             inventory = DeviceFactory<ExtensionVCDevice<DGExtensionFilter>>::EnumerateDevices();
             break;
-        case DeviceType::Etron:
+        case DeviceCategory::Etron:
             inventory = DeviceFactory<ExtensionVCDevice<EtronExtensionFilter>>::EnumerateDevices();
             break;
         default:
@@ -317,7 +317,7 @@ namespace TopGear
 //		switch (camera)
 //		{
 //		case Camera::StandardUVC:
-//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceType::Standard);
+//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceCategory::Standard);
 //			if (inventory.size() > 0)
 //			{
 //				vs = CameraFactory<StandardUVC>::CreateInstance(inventory[0]);
@@ -326,7 +326,7 @@ namespace TopGear
 //			}
 //			break;
 //		case Camera::Camaro:
-//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceType::DeepGlint);
+//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceCategory::DeepGlint);
 //			for (auto device : inventory)
 //			{
 //				vs = CameraFactory<Camaro>::CreateInstance(device);
@@ -347,13 +347,13 @@ namespace TopGear
 //			}
 //			break;
 //		case Camera::CamaroDual:
-//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceType::DeepGlint);
+//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceCategory::DeepGlint);
 //			vs = CameraFactory<CamaroDual>::CreateInstance(inventory);
 //			if (vs)
 //				Logger::Write(spdlog::level::info, "Camaro stereo camera created");
 //			break;
 //		case Camera::ImpalaE:
-//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceType::Etron);
+//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceCategory::Etron);
 //			for (auto device : inventory)
 //			{
 //				vs = CameraFactory<ImpalaE>::CreateInstance(device);

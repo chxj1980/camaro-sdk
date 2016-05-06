@@ -34,11 +34,6 @@ namespace TopGear
 		virtual bool SetControl(std::string name, IPropertyData &&val) override;
 		virtual bool GetControl(std::string name, IPropertyData &val) override;
 
-		//virtual int SetSensorTrigger(uint8_t level) override;
-		//virtual int SetResyncNumber(uint16_t resyncNum) override;
-		//virtual int QueryDeviceRole() override;
-		//virtual std::string QueryDeviceInfo() override;
-
 		//advanced device controls (on EP0)
 		virtual int SetRegisters(uint16_t regaddr[], uint16_t regval[], int num) override;
 		virtual int GetRegisters(uint16_t regaddr[], uint16_t regval[], int num) override;
@@ -46,16 +41,6 @@ namespace TopGear
 		virtual int SetRegister(uint16_t regaddr, uint16_t regval) override;
 		virtual int GetRegister(uint16_t regaddr, uint16_t &regval) override;
 	protected:
-		//enum class ControlCode
-		//{
-		//	Trigger = 1,
-		//	DeviceInfo = 2,
-		//	DeviceRole = 3,
-		//	RegisterAccess = 4,
-		//	Resync = 5,
-		//};
-
-
 		void OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr> &frames);
 		//std::shared_ptr<IExtensionAccess> extension;
 		ExtensionAccessAdapter extensionAdapter;
