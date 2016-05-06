@@ -26,6 +26,21 @@ using namespace TopGear;
 using namespace Linux;
 
 //#define USER_POINTER
+//#define ASYNC_INVOKE
+
+#ifdef __ARM_NEON__
+void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsigned char* src, int num_bytes)
+{
+    asm(
+    "neoncopypld:\n"
+        "       pld         [r1, #0xC0]\n"
+        "       vldm        r1!,{d0-d7}\n"
+        "       vstm        r0!,{d0-d7}\n"
+        "       subs        r2,r2,#0x40\n"
+        "       bge         neoncopypld\n"
+    );
+}
+#endif
 
 std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &device)
 {
@@ -221,7 +236,11 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
         return {};
 
     //Copy mmap buffer to user buffer
+#ifdef __ARM_NEON__
+    neonMemCopy_gas(vbuffers[index], mbuffers[queue_buf.index], queue_buf.length);
+#else
     std::memcpy(vbuffers[index], mbuffers[queue_buf.index], queue_buf.length);
+#endif
     ReleaseFrame(handle, queue_buf.index);
 
     std::shared_ptr<IVideoFrame> frame(new VideoBufferLock(
@@ -394,7 +413,9 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
 {
     int index = -1;
     auto framesRef = streams[handle].framesRef;
+#ifdef ASYNC_INVOKE
     std::future<void> result;
+#endif
     while (streams[handle].isRunning)
     {
         //Check mmap and release used frame
@@ -404,6 +425,7 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
                 streams[handle].rmap.Unregister(i);
                 framesRef[i].second = false;
             }
+#ifdef ASYNC_INVOKE
         //Check callback completion
         if (result.valid())
         {
@@ -414,14 +436,17 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
                 continue;
             }
         }
+#endif
         auto frame = RequestFrame(handle, index);
         if (frame && index>=0)
         {
             framesRef[index].second = true;
             framesRef[index].first = frame;
+
             //Invoke callback handler async
             if (streams[handle].fncb)
             {
+#ifdef ASYNC_INVOKE
                 std::promise<bool> prom;
                 std::future<bool> fut = prom.get_future();
                 result = std::async(std::launch::async, [&]()
@@ -431,6 +456,10 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
                     streams[handle].fncb(f);
                 });
                 fut.get();
+#else
+                auto f = framesRef[index].first.lock();
+                streams[handle].fncb(f);
+#endif
             }
         }
         else
