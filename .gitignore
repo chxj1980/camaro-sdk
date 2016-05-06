@@ -201,7 +201,6 @@ AppPackages/
 ClientBin/
 [Ss]tyle[Cc]op.*
 ~$*
-*~
 *.dbmdl
 *.dbproj.schemaview
 *.pfx
@@ -296,3 +295,7 @@ build-*/
 *.qmlproject.user
 *.qmlproject.user.*
 # QT End
+
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
