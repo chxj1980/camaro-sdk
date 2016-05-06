@@ -10,10 +10,17 @@ TARGET = camaroapi
 TEMPLATE = lib
 CONFIG += staticlib
 
+message(Platform: $$QMAKE_HOST.arch)
+
 unix {
     target.path = /usr/lib
     INSTALLS += target
 }
+
+#contains(QMAKE_HOST.arch, armv7l)
+#{
+#    QMAKE_CXXFLAGS += -mfpu=neon -mfloat-abi=hard
+#}
 
 CONFIG(debug, debug|release) {
     DESTDIR = $$PWD/build/debug
@@ -83,7 +90,8 @@ HEADERS += \
 #    ../../Common/Include/flycapturereader.h \
     ../../Common/Include/CamaroISP.h \
     ../../Common/Include/Fovea.h \
-    ../../Common/Include/RetrievalMap.h
+    ../../Common/Include/RetrievalMap.h \
+    ../../Common/Include/ThreadPool.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \

@@ -101,14 +101,17 @@ namespace TopGear
 		DeepCamAPI(DeepCamAPI &) = delete;
 	};
 
-    template<class U>
-    std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera(Camera camera, U & source)
-    {
-        (void)camera;
-        (void)source;
-        static_assert(std::is_same<IGenericVCDevicePtr, U>::value || std::is_same<std::vector<IGenericVCDevicePtr>, U>::value,
-                      "Parameter source must be type of IGenericVCDeviceRef or std::vector<IGenericVCDeviceRef>");
-        return {};
-    }
+
+
+//    template<class U>
+//    std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera(Camera camera, U & source)
+//    {
+//        (void)camera;
+//        (void)source;
+//        std::cout<<"Wrong Way!"<<std::endl;
+//        static_assert(std::is_same<IGenericVCDevicePtr, U>::value || std::is_same<std::vector<IGenericVCDevicePtr>, U>::value,
+//                      "Parameter source must be type of IGenericVCDeviceRef or std::vector<IGenericVCDeviceRef>");
+//        return {};
+//    }
 	// ReSharper restore CppFunctionIsNotImplemented
 }

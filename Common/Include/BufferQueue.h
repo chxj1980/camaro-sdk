@@ -19,7 +19,8 @@ namespace TopGear
 		virtual ~BufferQueue();
 		BufferQueue(const BufferQueue&) = delete;            // disable copying
 		BufferQueue& operator=(const BufferQueue&) = delete; // disable assignment
-		bool Push(T item);
+        //bool Push(T item);
+        bool Push(T&& item);
 		bool Pop(T &item);	//Keep waiting until any item popped, if noWait is true
 		bool Pop_NoWait(T &item);
 		void Discard();		//Stop popping waiting
@@ -43,20 +44,26 @@ namespace TopGear
 	{
 	}
 
-	template <class T>
-	bool BufferQueue<T>::Push(T item)
-	{
+//	template <class T>
+//	bool BufferQueue<T>::Push(T item)
+//	{
+//        return Push(std::move(item));
+//	}
+
+    template <class T>
+    bool BufferQueue<T>::Push(T&& item)
+    {
         std::lock_guard<std::mutex> lk(mtx);
-		auto result = false;
-		if (sizeLimit == 0 || queue.size() < sizeLimit)
-		{
-			discarded = false;
-			queue.emplace(item);
-			cond.notify_one();
-			result = true;
-		}
-		return result;
-	}
+        auto result = false;
+        if (sizeLimit == 0 || queue.size() < sizeLimit)
+        {
+            discarded = false;
+            queue.emplace(item);
+            cond.notify_one();
+            result = true;
+        }
+        return result;
+    }
 
 	template <class T>
 	bool BufferQueue<T>::Pop_NoWait(T& item)
