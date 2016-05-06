@@ -361,6 +361,8 @@ ProcessImage::ProcessImage(QWidget *parent)
             format.MaxRate = 20;
             prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+            frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+            frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
             auto index = camera->GetMatchedFormatIndex(format);
             camera->SetCurrentFormat(index);
             mv->SelectStream(1);
@@ -668,14 +670,17 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
 #endif
         }
 
-        QImage * frame = new QImage(prgb1.get(),format.Width, format.Height,QImage::Format_RGB888);
-        lblVideoLeft->setPixmap(QPixmap::fromImage(*frame,Qt::AutoColor).scaled(800,450));
-        delete frame;
+        //QImage * frame = new QImage((prgb1.get(),format.Width, format.Height,QImage::Format_RGB888);
+        memcpy(frame1->scanLine(0), prgb1.get(),format.Width*format.Height*3);
+        lblVideoLeft->setPixmap(QPixmap::fromImage(*frame1,Qt::AutoColor).scaled(800,450));
+        //delete frame;
 
         if (raw2)
         {
-            frame = new QImage(prgb2.get(),format.Width, format.Height,QImage::Format_RGB888);
-            lblVideoRight->setPixmap(QPixmap::fromImage(*frame,Qt::AutoColor).scaled(800,450));
+            //frame = new QImage(prgb2.get(),format.Width, format.Height,QImage::Format_RGB888);
+
+            memcpy(frame2->scanLine(0), prgb2.get(),format.Width*format.Height*3);
+            lblVideoRight->setPixmap(QPixmap::fromImage(*frame2,Qt::AutoColor).scaled(800,450));
 //        QPainter paint;
 //        paint.begin(&pixmap2);
 //        MarkView(paint, slaveRect, Qt::green);
@@ -685,7 +690,7 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
 //            result = true;
 //        }
 //        paint.end();
-            delete frame;
+          //  delete frame;
         }
     }
 

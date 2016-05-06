@@ -84,6 +84,8 @@ private:
     std::atomic<int> dropcount;
     std::unique_ptr<uchar[]> prgb1;
     std::unique_ptr<uchar[]> prgb2;
+    std::unique_ptr<QImage> frame1;
+    std::unique_ptr<QImage> frame2;
 
     FrameRateCounter fc;
 
