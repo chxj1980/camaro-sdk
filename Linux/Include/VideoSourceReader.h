@@ -33,7 +33,7 @@ namespace TopGear
             void EnumerateStreams(const LSource &one);
             void EnumerateFormats(uint32_t handle);
         private:
-            static const int BUFFER_SIZE = 4;
+            static const int BUFFER_SIZE = 2;
             static const int FRAMEQUEUE_SIZE = 50;
 
             struct StreamState

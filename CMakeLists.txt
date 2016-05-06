@@ -1,12 +1,16 @@
-# CMake 最低版本号要求
 cmake_minimum_required (VERSION 2.8.12)
-# 项目信息
+
 project (DeepCamera)
 
 option (USE_NEON "Use ARM NEON" OFF)
 
 aux_source_directory(${PROJECT_SOURCE_DIR}/Common/Source DIR_SRCS)
 aux_source_directory(${PROJECT_SOURCE_DIR}/Linux/Source DIR_LINUX_SRCS)
+
+#Remove Pointgrey porting
+list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/flycapturedevice.cpp)
+list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/flycapturereader.cpp)
+list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/pointgrey.cpp)
 
 add_library(DeepCamera STATIC ${DIR_SRCS} ${DIR_LINUX_SRCS})
 
