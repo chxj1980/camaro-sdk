@@ -12,6 +12,9 @@ namespace TopGear
 	public:
 		virtual ~IProcessor() = default;
         virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source) = 0;
+        virtual bool IsRunning() const = 0;
+        virtual bool Run() = 0;
+        virtual bool Stop() = 0;
 	};
 
     class IProcessorResult
@@ -51,33 +54,59 @@ namespace TopGear
         void ProcessWorker(int index, std::vector<IVideoFramePtr> &payload);
     };
 
-    class ProcessorFork final
-            : public IProcessor
+    template<class T>
+    class IPipelineNode
+    {
+    public:
+        virtual void AddDescendant(std::shared_ptr<IProcessor> &p) = 0;
+        virtual std::shared_ptr<IProcessor> &GetProcessor() = 0;
+        virtual T& GetDescendant() = 0;
+    };
+
+    class ProcessorFork
+            : public IProcessor,
+              public IPipelineNode<std::vector<std::shared_ptr<IProcessor>>>
     {
     public:
         explicit ProcessorFork(std::shared_ptr<IProcessor> &p);
         virtual ~ProcessorFork() = default;
 
-        void AddDescendant(std::shared_ptr<IProcessor> &p);
+        virtual void AddDescendant(std::shared_ptr<IProcessor> &p) override;
+        virtual std::shared_ptr<IProcessor> &GetProcessor() override;
+        virtual std::vector<std::shared_ptr<IProcessor>> &GetDescendant() override;
+
         virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source) override;
+        virtual bool IsRunning() const override { return running; }
+        virtual bool Run() override;
+        virtual bool Stop() override;
     private:
         std::shared_ptr<IProcessor> processor;
         std::vector<std::shared_ptr<IProcessor>> processorList;
         ThreadPool pool;
+        std::atomic_bool running;
+        std::atomic_bool processing;
     };
 
-    class ProcessorNode final
-            : public IProcessor
+    class ProcessorNode
+            : public IProcessor,
+              public IPipelineNode<std::shared_ptr<IProcessor>>
     {
     public:
         explicit ProcessorNode(std::shared_ptr<IProcessor> &p);
         virtual ~ProcessorNode() = default;
 
-        void AddDescendant(std::shared_ptr<IProcessor> &p);
-        virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source);
+        virtual void AddDescendant(std::shared_ptr<IProcessor> &p) override;
+        virtual std::shared_ptr<IProcessor> &GetProcessor() override;
+        virtual std::shared_ptr<IProcessor> &GetDescendant() override;
 
+        virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source);
+        virtual bool IsRunning() const override { return running; }
+        virtual bool Run() override;
+        virtual bool Stop() override;
     private:
         std::shared_ptr<IProcessor> processor;
         std::shared_ptr<IProcessor> next;
+        std::atomic_bool running;
+        std::atomic_bool processing;
     };
 }
