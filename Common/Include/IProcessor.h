@@ -72,8 +72,11 @@ namespace TopGear
         virtual ~ProcessorFork() = default;
 
         virtual void AddDescendant(std::shared_ptr<IProcessor> &p) override;
-        virtual std::shared_ptr<IProcessor> &GetProcessor() override;
-        virtual std::vector<std::shared_ptr<IProcessor>> &GetDescendant() override;
+        virtual std::shared_ptr<IProcessor> &GetProcessor() override { return processor; }
+        virtual std::vector<std::shared_ptr<IProcessor>> &GetDescendant() override
+        {
+            return processorList;
+        }
 
         virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source) override;
         virtual bool IsRunning() const override { return running; }
@@ -96,8 +99,8 @@ namespace TopGear
         virtual ~ProcessorNode() = default;
 
         virtual void AddDescendant(std::shared_ptr<IProcessor> &p) override;
-        virtual std::shared_ptr<IProcessor> &GetProcessor() override;
-        virtual std::shared_ptr<IProcessor> &GetDescendant() override;
+        virtual std::shared_ptr<IProcessor> &GetProcessor() override { return processor; }
+        virtual std::shared_ptr<IProcessor> &GetDescendant() override { return next; }
 
         virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source);
         virtual bool IsRunning() const override { return running; }

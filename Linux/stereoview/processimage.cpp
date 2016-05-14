@@ -8,6 +8,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 
 #include <unistd.h>
 #include "recmgr.h"
@@ -338,6 +339,8 @@ ProcessImage::ProcessImage(QWidget *parent)
 //    }
 
     auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::DeepGlint);
+    for(auto &d : devices)
+        std::cout<<d->GetDeviceInfo()<<std::endl;
     qDebug("Devices:  %d",devices.size());
     if (!devices.empty())
     {
@@ -366,6 +369,7 @@ ProcessImage::ProcessImage(QWidget *parent)
             auto index = camera->GetMatchedFormatIndex(format);
             camera->SetCurrentFormat(index);
             mv->SelectStream(1);
+            cc->Flip(true, false);
             camera->SetCurrentFormat(index);
             camera->StartStream();
         }
