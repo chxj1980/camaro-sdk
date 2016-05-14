@@ -29,14 +29,14 @@ using namespace Linux;
 
 #ifdef USE_CUDA_UNIFIED_MEMORY
 #include "cuda_runtime.h"
-
-std::mutex VideoSourceReader::mtx;
-
 #endif
 
 #ifdef __ARM_NEON__
 void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsigned char* src, int num_bytes)
 {
+    (void)dst;
+    (void)src;
+    (void)num_bytes;
     asm(
     "neoncopypld:\n"
         "       pld         [r1, #0xC0]\n"
@@ -46,6 +46,10 @@ void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsigned cha
         "       bge         neoncopypld\n"
     );
 }
+#endif
+
+#ifdef USE_SINGLE_STREAM_LOCK
+std::mutex VideoSourceReader::mtx;
 #endif
 
 std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &device)
@@ -226,15 +230,15 @@ void VideoSourceReader::Uninitmmap(uint32_t handle)
 
     }
 
-    //request buffer
-    v4l2_requestbuffers req;
-    std::memset(&req,0,sizeof(req));
-    req.count = 0;
-    req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    req.memory = V4L2_MEMORY_MMAP;
+//    //request buffer
+//    v4l2_requestbuffers req;
+//    std::memset(&req,0,sizeof(req));
+//    req.count = 0;
+//    req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+//    req.memory = V4L2_MEMORY_MMAP;
 
-    if (ioctl(handle, VIDIOC_REQBUFS, &req) == -1)
-        fprintf(stderr, "xxx VIDIOC_REQBUFS fail %s\n", strerror(errno));
+//    if (ioctl(handle, VIDIOC_REQBUFS, &req) == -1)
+//        fprintf(stderr, "xxx VIDIOC_REQBUFS fail %s\n", strerror(errno));
 }
 
 std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &index) //DQBUF

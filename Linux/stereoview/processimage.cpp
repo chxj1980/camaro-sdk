@@ -80,6 +80,9 @@ void convert_gray_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int widt
     }
 }
 
+#ifdef __ARM_NEON__
+extern void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsigned char* src, int num_bytes);
+#endif
 
 #define RESYNC_NUM 100
 
@@ -361,7 +364,7 @@ ProcessImage::ProcessImage(QWidget *parent)
             TopGear::VideoFormat format {};
             format.Height = 1080;
             format.Width = 1920;
-            format.MaxRate = 20;
+            format.MaxRate = 15;
             prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
@@ -398,6 +401,8 @@ void ProcessImage::ontimer()
     dropcount = 0;
     lblFramerate->setText(QString("fps:%1  framedrops:%2").arg((int)fc.GetFrameRate()).arg(drops));
 }
+
+std::mutex mtx;
 
 void ProcessImage::onGetStereoFrame(TopGear::IVideoStream &sender, std::vector<TopGear::IVideoFramePtr> &frames)//this is called in sub-thread
 {
@@ -442,6 +447,28 @@ void ProcessImage::onGetStereoFrame(TopGear::IVideoStream &sender, std::vector<T
     }
 
     fc.NewFrame();
+
+
+    uint8_t *raw1 = nullptr;
+    uint8_t *raw2 = nullptr;
+    uint32_t stride1;
+    uint32_t stride2;
+    auto format = frames[0]->GetFormat();
+    frames[0]->LockBuffer(&raw1,&stride1);
+    frames[1]->LockBuffer(&raw2,&stride2);
+
+    std::unique_lock<std::mutex> lk(mtx);
+
+    if (raw1)
+        convert_yuyv_to_rgb_buffer(raw1, frame1->scanLine(0), format.Width, format.Height);
+    if (raw2)
+        convert_yuyv_to_rgb_buffer(raw2, frame2->scanLine(0), format.Width, format.Height);
+
+    lk.unlock();
+
+    frames[0]->UnlockBuffer();
+    frames[1]->UnlockBuffer();
+
     if (frames.size()==1)
         emit onstereoframe(frames[0], nullptr);
     else
@@ -535,13 +562,13 @@ void ProcessImage::getInfoFromFrame(void *frame, unsigned char *info, int infole
 
 void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVideoFramePtr slave)
 {
-    uint8_t *raw1 = nullptr;
-    uint8_t *raw2 = nullptr;
-    uint32_t stride1;
-    uint32_t stride2;
-    master->LockBuffer(&raw1,&stride1);
-    if (slave)
-        slave->LockBuffer(&raw2,&stride2);
+//    uint8_t *raw1 = nullptr;
+//    uint8_t *raw2 = nullptr;
+//    uint32_t stride1;
+//    uint32_t stride2;
+//    master->LockBuffer(&raw1,&stride1);
+//    if (slave)
+//        slave->LockBuffer(&raw2,&stride2);
 
     auto format = master->GetFormat();
 
@@ -563,44 +590,44 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
 //        //addInfoToFrame(left, data, 60);
 //    }
 
-    if (bSaveframe)
-    {
-        if (saveframe_index == 0)
-        {
-            qDebug("=================Start recroding frames...");
-            system("mkdir -p ~/tmp/RAW");
-            char sss[256];
-            sprintf(sss,"%s/tmp/RAW/all%02d.raw",getenv("HOME"),ccc);
-            REC_Open(sss);
-            ccc ++;
-        }
+//    if (bSaveframe)
+//    {
+//        if (saveframe_index == 0)
+//        {
+//            qDebug("=================Start recroding frames...");
+//            system("mkdir -p ~/tmp/RAW");
+//            char sss[256];
+//            sprintf(sss,"%s/tmp/RAW/all%02d.raw",getenv("HOME"),ccc);
+//            REC_Open(sss);
+//            ccc ++;
+//        }
 
-        if (REC_Push(raw1, raw2, format.Height*stride1, format.Height*stride2, saveframe_index) <0)
-            qDebug("---RECORD drop %d---", saveframe_index);
+//        if (REC_Push(raw1, raw2, format.Height*stride1, format.Height*stride2, saveframe_index) <0)
+//            qDebug("---RECORD drop %d---", saveframe_index);
 
-        saveframe_index ++;
+//        saveframe_index ++;
 
-        if (saveframe_index % 200 == 0)
-        {
-            qDebug("===record frames %d", saveframe_index);
-        }
+//        if (saveframe_index % 200 == 0)
+//        {
+//            qDebug("===record frames %d", saveframe_index);
+//        }
 
-        saved_frames = saveframe_index;
+//        saved_frames = saveframe_index;
 
-        if (max_save > 0 && saveframe_index >= max_save)
-        {
-            qDebug("=================record frames DONE!!!");
-            REC_Close();
-            saveframe_index = 0;
-            onBtnSaveframeClick();
-        }
-    }
-    else if (saveframe_index > 0)
-    {
-        REC_Close();
-        qDebug("=================record frames terminate(%d)!", saveframe_index);
-        saveframe_index = 0;
-    }
+//        if (max_save > 0 && saveframe_index >= max_save)
+//        {
+//            qDebug("=================record frames DONE!!!");
+//            REC_Close();
+//            saveframe_index = 0;
+//            onBtnSaveframeClick();
+//        }
+//    }
+//    else if (saveframe_index > 0)
+//    {
+//        REC_Close();
+//        qDebug("=================record frames terminate(%d)!", saveframe_index);
+//        saveframe_index = 0;
+//    }
 
     if (!bRenderPaused)
     {
@@ -622,18 +649,18 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
 
 //        convert_raw_to_rgb_buffer(raw1, prgb1.get(), false , format.Width, format.Height);
 //        convert_raw_to_rgb_buffer(raw2, prgb2.get(), false , format.Width, format.Height);
-        if (raw1)
-            convert_yuyv_to_rgb_buffer(raw1, prgb1.get(), format.Width, format.Height);
-        if (raw2)
-        {
+//        if (raw1)
+//            convert_yuyv_to_rgb_buffer(raw1, frame1->scanLine(0), format.Width, format.Height);
+//        if (raw2)
+//        {
 //            convert_gray_to_rgb_buffer(raw2, prgb2.get(), format.Width, format.Height);
 //            auto d = raw2[format.Height/2*format.Width+format.Width/2];
 //            if (DepthTable.Payload.size()==256)
 //                qDebug("Disparity: %d Depth: %fm", d, d==0?0:320.0/d);//DepthTable.Payload[d]);
 //            else
 //                qDebug("Disparity: %d", d);
-            convert_yuyv_to_rgb_buffer(raw2, prgb2.get(), format.Width, format.Height);
-        }
+            //convert_yuyv_to_rgb_buffer(raw2, prgb2.get(), format.Width, format.Height);
+ //       }
 
 
 
@@ -675,16 +702,23 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
         }
 
         //QImage * frame = new QImage((prgb1.get(),format.Width, format.Height,QImage::Format_RGB888);
-        memcpy(frame1->scanLine(0), prgb1.get(),format.Width*format.Height*3);
+//#ifdef __ARM_NEON__
+//        neonMemCopy_gas(frame1->scanLine(0), prgb1.get(),format.Width*format.Height*3);
+//#else
+//        memcpy(frame1->scanLine(0), prgb1.get(),format.Width*format.Height*3);
+//#endif
+        std::unique_lock<std::mutex> lk(mtx);
         lblVideoLeft->setPixmap(QPixmap::fromImage(*frame1,Qt::AutoColor).scaled(800,450));
+        lblVideoRight->setPixmap(QPixmap::fromImage(*frame2,Qt::AutoColor).scaled(800,450));
+        lk.unlock();
         //delete frame;
 
-        if (raw2)
-        {
+        //if (raw2)
+        //{
             //frame = new QImage(prgb2.get(),format.Width, format.Height,QImage::Format_RGB888);
 
-            memcpy(frame2->scanLine(0), prgb2.get(),format.Width*format.Height*3);
-            lblVideoRight->setPixmap(QPixmap::fromImage(*frame2,Qt::AutoColor).scaled(800,450));
+            //memcpy(frame2->scanLine(0), prgb2.get(),format.Width*format.Height*3);
+            //lblVideoRight->setPixmap(QPixmap::fromImage(*frame2,Qt::AutoColor).scaled(800,450));
 //        QPainter paint;
 //        paint.begin(&pixmap2);
 //        MarkView(paint, slaveRect, Qt::green);
@@ -695,12 +729,12 @@ void ProcessImage::showstereoframe(TopGear::IVideoFramePtr master, TopGear::IVid
 //        }
 //        paint.end();
           //  delete frame;
-        }
+       // }
     }
 
-    master->UnlockBuffer();
-    if (slave)
-        slave->UnlockBuffer();
+//    master->UnlockBuffer();
+//    if (slave)
+//        slave->UnlockBuffer();
 
 
 

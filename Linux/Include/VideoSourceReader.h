@@ -14,7 +14,7 @@
 //#define USE_V4L2_USER_POINTER
 //#define USE_CUDA_UNIFIED_MEMORY
 //#define COPY_TO_USER
-//#define USE_SINGLE_STREAM_LOCK
+#define USE_SINGLE_STREAM_LOCK
 
 namespace TopGear
 {
