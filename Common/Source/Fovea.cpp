@@ -19,10 +19,18 @@ Fovea::~Fovea()
 void Fovea::FrameWatcher()
 {
     IVideoFramePtr frames[2];
-    std::pair<int, IVideoFramePtr> frameEx;
-    while (frameBuffer.Pop(frameEx))
+    //std::pair<int, IVideoFramePtr> frameEx;
+    //while (frameBuffer.Pop(frameEx))
+    while(threadOn)
     {
-        frames[frameEx.first] = std::move(frameEx.second);
+        //frames[frameEx.first] = std::move(frameEx.second);
+        std::unique_lock<std::mutex> lock1(wmtx);
+        frames[0].swap(wframe);
+        lock1.unlock();
+
+        std::unique_lock<std::mutex> lock2(wmtx);
+        frames[1].swap(tframe);
+        lock2.unlock();
 
         if (frames[0] && frames[1])
         {
@@ -36,32 +44,22 @@ void Fovea::FrameWatcher()
     }
 }
 
-void Fovea::PushFrame(int index, IVideoFramePtr &frame)
-{
-    if (threadOn)
-    {
-//        uint32_t w = source.GetCurrentFormat().Width;
-//        uint32_t h = source.GetCurrentFormat().Height;
-
-//        uint8_t *pData;
-//        uint32_t stride;
-//        if (frame->LockBuffer(&pData, &stride) != 0)
-//            return;
-//        frame->UnlockBuffer();
-
-//        IVideoFramePtr ex = std::make_shared<VideoFrameEx>(frame, 0, stride, w, h, frameIndexes[0],
-//            h*stride, 0);
-//        ++frameIndexes[index];
-        frameBuffer.Push(std::make_pair(index, frame));
-    }
-}
+//void Fovea::PushFrame(int index, IVideoFramePtr &frame)
+//{
+//    if (threadOn)
+//    {
+//        frameBuffer.Push(std::make_pair(index, frame));
+//    }
+//}
 
 void Fovea::OnWideAngleFrame(IVideoStream &source, std::vector<IVideoFramePtr> &frames)
 {
     (void)source;
     if (frames.size() != 1)
         return;
-    PushFrame(0, frames[0]);
+    //PushFrame(0, frames[0]);
+    std::lock_guard<std::mutex> lg(wmtx);
+    wframe = frames[0];
 }
 
 void Fovea::OnTelephotoFrame(IVideoStream &source, std::vector<IVideoFramePtr> &frames)
@@ -69,7 +67,9 @@ void Fovea::OnTelephotoFrame(IVideoStream &source, std::vector<IVideoFramePtr> &
     (void)source;
     if (frames.size() != 1)
         return;
-    PushFrame(1, frames[0]);
+    //PushFrame(1, frames[0]);
+    std::lock_guard<std::mutex> lg(tmtx);
+    tframe = frames[0];
 }
 
 const std::vector<std::shared_ptr<IVideoStream>> &Fovea::GetStreams() const
@@ -122,14 +122,15 @@ void Fovea::StartStreams()
 
 void Fovea::StopStreams()
 {
+    threadOn = false;
     for(auto &item : videoStreams)
         item->StopStream();
+
     if (frameWatchThread.joinable())
     {
-        frameBuffer.Discard();
+        //frameBuffer.Discard();
         frameWatchThread.join();
     }
-    threadOn = false;
 }
 
 int Fovea::Flip(bool vertical, bool horizontal)

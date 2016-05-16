@@ -25,9 +25,13 @@ namespace TopGear
     private:
         std::thread frameWatchThread;
         bool threadOn = false;
-        BufferQueue<std::pair<int, IVideoFramePtr>> frameBuffer;
+        std::mutex wmtx;
+        std::mutex tmtx;
+        IVideoFramePtr wframe;
+        IVideoFramePtr tframe;
+        //BufferQueue<std::pair<int, IVideoFramePtr>> frameBuffer;
         void FrameWatcher();
-        void PushFrame(int index, IVideoFramePtr &frame);
+        //void PushFrame(int index, IVideoFramePtr &frame);
     public:
         Fovea(std::shared_ptr<IVideoStream> &wideangle, std::shared_ptr<IVideoStream> &telephoto);
         virtual ~Fovea();
