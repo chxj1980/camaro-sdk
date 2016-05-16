@@ -58,6 +58,8 @@ namespace TopGear
 #ifdef COPY_TO_USER
                 uint8_t *vbuffers[FRAMEQUEUE_SIZE]; //User memory buffer
                 std::pair<std::weak_ptr<IVideoFrame>, bool> framesRef[FRAMEQUEUE_SIZE];
+#else
+                std::pair<std::weak_ptr<IVideoFrame>, bool> framesRef[BUFFER_SIZE];
 #endif
                 uint64_t frameCounter = 0;
             };

@@ -466,9 +466,7 @@ bool VideoSourceReader::IsStreaming(uint32_t handle)
 void VideoSourceReader::OnReadWorker(uint32_t handle)
 {
     int index = -1;
-#ifdef COPY_TO_USER
     auto framesRef = streams[handle].framesRef;
-#endif
 #ifdef ASYNC_INVOKE
     std::future<void> result;
 #endif
@@ -480,6 +478,13 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
             if (framesRef[i].second && framesRef[i].first.expired())
             {
                 framesRef[i].second = false;
+            }
+#else
+        for(int i=0;i<BUFFER_SIZE;++i)
+            if (framesRef[i].second && framesRef[i].first.expired())
+            {
+                framesRef[i].second = false;
+                ReleaseFrame(handle, i);
             }
 #endif
 #ifdef ASYNC_INVOKE
@@ -503,11 +508,8 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
 #endif
         if (frame && index>=0)
         {
-
-#ifdef COPY_TO_USER
             framesRef[index].second = true;
             framesRef[index].first = frame;
-#endif
 
             //Invoke callback handler async
             if (streams[handle].fncb)
@@ -531,7 +533,7 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
 	#endif
 #else
                 streams[handle].fncb(frame);
-                ReleaseFrame(handle, index);
+
 #endif
             }
         }
