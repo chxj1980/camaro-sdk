@@ -18,6 +18,9 @@
 #include "IDeviceControl.h"
 #include "IMultiVideoStream.h"
 
+#include <jpeglib.h>
+#include <thread>
+
 #define NEED_GPSIMU 1
 ////////////////////////////////////////////////////////
 
@@ -38,6 +41,48 @@ void convert_yuv_to_rgb_pixel(uint8_t y, uint8_t u, uint8_t v, uint8_t *rgb)
     rgb[2] = b * 220 / 256;
 }
 /*yuv格式转换为rgb格式*/
+
+void SaveJpg(TopGear::VideoFormat &format, uint8_t *base, const std::string &filename)
+{
+    FILE *outfile = fopen(filename.c_str(), "wb");
+    std::cout<<filename<<std::endl;
+    if (outfile == nullptr)
+        return;
+
+    JSAMPROW jrow[1];
+    jpeg_compress_struct cinfo;
+    jpeg_error_mgr err;
+    cinfo.err = jpeg_std_error(&err);
+    jpeg_create_compress(&cinfo);
+    jpeg_stdio_dest(&cinfo, outfile);
+    //std::cout<<filename<<std::endl;
+    cinfo.image_width = (uint32_t)format.Width & -1;
+    cinfo.image_height = (uint32_t)format.Height & -1;
+    cinfo.input_components = 3;
+    cinfo.in_color_space = JCS_YCbCr;
+    jpeg_set_defaults(&cinfo);
+    jpeg_set_quality(&cinfo, 80, true);
+    jpeg_start_compress(&cinfo, true);
+    std::unique_ptr<uint8_t[]> buf(new uint8_t[format.Width*3]);
+    while(cinfo.next_scanline<(uint32_t)format.Height)
+    {
+        for(auto i=0u;i<cinfo.image_width;i+=2)
+        {
+            buf[i*3]=base[i*2];
+            buf[i*3+1]=base[i*2+1];
+            buf[i*3+2]=base[i*2+3];
+            buf[i*3+3]=base[i*2+2];
+            buf[i*3+4]=base[i*2+1];
+            buf[i*3+5]=base[i*2+3];
+        }
+        jrow[0] = buf.get();
+        base+=format.Width*2;
+        jpeg_write_scanlines(&cinfo, jrow, 1);
+    }
+    jpeg_finish_compress(&cinfo);
+    fclose(outfile);
+    jpeg_destroy_compress(&cinfo);
+}
 
 void convert_yuyv_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int width, int height)
 {
@@ -364,7 +409,7 @@ ProcessImage::ProcessImage(QWidget *parent)
             TopGear::VideoFormat format {};
             format.Height = 1080;
             format.Width = 1920;
-            format.MaxRate = 15;
+            format.MaxRate =20;
             prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
@@ -457,14 +502,24 @@ void ProcessImage::onGetStereoFrame(TopGear::IVideoStream &sender, std::vector<T
     frames[0]->LockBuffer(&raw1,&stride1);
     frames[1]->LockBuffer(&raw2,&stride2);
 
-    std::unique_lock<std::mutex> lk(mtx);
+//    std::unique_lock<std::mutex> lk(mtx);
 
+    //std::thread t;
     if (raw1)
+    {
+        //t = std::thread(&SaveJpg, std::ref(format), raw1, "1/"+std::to_string(frames[0]->GetFrameIndex())+".jpg");
         convert_yuyv_to_rgb_buffer(raw1, frame1->scanLine(0), format.Width, format.Height);
+    }
     if (raw2)
+    {
+        //SaveJpg(format, raw2, "2/"+std::to_string(frames[0]->GetFrameIndex())+".jpg");
         convert_yuyv_to_rgb_buffer(raw2, frame2->scanLine(0), format.Width, format.Height);
+    }
+//    if (t.joinable())
+//        t.join();
 
-    lk.unlock();
+
+//    lk.unlock();
 
     frames[0]->UnlockBuffer();
     frames[1]->UnlockBuffer();
