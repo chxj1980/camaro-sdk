@@ -12,9 +12,7 @@
 #include "IMultiVideoSource.h"
 
 //#define USE_V4L2_USER_POINTER
-//#define USE_CUDA_UNIFIED_MEMORY
-//#define COPY_TO_USER
-#define USE_SINGLE_STREAM_LOCK
+//#define USE_CUDA
 
 namespace TopGear
 {
@@ -23,9 +21,6 @@ namespace TopGear
         class VideoSourceReader : public IMultiVideoSource
 		{
 		public:
-#ifdef USE_SINGLE_STREAM_LOCK
-        	static std::mutex mtx;
-#endif
             static std::vector<std::shared_ptr<IVideoStream>> CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &device);
             static std::shared_ptr<IVideoStream> CreateVideoStream(std::shared_ptr<IGenericVCDevice> &device);
 
@@ -42,7 +37,6 @@ namespace TopGear
             void EnumerateFormats(uint32_t handle);
         private:
             static const int BUFFER_SIZE = 8;
-            static const int FRAMEQUEUE_SIZE = 20;
 
             struct StreamState
             {
@@ -55,13 +49,9 @@ namespace TopGear
                 std::thread streamThread;
                 uint32_t imageSize = 0;
                 uint8_t *mbuffers[BUFFER_SIZE];   //Mapping mmap memory
-#ifdef COPY_TO_USER
-                uint8_t *vbuffers[FRAMEQUEUE_SIZE]; //User memory buffer
-                std::pair<std::weak_ptr<IVideoFrame>, bool> framesRef[FRAMEQUEUE_SIZE];
-#else
                 std::pair<std::weak_ptr<IVideoFrame>, bool> framesRef[BUFFER_SIZE];
-#endif
                 uint64_t frameCounter = 0;
+                bool lengthMutable = false;
             };
 
             std::map<uint32_t, StreamState> streams;

@@ -409,7 +409,7 @@ ProcessImage::ProcessImage(QWidget *parent)
             TopGear::VideoFormat format {};
             format.Height = 1080;
             format.Width = 1920;
-            format.MaxRate =20;
+            format.MaxRate =15;
             prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));

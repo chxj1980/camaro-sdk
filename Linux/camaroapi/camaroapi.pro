@@ -17,10 +17,10 @@ unix {
     INSTALLS += target
 }
 
-contains(QMAKE_HOST.arch, armv7l)
-{
-    QMAKE_CXXFLAGS += -mfpu=neon -mfloat-abi=hard
-}
+#contains(QMAKE_HOST.arch, armv7l)
+#{
+#    QMAKE_CXXFLAGS += -mfpu=neon -mfloat-abi=hard
+#}
 
 CONFIG(debug, debug|release) {
     DESTDIR = $$PWD/build/debug

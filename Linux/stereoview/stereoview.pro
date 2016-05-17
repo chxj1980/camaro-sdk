@@ -54,7 +54,7 @@ HEADERS  += processimage.h \
 CONFIG += c++11
 
 QMAKE_CXXFLAGS += -fopenmp
-LIBS += -lgomp
+LIBS += -lgomp -ljpeg
 
 CONFIG(debug, debug|release) {
     unix:!macx: LIBS += -L$$PWD/../camaroapi/build/debug/ -lcamaroapi

@@ -17,6 +17,23 @@ using namespace Linux;
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
+#ifdef __ARM_NEON__
+void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsigned char* src, int num_bytes)
+{
+    (void)dst;
+    (void)src;
+    (void)num_bytes;
+    asm(
+    "neoncopypld:\n"
+        "       pld         [r1, #0xC0]\n"
+        "       vldm        r1!,{d0-d7}\n"
+        "       vstm        r0!,{d0-d7}\n"
+        "       subs        r2,r2,#0x40\n"
+        "       bge         neoncopypld\n"
+    );
+}
+#endif
+
 void v4l2Helper::EnumVideoDeviceSources(std::vector<SourcePair> &sources,
                                         std::chrono::milliseconds waitTime)
 {

@@ -41,32 +41,6 @@ namespace TopGear
 		static const std::string ConfigSuffix;
 #endif
 
-//		template<class U>
-//		static std::shared_ptr<IVideoStream> CreateCamera(Camera camera, U & source)
-//		{
-//			static_assert(std::is_same<IGenericVCDevicePtr, U>::value || std::is_same<std::vector<IGenericVCDevicePtr>, U>::value,
-//				"Parameter source must be type of IGenericVCDeviceRef or std::vector<IGenericVCDeviceRef>");
-//			std::shared_ptr<IVideoStream> vs;
-//			switch (camera)
-//			{
-//			case Camera::StandardUVC:
-//				vs = CameraFactory<StandardUVC>::CreateInstance(source);
-//				break;
-//			case Camera::Camaro:
-//				vs = CameraFactory<Camaro>::CreateInstance(source);
-//				break;
-//			case Camera::CamaroDual:
-//				vs = CameraFactory<CamaroDual>::CreateInstance(source);
-//				break;
-//			case Camera::ImpalaE:
-//				vs = CameraFactory<ImpalaE>::CreateInstance(source);
-//				break;
-//			default:
-//				break;
-//			}
-//			return vs;
-//		}
-
 		static void LoadCameraConfigs()
 		{
 #ifdef _WIN32
@@ -297,8 +271,14 @@ namespace TopGear
         case Camera::Fovea:
             if (source.size()<2)
                 break;
-            vss.push_back(CreateCamera(Camera::CamaroISP, source[0]));
-            vss.push_back(CreateCamera(Camera::CamaroISP, source[1]));
+            if (std::dynamic_pointer_cast<StandardVCDevice>(source[0])==nullptr)
+                vss.push_back(CreateCamera(Camera::CamaroISP, source[0]));
+            else
+                vss.push_back(CreateCamera(Camera::StandardUVC, source[0]));
+            if (std::dynamic_pointer_cast<StandardVCDevice>(source[1])==nullptr)
+                vss.push_back(CreateCamera(Camera::CamaroISP, source[1]));
+            else
+                vss.push_back(CreateCamera(Camera::StandardUVC, source[1]));
             vs = CameraFactory<Fovea>::CreateInstance(vss);
             if (vs)
                 Logger::Write(spdlog::level::info, "Fovea camera created");

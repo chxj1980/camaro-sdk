@@ -17,6 +17,10 @@
 
 namespace TopGear
 {
+#ifdef __ARM_NEON__
+    extern void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsigned char* src, int num_bytes);
+#endif
+
     namespace Linux
     {
         class v4l2Helper

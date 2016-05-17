@@ -88,7 +88,6 @@ bool ProcessorFork::Run()
 {
     if (running)
         return true;
-    auto suc = false;
     for(size_t i = 0 ; i<processorList.size(); ++i)
         if (!processorList[i]->Run())
             return false;

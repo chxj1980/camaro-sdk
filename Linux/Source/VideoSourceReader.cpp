@@ -27,29 +27,8 @@ using namespace Linux;
 
 //#define ASYNC_INVOKE
 
-#ifdef USE_CUDA_UNIFIED_MEMORY
+#ifdef USE_CUDA
 #include "cuda_runtime.h"
-#endif
-
-#ifdef __ARM_NEON__
-void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsigned char* src, int num_bytes)
-{
-    (void)dst;
-    (void)src;
-    (void)num_bytes;
-    asm(
-    "neoncopypld:\n"
-        "       pld         [r1, #0xC0]\n"
-        "       vldm        r1!,{d0-d7}\n"
-        "       vstm        r0!,{d0-d7}\n"
-        "       subs        r2,r2,#0x40\n"
-        "       bge         neoncopypld\n"
-    );
-}
-#endif
-
-#ifdef USE_SINGLE_STREAM_LOCK
-std::mutex VideoSourceReader::mtx;
 #endif
 
 std::vector<std::shared_ptr<IVideoStream>> VideoSourceReader::CreateVideoStreams(std::shared_ptr<IGenericVCDevice> &device)
@@ -122,9 +101,6 @@ void VideoSourceReader::Initmmap(uint32_t handle)
     auto it = streams.find(handle);
     if (it ==streams.end())
         return;
-#ifdef COPY_TO_USER
-    auto vbuffers = (it->second).vbuffers;
-#endif
     auto mbuffers = (it->second).mbuffers;
 
     //request buffer
@@ -156,18 +132,14 @@ void VideoSourceReader::Initmmap(uint32_t handle)
     (it->second).defaultStride = fmt.fmt.pix.bytesperline;
     (it->second).imageSize = fmt.fmt.pix.sizeimage;
 
-#ifdef COPY_TO_USER
-    for(auto i = 0u; i < FRAMEQUEUE_SIZE; ++i)
-        vbuffers[i] = new uint8_t[(it->second).imageSize];
-#endif
-
     //query buffer , mmap , and enqueue  afterwards
     for(auto i = 0u; i < BUFFER_SIZE; ++i)
     {
 #ifdef USE_V4L2_USER_POINTER
-	#ifdef USE_CUDA_UNIFIED_MEMORY
-    	if (cudaMallocManaged(&mbuffers[i], (it->second).imageSize, cudaMemAttachHost)!=cudaSuccess)
-    		throw std::runtime_error("cudaMallocManaged failed!");
+    #ifdef USE_CUDA
+        if (cudaMallocHost(&mbuffers[i], (it->second).imageSize,
+                           cudaHostAllocPortable|cudaHostAllocMapped)!=cudaSuccess)
+            throw std::runtime_error("cudaMallocHost failed!");
 	#else
     	mbuffers[i]= new uint8_t[(it->second).imageSize];
 	#endif
@@ -207,19 +179,12 @@ void VideoSourceReader::Uninitmmap(uint32_t handle)
     if (it == streams.end())
         return;
 
-#ifdef COPY_TO_USER
-    for(int i = 0; i < FRAMEQUEUE_SIZE; ++i)
-    {
-        delete[] (it->second).vbuffers[i];
-        (it->second).vbuffers[i] = nullptr;
-    }
-#endif
-
     for(int i = 0; i < BUFFER_SIZE; ++i)
     {
+        ReleaseFrame(handle, i);
 #ifdef USE_V4L2_USER_POINTER
-	#ifdef USE_CUDA_UNIFIED_MEMORY
-    	cudaFree((it->second).mbuffers[i]);
+    #ifdef USE_CUDA
+        cudaFreeHost((it->second).mbuffers[i]);
 	#else
         delete[] (it->second).mbuffers[i];
 	#endif
@@ -229,23 +194,10 @@ void VideoSourceReader::Uninitmmap(uint32_t handle)
         (it->second).mbuffers[i] = nullptr;
 
     }
-
-//    //request buffer
-//    v4l2_requestbuffers req;
-//    std::memset(&req,0,sizeof(req));
-//    req.count = 0;
-//    req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-//    req.memory = V4L2_MEMORY_MMAP;
-
-//    if (ioctl(handle, VIDIOC_REQBUFS, &req) == -1)
-//        fprintf(stderr, "xxx VIDIOC_REQBUFS fail %s\n", strerror(errno));
 }
 
 std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &index) //DQBUF
 {
-#ifdef COPY_TO_USER
-    auto vbuffers = streams[handle].vbuffers;
-#endif
     auto mbuffers = streams[handle].mbuffers;
 
     v4l2_buffer queue_buf;
@@ -256,42 +208,24 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
 #else
     queue_buf.memory = V4L2_MEMORY_MMAP;
 #endif
-    queue_buf.flags = V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN;
+    //queue_buf.flags = V4L2_BUF_FLAG_TIMESTAMP_UNKNOWN;
 
     index = -1;
 
     if(ioctl(handle, VIDIOC_DQBUF, &queue_buf) == -1)
         return {};
 
+    if (!streams[handle].lengthMutable &&
+            ((queue_buf.flags & V4L2_BUF_FLAG_ERROR)!=0 || queue_buf.bytesused != queue_buf.length))
+    {
+        ReleaseFrame(handle, queue_buf.index);
+        ++streams[handle].frameCounter;
+        return {};
+    }
+
     auto tm = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::high_resolution_clock::now().time_since_epoch());
-#ifdef COPY_TO_USER
-    for(int i=0;i<FRAMEQUEUE_SIZE;++i)
-        if (!streams[handle].framesRef[i].second)
-        {
-            index = i;
-            break;
-        }
-    if (index<0)    //unavailable buffer
-        return {};
 
-    //Copy mmap buffer to user buffer
-#ifdef __ARM_NEON__
-    neonMemCopy_gas(vbuffers[index], mbuffers[queue_buf.index], queue_buf.length);
-#else
-    std::memcpy(vbuffers[index], mbuffers[queue_buf.index], queue_buf.length);
-#endif
-    ReleaseFrame(handle, queue_buf.index);
-
-    std::shared_ptr<IVideoFrame> frame(new VideoBufferLock(
-                                       handle,
-                                       index,
-                                       vbuffers[index],
-                                       tm.count(),
-                                       streams[handle].frameCounter,
-                                       streams[handle].defaultStride,
-                                       streams[handle].formats[streams[handle].currentFormatIndex]));
-#else
     index = queue_buf.index;
     std::shared_ptr<IVideoFrame> frame(new VideoBufferLock(
                                            handle,
@@ -301,7 +235,6 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
                                            streams[handle].frameCounter,
                                            streams[handle].defaultStride,
                                            streams[handle].formats[streams[handle].currentFormatIndex]));
-#endif
     ++streams[handle].frameCounter;
     return frame;
 }
@@ -429,6 +362,11 @@ bool VideoSourceReader::StartStream(uint32_t handle)
 
     Initmmap(handle);
 
+    auto &format = streams[handle].formats[streams[handle].currentFormatIndex];
+
+    streams[handle].lengthMutable =
+            std::memcmp(format.PixelFormat, "MJPG", 4)==0 || std::memcmp(format.PixelFormat, "H264", 4)==0;
+
     streams[handle].isRunning = true;
     streams[handle].streamThread = std::thread(&VideoSourceReader::OnReadWorker, this, handle);
     streams[handle].streamOn = streams[handle].streamThread.joinable();
@@ -472,21 +410,13 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
 #endif
     while (streams[handle].isRunning)
     {
-#ifdef COPY_TO_USER
-        //Check mmap and release used frame
-        for(int i=0;i<FRAMEQUEUE_SIZE;++i)
-            if (framesRef[i].second && framesRef[i].first.expired())
-            {
-                framesRef[i].second = false;
-            }
-#else
+        //Release unused frames
         for(int i=0;i<BUFFER_SIZE;++i)
             if (framesRef[i].second && framesRef[i].first.expired())
             {
                 framesRef[i].second = false;
                 ReleaseFrame(handle, i);
             }
-#endif
 #ifdef ASYNC_INVOKE
         //Check callback completion
         if (result.valid())
@@ -499,15 +429,10 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
             }
         }
 #endif
-#ifdef USE_SINGLE_STREAM_LOCK
-        std::unique_lock<std::mutex> lock(mtx);
-#endif
         auto frame = RequestFrame(handle, index);
-#ifdef USE_SINGLE_STREAM_LOCK
-        lock.unlock();
-#endif
         if (frame && index>=0)
         {
+            //Add frame for watching
             framesRef[index].second = true;
             framesRef[index].first = frame;
 
@@ -515,25 +440,12 @@ void VideoSourceReader::OnReadWorker(uint32_t handle)
             if (streams[handle].fncb)
             {
 #ifdef ASYNC_INVOKE
-	#ifdef COPY_TO_USER
-                std::promise<bool> prom;
-                std::future<bool> fut = prom.get_future();
-                result = std::async(std::launch::async, [&]()
-                {
-                    auto f = framesRef[index].first.lock();
-                    prom.set_value(true);
-                    streams[handle].fncb(f);
-                });
-                fut.get();st
-	#else
                 result = std::async(std::launch::async, [&](std::shared_ptr<IVideoFrame> f)
                 {
                 	streams[handle].fncb(f);
                 }, frame);
-	#endif
 #else
                 streams[handle].fncb(frame);
-
 #endif
             }
         }
