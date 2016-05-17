@@ -222,7 +222,7 @@ void CamaroDual::FrameWatcher()
 						if (dropped > 0)
 						{
                             lastIndex = mFrame->GetFrameIndex();
-							std::cout << dropped << " Frames dropped before Index " << lastIndex << std::endl;
+                            //std::cout << dropped << " Frames dropped before Index " << lastIndex << std::endl;
 						}
 					}
 					//std::cout << " Frame " << mFrame->GetFrameIdx() << std::endl;

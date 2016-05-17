@@ -163,7 +163,7 @@ std::string GetDescPathFromBusInfo(const std::string busInfo,
     for(auto busName : busList)
     {
         auto specficPath = BUS_BASE_PATH+"/"+busName;
-        std::cout<<specficPath<<std::endl;
+        //std::cout<<specficPath<<std::endl;
         if (!MatchPath(specficPath, S_IFDIR) && !MatchPath(specficPath, S_IFLNK))
             continue;
 
@@ -245,7 +245,7 @@ std::shared_ptr<ExtensionInfo> v4l2Helper::GetXUFromBusInfo(
 {
     auto product = std::string(reinterpret_cast<const char *>(cap.card));
     auto bus = std::string(reinterpret_cast<const char *>(cap.bus_info));
-    std::cout<<cap.card<<std::endl<<cap.bus_info<<std::endl;
+    //std::cout<<cap.card<<std::endl<<cap.bus_info<<std::endl;
     auto filePath = GetDescPathFromBusInfo(bus,product);
     if (filePath.empty())
         return {};
