@@ -299,3 +299,5 @@ build-*/
 CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
+/lib/
+/install_manifest.txt
