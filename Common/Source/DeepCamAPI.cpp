@@ -278,14 +278,21 @@ namespace TopGear
         case Camera::Fovea:
             if (source.size()<2)
                 break;
-            if (std::dynamic_pointer_cast<StandardVCDevice>(source[0])==nullptr)
-                vss.push_back(CreateCamera(Camera::CamaroISP, source[0]));
-            else
+
+            if (std::dynamic_pointer_cast<StandardVCDevice>(source[0]))
                 vss.push_back(CreateCamera(Camera::StandardUVC, source[0]));
-            if (std::dynamic_pointer_cast<StandardVCDevice>(source[1])==nullptr)
-                vss.push_back(CreateCamera(Camera::CamaroISP, source[1]));
+            else if (std::dynamic_pointer_cast<FlyCaptureDevice>(source[0]))
+                vss.push_back(CreateCamera(Camera::PointGrey, source[0]));
             else
+                vss.push_back(CreateCamera(Camera::CamaroISP, source[0]));
+
+            if (std::dynamic_pointer_cast<StandardVCDevice>(source[1]))
                 vss.push_back(CreateCamera(Camera::StandardUVC, source[1]));
+            else if (std::dynamic_pointer_cast<FlyCaptureDevice>(source[1]))
+                vss.push_back(CreateCamera(Camera::PointGrey, source[1]));
+            else
+                vss.push_back(CreateCamera(Camera::CamaroISP, source[1]));
+
             vs = CameraFactory<Fovea>::CreateInstance(vss);
             if (vs)
                 Logger::Write(spdlog::level::info, "Fovea camera created");
