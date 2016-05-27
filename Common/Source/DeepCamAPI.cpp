@@ -198,8 +198,11 @@ namespace TopGear
         case DeviceCategory::Etron:
             inventory = DeviceFactory<ExtensionVCDevice<EtronExtensionFilter>>::EnumerateDevices();
             break;
+#ifdef SUPPORT_POINTGREY
         case DeviceCategory::FlyCapture:
             inventory = DeviceFactory<FlyCaptureDevice>::EnumerateDevices();
+            break;
+#endif
         default:
             break;
         }
@@ -247,11 +250,13 @@ namespace TopGear
             if (vs)
                 Logger::Write(spdlog::level::info, "ImpalaE stereo camera created");
             break;
+#ifdef SUPPORT_POINTGREY
         case Camera::PointGrey:
             vs = CameraFactory<PointGrey>::CreateInstance(source);
             if (vs)
                 Logger::Write(spdlog::level::info, "PointGrey camera created");
             break;
+#endif
         case Camera::CamaroDual:
             break;
         case Camera::Fovea:
@@ -281,15 +286,19 @@ namespace TopGear
 
             if (std::dynamic_pointer_cast<StandardVCDevice>(source[0]))
                 vss.push_back(CreateCamera(Camera::StandardUVC, source[0]));
+#ifdef SUPPORT_POINTGREY
             else if (std::dynamic_pointer_cast<FlyCaptureDevice>(source[0]))
                 vss.push_back(CreateCamera(Camera::PointGrey, source[0]));
+#endif
             else
                 vss.push_back(CreateCamera(Camera::CamaroISP, source[0]));
 
             if (std::dynamic_pointer_cast<StandardVCDevice>(source[1]))
                 vss.push_back(CreateCamera(Camera::StandardUVC, source[1]));
+#ifdef SUPPORT_POINTGREY
             else if (std::dynamic_pointer_cast<FlyCaptureDevice>(source[1]))
                 vss.push_back(CreateCamera(Camera::PointGrey, source[1]));
+#endif
             else
                 vss.push_back(CreateCamera(Camera::CamaroISP, source[1]));
 

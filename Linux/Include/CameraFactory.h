@@ -10,14 +10,19 @@
 #include "CamaroISP.h"
 #include "ImpalaE.h"
 #include "Fovea.h"
-#include "PointGrey.h"
 #include "ExtensionAccess.h"
 #include "VideoSourceReader.h"
-#include "FlyCaptureReader.h"
 #include "CamaroDual.h"
 #include "ExtensionVCDevice.h"
 #include "IDiscernible.h"
 #include "ExtensionFilterBase.h"
+
+#include "sys_config.h"
+
+#ifdef SUPPORT_POINTGREY
+#include "PointGrey.h"
+#include "FlyCaptureReader.h"
+#endif
 
 namespace TopGear
 {
@@ -100,7 +105,8 @@ namespace TopGear
                 return std::make_shared<CamaroISP>(reader, ex, it->second);
             return std::make_shared<CamaroISP>(reader, ex);
         }
-        
+
+#ifdef SUPPORT_POINTGREY
         template <>
         template <>
         inline std::shared_ptr<IVideoStream> CameraFactory<PointGrey>::
@@ -115,6 +121,7 @@ namespace TopGear
                 return false;
             return std::make_shared<PointGrey>(reader, device->GetSource(), vflip);
         }
+#endif
 
         template <>
         template <>

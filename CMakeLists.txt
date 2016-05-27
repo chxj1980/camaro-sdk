@@ -21,12 +21,21 @@ endif()
 aux_source_directory(${PROJECT_SOURCE_DIR}/Common/Source DIR_SRCS)
 aux_source_directory(${PROJECT_SOURCE_DIR}/Linux/Source DIR_LINUX_SRCS)
 
-add_library(DeepCamera STATIC ${DIR_SRCS} ${DIR_LINUX_SRCS})
-
 include_directories("${PROJECT_SOURCE_DIR}/Common/Include")
 include_directories("${PROJECT_SOURCE_DIR}/Linux/Include")
 
+OPTION( SUPPORT_POINTGREY "Support FlyCapture API for PointGrey Camera" OFF ) 
+
+if (NOT SUPPORT_POINTGREY)
+	list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/FlyCaptureDevice.cpp)
+	list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/FlyCaptureReader.cpp)
+	list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/PointGrey.cpp)
+endif (NOT SUPPORT_POINTGREY)
+
+add_library(DeepCamera STATIC ${DIR_SRCS} ${DIR_LINUX_SRCS})
+
 OPTION( USE_V4L2_USER_POINTER "Use V4L2 User Pointer Buffer Mode" OFF )
+
 if(CUDA_FOUND)
 	CMAKE_DEPENDENT_OPTION(USE_CUDA "Enable CUDA Zero-Copy (User Pointer Mode Needed)" ON "USE_V4L2_USER_POINTER" OFF)
 	if(USE_CUDA)
@@ -37,6 +46,7 @@ endif(CUDA_FOUND)
 SET(V4L2_BUFFER_NUM 8 CACHE STRING "V4L2 Buffer Number (Default 8)")
 
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/v4l2_config.h.in ${PROJECT_SOURCE_DIR}/Linux/Include/v4l2_config.h )
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/sys_config.h.in ${PROJECT_SOURCE_DIR}/Common/Include/sys_config.h )
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)

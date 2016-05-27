@@ -7,8 +7,13 @@
 #include "GenericVCDevice.h"
 #include "ExtensionVCDevice.h"
 #include "StandardVCDevice.h"
-#include "FlyCaptureDevice.h"
 #include "v4l2helper.h"
+
+#include "sys_config.h"
+
+#ifdef SUPPORT_POINTGREY
+#include "FlyCaptureDevice.h"
+#endif
 
 namespace TopGear
 {
@@ -47,6 +52,7 @@ namespace TopGear
             return genericDevices;
         }
 
+#ifdef SUPPORT_POINTGREY
         template <>
         std::vector<IGenericVCDevicePtr> DeviceFactory<FlyCaptureDevice>::EnumerateDevices()
         {
@@ -54,6 +60,7 @@ namespace TopGear
             FlyCaptureDevice::EnumVideoDeviceSources(genericDevices);
             return genericDevices;
         }
+#endif
 
         template<typename T>
         struct IsExtensionVCDevice

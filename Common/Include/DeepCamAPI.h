@@ -5,6 +5,8 @@
 #include "IVideoStream.h"
 #include "IGenericVCDevice.h"
 
+#include "sys_config.h"
+
 // Generic helper definitions for shared library support
 #ifndef DEEPCAM_API
 #if defined _WIN32 || defined __CYGWIN__
@@ -46,7 +48,9 @@ namespace TopGear
         Standard,
         DeepGlint,
         Etron,
+#ifdef SUPPORT_POINTGREY
         FlyCapture,
+#endif
     };
 
 	enum class Camera
@@ -57,7 +61,9 @@ namespace TopGear
 		CamaroDual,
 		ImpalaE,
         Fovea,
+#ifdef SUPPORT_POINTGREY
         PointGrey,
+#endif
 	};
 
 	enum class Level
