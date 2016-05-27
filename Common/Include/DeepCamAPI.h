@@ -46,6 +46,7 @@ namespace TopGear
         Standard,
         DeepGlint,
         Etron,
+        FlyCapture,
     };
 
 	enum class Camera
@@ -56,6 +57,7 @@ namespace TopGear
 		CamaroDual,
 		ImpalaE,
         Fovea,
+        PointGrey,
 	};
 
 	enum class Level

@@ -271,6 +271,8 @@ CamaroISP::CamaroISP(std::shared_ptr<IVideoStream>& vs,
         registerMap = config.QueryRegisterMap(info.Payload);
 
     formats = pReader->GetAllFormats();
+
+    Flip(false, false);
 }
 
 CamaroISP::~CamaroISP()

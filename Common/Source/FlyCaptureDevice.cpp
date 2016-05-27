@@ -1,5 +1,5 @@
-#include "flycapturedevice.h"
-#include "flycapturesource.h"
+#include "FlyCaptureDevice.h"
+#include "FlyCaptureSource.h"
 
 using namespace TopGear;
 
@@ -84,6 +84,7 @@ FlyCaptureDevice::FlyCaptureDevice(uint32_t token, bool isSN)
     {
         driverName = std::string(info.driverName);
         modelName = std::string(info.modelName);
-        sensorInfo = std::string(info.sensorInfo);
+        sensorInfo = std::to_string(info.serialNumber);
     }
+    BusMgr.reset();
 }

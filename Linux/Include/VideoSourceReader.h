@@ -11,8 +11,7 @@
 #include "LSource.h"
 #include "IMultiVideoSource.h"
 
-//#define USE_V4L2_USER_POINTER
-//#define USE_CUDA
+#include "v4l2_config.h"
 
 namespace TopGear
 {
@@ -36,7 +35,7 @@ namespace TopGear
             void EnumerateStreams(const LSource &one);
             void EnumerateFormats(uint32_t handle);
         private:
-            static const int BUFFER_SIZE = 8;
+            static const int BUFFER_SIZE = V4L2_BUFFER_NUM;
 
             struct StreamState
             {

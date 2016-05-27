@@ -4,5 +4,5 @@
 
 using namespace TopGear;
 
-const VideoFormat VideoFormat::Null { 0,0,0,0 };
+const VideoFormat VideoFormat::Null;
 

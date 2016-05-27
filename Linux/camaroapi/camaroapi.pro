@@ -33,7 +33,7 @@ INCLUDEPATH += ../Include
 
 CONFIG += c++11
 
-#LIBS += -lusb-1.0
+#LIBS += -lusb-1.0 -lflycapture
 
 HEADERS += \
     ../../Common/Include/BufferQueue.h \
@@ -84,14 +84,14 @@ HEADERS += \
     ../../Common/Include/EtronExtensionFilter.h \
     ../../Common/Include/ImpalaE.h \
     ../../Common/Include/Logger.h \
-    ../../Common/Include/pointgrey.h \
-#    ../../Common/Include/flycapturesource.h \
-#    ../../Common/Include/flycapturedevice.h \
-#    ../../Common/Include/flycapturereader.h \
     ../../Common/Include/CamaroISP.h \
     ../../Common/Include/Fovea.h \
     ../../Common/Include/RetrievalMap.h \
-    ../../Common/Include/ThreadPool.h
+    ../../Common/Include/ThreadPool.h \
+    ../../Common/Include/FlyCaptureDevice.h \
+    ../../Common/Include/FlyCaptureReader.h \
+    ../../Common/Include/FlyCaptureSource.h \
+    ../../Common/Include/PointGrey.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \
@@ -110,11 +110,11 @@ SOURCES += \
     ../../Common/Source/DGExtensionFilter.cpp \
     ../../Common/Source/ImpalaE.cpp \
     ../../Common/Source/Logger.cpp \
-#    ../../Common/Source/pointgrey.cpp \
-#    ../../Common/Source/flycapturedevice.cpp \
-#    ../../Common/Source/flycapturereader.cpp \
     ../../Common/Source/CamaroISP.cpp \
     ../../Common/Source/VideoFormat.cpp \
     ../../Common/Source/Fovea.cpp \
     ../../Common/Source/RetrievalMap.cpp \
-    ../../Common/Source/IProcessor.cpp
+    ../../Common/Source/IProcessor.cpp \
+    ../../Common/Source/PointGrey.cpp \
+    ../../Common/Source/FlyCaptureReader.cpp \
+    ../../Common/Source/FlyCaptureDevice.cpp

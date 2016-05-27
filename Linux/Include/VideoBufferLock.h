@@ -23,6 +23,8 @@ namespace TopGear
 			{
 				if (!m_bLocked)
 					return 0;
+                if (frameSize)
+                    return frameSize;
                 return defaultStride*videoFormat.Height;
 			}
 
@@ -33,7 +35,7 @@ namespace TopGear
 
             explicit VideoBufferLock(int dev, int index, unsigned char *pdata,
                 uint64_t timestamp, uint64_t frameNo,
-                int lDefaultStride, const VideoFormat &format)
+                int lDefaultStride, const VideoFormat &format, uint32_t size=0)
                 : handle(dev),
                   bufferIndex(index),
                   pBuffer(pdata),
@@ -41,7 +43,8 @@ namespace TopGear
                   defaultStride(lDefaultStride),
                   videoFormat(format),
                   tm(timestamp),
-                  frameIndex(frameNo)
+                  frameIndex(frameNo),
+                  frameSize(size)
             {
 			}
 
@@ -92,6 +95,7 @@ namespace TopGear
             const VideoFormat videoFormat;
             uint64_t tm;
             uint64_t frameIndex;
+            uint32_t frameSize;
 		};
 	}
 }

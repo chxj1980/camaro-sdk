@@ -2,20 +2,41 @@ cmake_minimum_required (VERSION 2.8.12)
 
 project (DeepCamera)
 
-option (USE_NEON "Use ARM NEON" OFF)
+include(FindCUDA)
+include(CMakeDependentOption)
+
+message("Processor Architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+message("OS Platform: ${CMAKE_SYSTEM}")
+
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "^arm[A-Za-z0-9]+$")
+	option (USE_NEON "Use ARM NEON" ON )
+	set(LIB_DEST arm)
+	if(IS_DIRECTORY /lib/arm-linux-gnueabihf)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfloat-abi=hard")
+	endif()
+else()
+	set(LIB_DEST ${CMAKE_SYSTEM_PROCESSOR})
+endif()
 
 aux_source_directory(${PROJECT_SOURCE_DIR}/Common/Source DIR_SRCS)
 aux_source_directory(${PROJECT_SOURCE_DIR}/Linux/Source DIR_LINUX_SRCS)
-
-#Remove Pointgrey porting
-list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/flycapturedevice.cpp)
-list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/flycapturereader.cpp)
-list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/pointgrey.cpp)
 
 add_library(DeepCamera STATIC ${DIR_SRCS} ${DIR_LINUX_SRCS})
 
 include_directories("${PROJECT_SOURCE_DIR}/Common/Include")
 include_directories("${PROJECT_SOURCE_DIR}/Linux/Include")
+
+OPTION( USE_V4L2_USER_POINTER "Use V4L2 User Pointer Buffer Mode" OFF )
+if(CUDA_FOUND)
+	CMAKE_DEPENDENT_OPTION(USE_CUDA "Enable CUDA Zero-Copy (User Pointer Mode Needed)" ON "USE_V4L2_USER_POINTER" OFF)
+	if(USE_CUDA)
+		include_directories("${CUDA_INCLUDE_DIRS}")
+	endif(USE_CUDA)
+endif(CUDA_FOUND)
+
+SET(V4L2_BUFFER_NUM 8 CACHE STRING "V4L2 Buffer Number (Default 8)")
+
+CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/v4l2_config.h.in ${PROJECT_SOURCE_DIR}/Linux/Include/v4l2_config.h )
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
@@ -29,9 +50,20 @@ else()
 endif()
 
 if(USE_NEON)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon -mfloat-abi=hard")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=neon")
 endif(USE_NEON)
 
-#set(CMAKE_BUILD_TYPE "Release")
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+      "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -Wno-strict-aliasing -g -ggdb")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -Wno-strict-aliasing")
+
+set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/lib" CACHE PATH "Directory for install" FORCE)
+
+install(TARGETS DeepCamera DESTINATION ${LIB_DEST})
+
+message("Build configuration: ${CMAKE_BUILD_TYPE}")
+message("Done.")

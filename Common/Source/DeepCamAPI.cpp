@@ -198,6 +198,8 @@ namespace TopGear
         case DeviceCategory::Etron:
             inventory = DeviceFactory<ExtensionVCDevice<EtronExtensionFilter>>::EnumerateDevices();
             break;
+        case DeviceCategory::FlyCapture:
+            inventory = DeviceFactory<FlyCaptureDevice>::EnumerateDevices();
         default:
             break;
         }
@@ -245,6 +247,11 @@ namespace TopGear
             if (vs)
                 Logger::Write(spdlog::level::info, "ImpalaE stereo camera created");
             break;
+        case Camera::PointGrey:
+            vs = CameraFactory<PointGrey>::CreateInstance(source);
+            if (vs)
+                Logger::Write(spdlog::level::info, "PointGrey camera created");
+            break;
         case Camera::CamaroDual:
             break;
         case Camera::Fovea:
@@ -288,66 +295,5 @@ namespace TopGear
         }
         return vs;
     }
-
-
-//	DEEPCAM_API std::shared_ptr<IVideoStream> DeepCamAPI::CreateCamera(Camera camera)
-//	{
-//		std::vector<IGenericVCDevicePtr> inventory;
-//		std::shared_ptr<IVideoStream> vs;
-//		switch (camera)
-//		{
-//		case Camera::StandardUVC:
-//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceCategory::Standard);
-//			if (inventory.size() > 0)
-//			{
-//				vs = CameraFactory<StandardUVC>::CreateInstance(inventory[0]);
-//				if (vs)
-//					Logger::Write(spdlog::level::info, "Standard UVC camera created");
-//			}
-//			break;
-//		case Camera::Camaro:
-//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceCategory::DeepGlint);
-//			for (auto device : inventory)
-//			{
-//				vs = CameraFactory<Camaro>::CreateInstance(device);
-//				auto dc = std::dynamic_pointer_cast<IDeviceControl>(vs);
-//				if (dc)
-//				{
-//					PropertyData<uint8_t> role;
-//					dc->GetControl("DeviceRole", role);
-//					if (role.Payload == 0)
-//					{
-//						Logger::Write(spdlog::level::info, "Camaro camera created");
-//						break;
-//					}
-//					else
-//						Logger::Write(spdlog::level::warn, "Camaro camera found, but in slave mode");
-//				}
-//				vs.reset();
-//			}
-//			break;
-//		case Camera::CamaroDual:
-//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceCategory::DeepGlint);
-//			vs = CameraFactory<CamaroDual>::CreateInstance(inventory);
-//			if (vs)
-//				Logger::Write(spdlog::level::info, "Camaro stereo camera created");
-//			break;
-//		case Camera::ImpalaE:
-//			inventory = DeepCamAPIInternal::EnumerateDevices(DeviceCategory::Etron);
-//			for (auto device : inventory)
-//			{
-//				vs = CameraFactory<ImpalaE>::CreateInstance(device);
-//				if (vs)
-//				{
-//					Logger::Write(spdlog::level::info, "ImpalaE stereo camera created");
-//					break;
-//				}
-//			}
-//			break;
-//		default:
-//			break;
-//		}
-//		return vs;
-//	}
 }
 

@@ -7,6 +7,7 @@
 #include "GenericVCDevice.h"
 #include "ExtensionVCDevice.h"
 #include "StandardVCDevice.h"
+#include "FlyCaptureDevice.h"
 #include "v4l2helper.h"
 
 namespace TopGear
@@ -43,6 +44,14 @@ namespace TopGear
             {
 
             }
+            return genericDevices;
+        }
+
+        template <>
+        std::vector<IGenericVCDevicePtr> DeviceFactory<FlyCaptureDevice>::EnumerateDevices()
+        {
+            std::vector<IGenericVCDevicePtr> genericDevices;
+            FlyCaptureDevice::EnumVideoDeviceSources(genericDevices);
             return genericDevices;
         }
 

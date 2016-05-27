@@ -4,6 +4,7 @@
 #include "ICameraControl.h"
 #include "IDeviceControl.h"
 #include "CameraSoloBase.h"
+#include "FlyCaptureSource.h"
 
 namespace TopGear
 {
@@ -22,8 +23,6 @@ namespace TopGear
         virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
         virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
 
-        virtual bool StartStream() override;
-        virtual bool StopStream() override;
 
 //        virtual bool SetControl(std::string name, IPropertyData &val) override;
 //        virtual bool SetControl(std::string name, IPropertyData &&val) override;
@@ -33,13 +32,16 @@ namespace TopGear
         VideoFrameCallbackFn fnCb = nullptr;
         std::vector<VideoFormat> formats;
         int currentFormatIndex = -1;
+        std::shared_ptr<FlyCaptureSource> pgsource;
+        std::shared_ptr<bool> flipState;
     public:
         virtual int Flip(bool vertical, bool horizontal) override;
         virtual int GetExposure(uint32_t& val) override;
         virtual int SetExposure(uint32_t val) override;
         virtual int GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB) override;
         virtual int SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB) override;
-        explicit PointGrey(std::shared_ptr<IVideoStream> &vs);
+        PointGrey(std::shared_ptr<IVideoStream> &vs, std::shared_ptr<ISource> &source,
+                  std::shared_ptr<bool> &vflip);
         virtual ~PointGrey();
     };
 }

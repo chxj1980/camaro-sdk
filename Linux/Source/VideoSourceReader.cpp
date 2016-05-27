@@ -27,6 +27,8 @@ using namespace Linux;
 
 //#define ASYNC_INVOKE
 
+#include "v4l2_config.h"
+
 #ifdef USE_CUDA
 #include "cuda_runtime.h"
 #endif
@@ -234,7 +236,8 @@ std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &in
                                            tm.count(),
                                            streams[handle].frameCounter,
                                            streams[handle].defaultStride,
-                                           streams[handle].formats[streams[handle].currentFormatIndex]));
+                                           streams[handle].formats[streams[handle].currentFormatIndex],
+                                           queue_buf.bytesused));
     ++streams[handle].frameCounter;
     return frame;
 }
@@ -303,8 +306,14 @@ void VideoSourceReader::EnumerateFormats(uint32_t handle)
             frameval.height = height;
             while(ioctl(handle, VIDIOC_ENUM_FRAMEINTERVALS, &frameval)==0)
             {
-                rate = (int)(frameval.discrete.denominator/frameval.discrete.numerator);
-                VideoFormat format { width,height,rate,0 };
+                if (frameval.type==V4L2_FRMIVAL_TYPE_DISCRETE)
+                    rate = (int)(frameval.discrete.denominator/frameval.discrete.numerator);
+                else
+                    rate = (int)(frameval.stepwise.max.denominator/frameval.stepwise.max.numerator);
+                VideoFormat format;
+                format.Width = width;
+                format.Height = height;
+                format.MaxRate = rate;
                 memcpy(format.PixelFormat, &fmt.pixelformat, 4);
                 videoFormats.emplace_back(format);
                 frameval.index++;

@@ -332,6 +332,8 @@ Camaro::Camaro(std::shared_ptr<IVideoStream>& vs,
 	if (header != 0 || footer != 0)
 		for (auto &f : formats)
 			f.Height -= header + footer;
+
+    Flip(false, false);
 }
 
 Camaro::~Camaro()

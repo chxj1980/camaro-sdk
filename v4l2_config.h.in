@@ -1,0 +1,9 @@
+#ifndef _V4L2_CONFIG_H
+#define _V4L2_CONFIG_H
+
+#cmakedefine USE_V4L2_USER_POINTER
+#cmakedefine USE_CUDA
+
+#cmakedefine V4L2_BUFFER_NUM @V4L2_BUFFER_NUM@
+
+#endif
