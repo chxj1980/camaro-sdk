@@ -11,15 +11,6 @@ namespace TopGear
 			return pReader->SetCurrentFormat(formatIndex);
 		}
 
-		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override
-		{
-			pReader->RegisterFrameCallback(fn);
-		}
-		virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override
-		{
-			pReader->RegisterFrameCallback(pCB);
-		}
-
 		virtual const VideoFormat& GetCurrentFormat() const override
 		{
 			return pReader->GetCurrentFormat();

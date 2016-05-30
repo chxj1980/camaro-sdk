@@ -46,16 +46,6 @@ bool PointGrey::SetCurrentFormat(uint32_t formatIndex)
     return true;
 }
 
-void PointGrey::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
-{
-    pReader->RegisterFrameCallback(fn);
-}
-
-void PointGrey::RegisterFrameCallback(IVideoFrameCallback* pCB)
-{
-    pReader->RegisterFrameCallback(pCB);
-}
-
 int PointGrey::Flip(bool vertical, bool horizontal)
 {
     *flipState = vertical;

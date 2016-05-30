@@ -87,9 +87,8 @@ void Camaro::ObtainExtendedLines()
 	footer = enF ? EMBEDDED_LINES : 0;
 }
 
-void Camaro::OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr>& frames)
+void Camaro::PostProcess(std::vector<IVideoFramePtr> &frames)
 {
-    (void)parent;
 	if (frames.size() != 1)
 		return;
 	auto frame = frames[0];
@@ -109,8 +108,6 @@ void Camaro::OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr>& frames)
 		(header + h)*stride, footer > 0 ? footer*stride : 0);
 	frames.clear();
 	frames.emplace_back(ex);
-	if (fnCb)
-		fnCb(*this, frames);
 }
 
 int Camaro::Flip(bool vertical, bool horizontal)
@@ -326,7 +323,6 @@ Camaro::Camaro(std::shared_ptr<IVideoStream>& vs,
 	if (Camaro::GetControl("DeviceInfo", info))
 		registerMap = config.QueryRegisterMap(info.Payload);
 
-	vs->RegisterFrameCallback(std::bind(&Camaro::OnFrame, this, std::placeholders::_1, std::placeholders::_2));
 	ObtainExtendedLines();
     formats = pReader->GetAllFormats();
 	if (header != 0 || footer != 0)
@@ -376,16 +372,6 @@ bool Camaro::SetCurrentFormat(uint32_t formatIndex)
 		return false;
 	currentFormatIndex = formatIndex;
 	return true;
-}
-
-void Camaro::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
-{
-	fnCb = fn;
-}
-
-void Camaro::RegisterFrameCallback(IVideoFrameCallback* pCB)
-{
-	fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
 }
 
 bool Camaro::StartStream()

@@ -24,9 +24,6 @@ namespace TopGear
 		virtual const VideoFormat &GetCurrentFormat() const override;
 		virtual bool SetCurrentFormat(uint32_t formatIndex) override;	
 
-		virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
-		virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
-
 		virtual bool StartStream() override;
 		virtual bool StopStream() override;
 
@@ -41,10 +38,8 @@ namespace TopGear
 		virtual int SetRegister(uint16_t regaddr, uint16_t regval) override;
 		virtual int GetRegister(uint16_t regaddr, uint16_t &regval) override;
 	protected:
-		void OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr> &frames);
-		//std::shared_ptr<IExtensionAccess> extension;
-		ExtensionAccessAdapter extensionAdapter;
-		VideoFrameCallbackFn fnCb = nullptr;
+        virtual void PostProcess(std::vector<IVideoFramePtr> &frames) override;
+        ExtensionAccessAdapter extensionAdapter;
 		std::vector<VideoFormat> formats;
 		int currentFormatIndex = -1;
 	private:

@@ -269,7 +269,6 @@ CamaroISP::CamaroISP(std::shared_ptr<IVideoStream>& vs,
     PropertyData<std::string> info;
     if (CamaroISP::GetControl("DeviceInfo", info))
         registerMap = config.QueryRegisterMap(info.Payload);
-
     formats = pReader->GetAllFormats();
 
     Flip(false, false);
@@ -308,14 +307,4 @@ bool CamaroISP::SetCurrentFormat(uint32_t formatIndex)
         return false;
     currentFormatIndex = formatIndex;
     return true;
-}
-
-void CamaroISP::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
-{
-    pReader->RegisterFrameCallback(fn);
-}
-
-void CamaroISP::RegisterFrameCallback(IVideoFrameCallback* pCB)
-{
-    pReader->RegisterFrameCallback(pCB);
 }

@@ -24,9 +24,6 @@ namespace TopGear
         virtual const VideoFormat &GetCurrentFormat() const override;
         virtual bool SetCurrentFormat(uint32_t formatIndex) override;
 
-        virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
-        virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
-
         virtual bool SetControl(std::string name, IPropertyData &val) override;
         virtual bool SetControl(std::string name, IPropertyData &&val) override;
         virtual bool GetControl(std::string name, IPropertyData &val) override;
@@ -43,6 +40,7 @@ namespace TopGear
         int currentFormatIndex = -1;
     private:
         const RegisterMap * registerMap = nullptr;
+        VideoFrameCallbackFn fncb = nullptr;
     public:
         virtual int Flip(bool vertical, bool horizontal) override;
         virtual int GetExposure(uint32_t& val) override;

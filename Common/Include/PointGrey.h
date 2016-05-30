@@ -20,16 +20,10 @@ namespace TopGear
         virtual const VideoFormat &GetCurrentFormat() const override;
         virtual bool SetCurrentFormat(uint32_t formatIndex) override;
 
-        virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
-        virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
-
-
 //        virtual bool SetControl(std::string name, IPropertyData &val) override;
 //        virtual bool SetControl(std::string name, IPropertyData &&val) override;
 //        virtual bool GetControl(std::string name, IPropertyData &val) override;
     protected:
-        void OnFrame(IVideoStream &parent, std::vector<IVideoFramePtr> &frames);
-        VideoFrameCallbackFn fnCb = nullptr;
         std::vector<VideoFormat> formats;
         int currentFormatIndex = -1;
         std::shared_ptr<FlyCaptureSource> pgsource;

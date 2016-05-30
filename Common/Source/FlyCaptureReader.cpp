@@ -34,31 +34,10 @@ FlyCaptureReader::FlyCaptureReader(std::shared_ptr<IGenericVCDevice> &device,
     if (source == nullptr)
         return;
     pCamera = &source->GetCameraSource();
-    // Set sensor pixel format as YUV422:
 
-    FlyCapture2::Format7ImageSettings setting;
-    unsigned int psz;
-    float per;
-    auto error = pCamera->GetFormat7Configuration(&setting, &psz, &per);
-    if (error != FlyCapture2::PGRERROR_OK)
-    {
-        //PrintError(error);
-        //return SENSOR_GET_STATUS_ERROR;
-        return;
-    }
-    setting.mode = FlyCapture2::MODE_0;
-    setting.pixelFormat = FlyCapture2::PIXEL_FORMAT_422YUV8;
-    psz = 24960;
-    error = pCamera->SetFormat7Configuration(&setting, psz);
-    if (error != FlyCapture2::PGRERROR_OK)
-    {
-        //PrintError(error);
-        //return SENSOR_SET_STATUS_ERROR;
-        return;
-    }
     // Set the camera configuration
     FlyCapture2::FC2Config conf;
-    error = pCamera->GetConfiguration(&conf);
+    auto error = pCamera->GetConfiguration(&conf);
     if (error != FlyCapture2::PGRERROR_OK) {
         //PrintError(error);
         //return SENSOR_GET_STATUS_ERROR;
