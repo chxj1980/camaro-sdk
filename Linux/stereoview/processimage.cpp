@@ -23,6 +23,8 @@
 #include <jpeglib.h>
 #include <thread>
 
+#include <libyuv.h>
+
 #define NEED_GPSIMU 1
 ////////////////////////////////////////////////////////
 
@@ -113,23 +115,26 @@ void convert_yuyv_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int widt
 
 void convert_i420_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int width, int height)
 {
-    int i;
     unsigned char * raw_u =  raw + width*height;
     unsigned char * raw_v =  raw_u + width*height/4;
-    #pragma omp parallel for shared(raw, rgb, raw_u, raw_v, width, height) private(i)
-    for(i=0;i<height;++i)
-    {
-        unsigned char *py = raw + i*width;
-        unsigned char *pu = raw_u + (i>>1)*(width>>1);
-        unsigned char *pv = raw_v + (i>>1)*(width>>1);
-        unsigned char *pixel = rgb + width*3*i;
-        for(auto j=0;j<width;j+=2)
-        {
-            convert_yuv_to_rgb_pixel(*(py++),*pu,*pv, pixel);
-            convert_yuv_to_rgb_pixel(*(py++),*(pu++),*(pv++), pixel+3);
-            pixel+=6;
-        }
-    }
+    libyuv::I420ToRAW(raw, width, raw_u, width/2, raw_v, width/2, rgb, width*3, width, height);
+
+//    int i;
+
+//    #pragma omp parallel for shared(raw, rgb, raw_u, raw_v, width, height) private(i)
+//    for(i=0;i<height;++i)
+//    {
+//        unsigned char *py = raw + i*width;
+//        unsigned char *pu = raw_u + (i>>1)*(width>>1);
+//        unsigned char *pv = raw_v + (i>>1)*(width>>1);
+//        unsigned char *pixel = rgb + width*3*i;
+//        for(auto j=0;j<width;j+=2)
+//        {
+//            convert_yuv_to_rgb_pixel(*(py++),*pu,*pv, pixel);
+//            convert_yuv_to_rgb_pixel(*(py++),*(pu++),*(pv++), pixel+3);
+//            pixel+=6;
+//        }
+//    }
 }
 
 TopGear::PropertyData<std::vector<float>> DepthTable;
@@ -447,7 +452,7 @@ ProcessImage::ProcessImage(QWidget *parent)
             std::make_shared<TopGear::DirectorySource>("/home/nick/workspace/Libra-F/demo/file_imgs","jpg");
 
     std::shared_ptr<TopGear::IGenericVCDevice> device =
-            std::make_shared<TopGear::ImageDevice>(source, TopGear::VideoFormat(1920, 1080, 20));
+            std::make_shared<TopGear::ImageDevice>(source, TopGear::VideoFormat(1920, 1080, 30));
 
     camera = deepcam.CreateCamera(TopGear::Camera::JpegSequence, device);
     if (camera)

@@ -73,3 +73,4 @@ INCLUDEPATH += SDL/include
 
 unix|win32: LIBS += -lflycapture
 unix|win32: LIBS += -lturbojpeg
+LIBS += -lyuv
