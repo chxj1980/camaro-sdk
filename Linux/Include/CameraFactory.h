@@ -24,6 +24,11 @@
 #include "FlyCaptureReader.h"
 #endif
 
+#ifdef SUPPORT_JPEG_SEQUENCE
+#include "ImageSequence.h"
+#include "ImageDevice.h"
+#endif
+
 namespace TopGear
 {
     namespace Linux
@@ -120,6 +125,19 @@ namespace TopGear
             if (source == nullptr)
                 return false;
             return std::make_shared<PointGrey>(reader, device->GetSource(), vflip);
+        }
+#endif
+
+#ifdef SUPPORT_JPEG_SEQUENCE
+        template <>
+        template <>
+        inline std::shared_ptr<IVideoStream> CameraFactory<ImageSequence>::
+        CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
+        {
+            auto idevice = std::dynamic_pointer_cast<ImageDevice>(device);
+            if (idevice == nullptr)
+                return false;
+            return std::make_shared<ImageSequence>(idevice);
         }
 #endif
 

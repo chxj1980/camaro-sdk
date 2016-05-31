@@ -2,5 +2,11 @@
 #define _SYS_CONFIG_H
 
 #cmakedefine SUPPORT_POINTGREY
+#cmakedefine SUPPORT_JPEG_SEQUENCE
+
+#cmakedefine USE_V4L2_USER_POINTER
+#cmakedefine USE_CUDA
+
+#cmakedefine VIDEO_BUFFER_NUM @VIDEO_BUFFER_NUM@
 
 #endif

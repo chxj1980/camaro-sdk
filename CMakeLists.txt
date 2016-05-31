@@ -32,6 +32,14 @@ if (NOT SUPPORT_POINTGREY)
 	list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/PointGrey.cpp)
 endif (NOT SUPPORT_POINTGREY)
 
+OPTION( SUPPORT_JPEG_SEQUENCE "Support JPEG Sequence as Virtual Camera (Need turbojpeg Library)" OFF ) 
+
+if (NOT SUPPORT_JPEG_SEQUENCE)
+	list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/FileSource.cpp)
+	list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/ImageSequence.cpp)
+endif (NOT SUPPORT_JPEG_SEQUENCE)
+
+
 add_library(DeepCamera STATIC ${DIR_SRCS} ${DIR_LINUX_SRCS})
 
 OPTION( USE_V4L2_USER_POINTER "Use V4L2 User Pointer Buffer Mode" OFF )
@@ -43,9 +51,8 @@ if(CUDA_FOUND)
 	endif(USE_CUDA)
 endif(CUDA_FOUND)
 
-SET(V4L2_BUFFER_NUM 8 CACHE STRING "V4L2 Buffer Number (Default 8)")
+SET(VIDEO_BUFFER_NUM 8 CACHE STRING "Video Buffer Number (Default 8)")
 
-CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/v4l2_config.h.in ${PROJECT_SOURCE_DIR}/Linux/Include/v4l2_config.h )
 CONFIGURE_FILE( ${CMAKE_SOURCE_DIR}/sys_config.h.in ${PROJECT_SOURCE_DIR}/Common/Include/sys_config.h )
 
 include(CheckCXXCompilerFlag)

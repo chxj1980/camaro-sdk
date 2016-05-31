@@ -64,6 +64,9 @@ namespace TopGear
 #ifdef SUPPORT_POINTGREY
         PointGrey,
 #endif
+#ifdef SUPPORT_JPEG_SEQUENCE
+        JpegSequence,
+#endif
 	};
 
 	enum class Level

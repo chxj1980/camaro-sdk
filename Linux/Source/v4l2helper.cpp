@@ -143,15 +143,12 @@ bool SearchDir(std::string dir, std::string matchStr, std::string &result)
 
 }
 
-#define TK1
-
 std::string GetDescPathFromBusInfo(const std::string busInfo,
                                    const std::string productName)
 {
     const std::string DEST_FILE = "descriptors";
     const std::string PRODUCT_FILE = "product";
 
-#ifdef TK1
     const std::string BUS_BASE_PATH = "/sys/bus/usb/devices";
 
     auto rpos = busInfo.rfind('-');
@@ -180,60 +177,6 @@ std::string GetDescPathFromBusInfo(const std::string busInfo,
             return destPath;
         }
     }
-#else
-    const std::string BUS_BASE_PATH = "/sys/devices/pci0000:00";
-
-
-    if (!MatchPath(BUS_BASE_PATH, S_IFDIR))
-        return {};
-
-    //Prepare path strings
-    auto pos = busInfo.find('-');
-    auto rpos = busInfo.rfind('-');
-    if (pos==std::string::npos || rpos==std::string::npos)
-        return {};
-    auto busStr = busInfo.substr(0,pos);
-    auto locationStr = busInfo.substr(pos+1,rpos-pos-1);
-    auto terminalStr = busInfo.substr(rpos+1);
-
-    std::string locationPath;
-    if (SearchDir(BUS_BASE_PATH,locationStr,locationPath))
-    {
-        locationPath += "/" +locationStr;
-        std::vector<std::string> busList;
-        GetDirs(locationPath,busList,busStr);
-        for(auto busName : busList)
-        {
-            auto offset = busName.find(busStr) + busStr.length();
-            auto prefix= busName.substr(offset)+"-";
-            std::string end;
-            size_t pos = 0;
-            while((pos = terminalStr.find('.', pos))!=std::string::npos)
-            {
-                end += prefix + terminalStr.substr(0, pos) + "/";
-                pos++;
-            }
-            end += prefix + terminalStr;
-            auto specficPath = locationPath+"/"+busName+"/"+end;
-
-            if (!MatchPath(specficPath,S_IFDIR))
-                continue;
-
-            auto destPath = specficPath + "/"+DEST_FILE;
-            auto prodPath = specficPath + "/"+PRODUCT_FILE;
-            if (MatchPath(destPath,S_IFREG) && MatchPath(prodPath,S_IFREG))
-            {
-                std::ifstream fp(prodPath.c_str());
-                std::string fileVal;
-                std::getline (fp, fileVal);
-                fp.close();
-                if (fileVal!=productName)
-                    continue;
-                return destPath;
-            }
-        }
-    }
-#endif
     return {};
 }
 

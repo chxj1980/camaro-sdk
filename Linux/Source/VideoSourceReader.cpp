@@ -27,8 +27,6 @@ using namespace Linux;
 
 //#define ASYNC_INVOKE
 
-#include "v4l2_config.h"
-
 #ifdef USE_CUDA
 #include "cuda_runtime.h"
 #endif

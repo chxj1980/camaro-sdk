@@ -257,6 +257,13 @@ namespace TopGear
                 Logger::Write(spdlog::level::info, "PointGrey camera created");
             break;
 #endif
+#ifdef SUPPORT_JPEG_SEQUENCE
+        case Camera::JpegSequence:
+            vs = CameraFactory<ImageSequence>::CreateInstance(source);
+            if (vs)
+                Logger::Write(spdlog::level::info, "Virtual camera created");
+            break;
+#endif
         case Camera::CamaroDual:
             break;
         case Camera::Fovea:
@@ -290,6 +297,10 @@ namespace TopGear
             else if (std::dynamic_pointer_cast<FlyCaptureDevice>(source[0]))
                 vss.push_back(CreateCamera(Camera::PointGrey, source[0]));
 #endif
+#ifdef SUPPORT_JPEG_SEQUENCE
+            else if (std::dynamic_pointer_cast<ImageDevice>(source[0]))
+                vss.push_back(CreateCamera(Camera::JpegSequence, source[0]));
+#endif
             else
                 vss.push_back(CreateCamera(Camera::CamaroISP, source[0]));
 
@@ -298,6 +309,10 @@ namespace TopGear
 #ifdef SUPPORT_POINTGREY
             else if (std::dynamic_pointer_cast<FlyCaptureDevice>(source[1]))
                 vss.push_back(CreateCamera(Camera::PointGrey, source[1]));
+#endif
+#ifdef SUPPORT_JPEG_SEQUENCE
+            else if (std::dynamic_pointer_cast<ImageDevice>(source[1]))
+                vss.push_back(CreateCamera(Camera::JpegSequence, source[1]));
 #endif
             else
                 vss.push_back(CreateCamera(Camera::CamaroISP, source[1]));

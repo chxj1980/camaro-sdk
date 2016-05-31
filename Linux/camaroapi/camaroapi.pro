@@ -91,7 +91,10 @@ HEADERS += \
     ../../Common/Include/FlyCaptureDevice.h \
     ../../Common/Include/FlyCaptureReader.h \
     ../../Common/Include/FlyCaptureSource.h \
-    ../../Common/Include/PointGrey.h
+    ../../Common/Include/PointGrey.h \
+    ../../Common/Include/ImageDevice.h \
+    ../../Common/Include/FileSource.h \
+    ../../Common/Include/ImageSequence.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \
@@ -117,4 +120,6 @@ SOURCES += \
     ../../Common/Source/IProcessor.cpp \
     ../../Common/Source/PointGrey.cpp \
     ../../Common/Source/FlyCaptureReader.cpp \
-    ../../Common/Source/FlyCaptureDevice.cpp
+    ../../Common/Source/FlyCaptureDevice.cpp \
+    ../../Common/Source/FileSource.cpp \
+    ../../Common/Source/ImageSequence.cpp

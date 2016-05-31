@@ -11,7 +11,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = stereoview
 TEMPLATE = app
 
-
 SOURCES += main.cpp\
         processimage.cpp \
     ../apitest/bayer.cpp \
@@ -53,9 +52,6 @@ HEADERS  += processimage.h \
 
 CONFIG += c++11
 
-QMAKE_CXXFLAGS += -fopenmp
-LIBS += -lgomp -ljpeg -lusb-1.0
-
 CONFIG(debug, debug|release) {
     unix:!macx: LIBS += -L$$PWD/../camaroapi/build/debug/ -lcamaroapi
     unix:!macx: PRE_TARGETDEPS += $$PWD/../camaroapi/build/debug/libcamaroapi.a
@@ -63,6 +59,9 @@ CONFIG(debug, debug|release) {
     unix:!macx: LIBS += -L$$PWD/../camaroapi/build/release/ -lcamaroapi
     unix:!macx: PRE_TARGETDEPS += $$PWD/../camaroapi/build/release/libcamaroapi.a
 }
+
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -lgomp -lusb-1.0
 
 INCLUDEPATH += $$PWD/../Include
 DEPENDPATH += $$PWD/../Include
@@ -73,3 +72,4 @@ DEPENDPATH += $$PWD/../../Common/Include
 INCLUDEPATH += SDL/include
 
 unix|win32: LIBS += -lflycapture
+unix|win32: LIBS += -lturbojpeg

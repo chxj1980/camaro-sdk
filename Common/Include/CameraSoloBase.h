@@ -25,6 +25,7 @@ namespace TopGear
         {
             (void)source;
             PostProcess(frames);
+            Notify(frames);
             if (fncb)
                 fncb(*this, frames);
         }

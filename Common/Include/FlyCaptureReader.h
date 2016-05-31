@@ -13,13 +13,7 @@
 
 #include <flycapture/FlyCapture2.h>
 
-#ifdef __linux__
-#include "v4l2_config.h"
-#endif
-
-#ifndef V4L2_BUFFER_NUM
-#define V4L2_BUFFER_NUM     8
-#endif
+#include "sys_config.h"
 
 namespace TopGear
 {
@@ -44,7 +38,7 @@ namespace TopGear
         void EnumerateFormats();
 
     private:
-        static const int BUFFER_SIZE = V4L2_BUFFER_NUM;
+        static const int BUFFER_SIZE = VIDEO_BUFFER_NUM;
 
         FlyCapture2::Camera *pCamera = nullptr;
 
