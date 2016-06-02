@@ -37,7 +37,15 @@ namespace TopGear
             std::memcpy(PixelFormat, rhs.PixelFormat, 4);
         }
 
+        friend bool operator ==(const VideoFormat& lhs, const VideoFormat& rhs)
+        {
+            return &lhs==&rhs;
+        }
 
+        friend bool operator !=(const VideoFormat& lhs, const VideoFormat& rhs)
+        {
+            return &lhs!=&rhs;
+        }
 
         static const VideoFormat Null;
 	};

@@ -24,11 +24,9 @@ void Fovea::FrameWatcher()
     {
         frames[frameEx.first] = std::move(frameEx.second);
 
-        if (frames[0] && frames[1])
+        if (frames[0] && frames[1] && keyStreamIndex==frameEx.first)    //Key frame here and no empty frame
         {
             auto vector = std::vector<IVideoFramePtr> { frames[0], frames[1] };
-            frames[0].reset();
-            frames[1].reset();
             Notify(vector);
             if (fnCb)
                 fnCb(*this, vector);
@@ -100,10 +98,18 @@ int Fovea::GetCurrentStream(std::shared_ptr<IVideoStream> &current)
 
 void Fovea::StartStreams()
 {
-//    for(auto &item : videoStreams)
-//        item->StartStream();
-    videoStreams[0]->StartStream();
-    videoStreams[1]->StartStream();
+    StopStreams();
+    if (keyStreamIndex<0)
+        return;
+    for(auto &item : videoStreams)
+    {
+        if (item->GetCurrentFormat()==VideoFormat::Null)
+        {
+            StopStreams();
+            return;
+        }
+        item->StartStream();
+    }
     frameWatchThread = std::thread(&Fovea::FrameWatcher, this);
     threadOn = frameWatchThread.joinable();
 }
@@ -163,7 +169,7 @@ int Fovea::SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB)
 bool Fovea::StartStream()
 {
     StartStreams();
-    return true;
+    return threadOn;
 }
 
 bool Fovea::StopStream()
@@ -234,8 +240,26 @@ const VideoFormat &Fovea::GetCurrentFormat() const
 bool Fovea::SetCurrentFormat(uint32_t formatIndex)
 {
     if (currentStream==nullptr)
-        return -1;
-    return currentStream->SetCurrentFormat(formatIndex);
+        return false;
+    if  (!currentStream->SetCurrentFormat(formatIndex))
+        return false;
+
+    //Update keyStreamIndex with higher-rate stream
+    int rate=0;
+    int index=0;
+    auto i = 0;
+    for(auto &stream : videoStreams)
+    {
+        auto &format = stream->GetCurrentFormat();
+        if (format!= VideoFormat::Null && format.MaxRate>rate)
+        {
+            rate = format.MaxRate;
+            index = i;
+        }
+        ++i;
+    }
+    keyStreamIndex = index;
+    return true;
 }
 
 void Fovea::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
