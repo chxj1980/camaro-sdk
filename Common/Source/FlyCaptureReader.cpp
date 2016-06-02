@@ -268,6 +268,10 @@ void FlyCaptureReader::RegisterReaderCallback(uint32_t index, const ReaderCallba
 void FlyCaptureReader::OnReadSample(FlyCapture2::Image* pImage, const void* pCallbackData)
 {
     (void)pCallbackData;
+
+    if (!streamOn)
+        return;
+
     std::unique_lock<std::mutex> lk(mtx, std::try_to_lock);
 
     if (!lk.owns_lock())
