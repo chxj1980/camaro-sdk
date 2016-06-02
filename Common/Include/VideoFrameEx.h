@@ -44,13 +44,8 @@ namespace TopGear
 			return actualStride*actualHeight;
 		}
 
-		virtual VideoFormat GetFormat() const override
+        virtual const VideoFormat &GetFormat() const override
 		{
-			auto format = frame->GetFormat();
-			format.Width = actualWidth;
-			format.Height = actualHeight;
-			if (fourcc > 0)
-				std::memcpy(format.PixelFormat, &fourcc, 4);
 			return format;
 		}
 
@@ -62,6 +57,11 @@ namespace TopGear
 			  actualWidth(width), actualHeight(height), idx(index),
 			  extra(extraOffset), extraLen(extraSize), fourcc(cc)
 		{
+            format = frame->GetFormat();
+            format.Width = actualWidth;
+            format.Height = actualHeight;
+            if (fourcc > 0)
+                std::memcpy(format.PixelFormat, &fourcc, 4);
 		}
 
 		virtual ~VideoFrameEx()
@@ -69,6 +69,7 @@ namespace TopGear
 		}
 	protected:
 		std::shared_ptr<IVideoFrame> frame;
+        VideoFormat format;
 		const uint32_t offset;
 		const uint32_t actualStride;
 		const uint32_t actualWidth;

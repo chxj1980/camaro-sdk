@@ -90,27 +90,40 @@ void SaveJpg(TopGear::VideoFormat &format, uint8_t *base, const std::string &fil
 
 void convert_yuyv_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int width, int height, bool inv = false)
 {
-    int i,j;
-    #pragma omp parallel for shared(raw,rgb) private(i,j)
-    for(i=0;i<height;++i)
+//    int i,j;
+//    #pragma omp parallel for shared(raw,rgb) private(i,j)
+//    for(i=0;i<height;++i)
+//    {
+//        int offset = width*2*i;
+//        int rgb_offset = width*3*i;
+//        for(j=0;j<width*2;j+=4)
+//        {
+//            unsigned char *pixel = rgb+rgb_offset+(j>>1)*3;
+//            if (inv)
+//            {
+//                convert_yuv_to_rgb_pixel(raw[offset+j+1],raw[offset+j],raw[offset+j+2],pixel);
+//                convert_yuv_to_rgb_pixel(raw[offset+j+3],raw[offset+j],raw[offset+j+2],pixel+3);
+//            }
+//            else
+//            {
+//                convert_yuv_to_rgb_pixel(raw[offset+j],raw[offset+j+1],raw[offset+j+3],pixel);
+//                convert_yuv_to_rgb_pixel(raw[offset+j+2],raw[offset+j+1],raw[offset+j+3],pixel+3);
+//            }
+//        }
+//    }
+    static std::unique_ptr<uint8_t[]> temp;
+    static int size = 0;
+
+    int argbzise = width*height*4;
+
+    if (argbzise!=size)
     {
-        int offset = width*2*i;
-        int rgb_offset = width*3*i;
-        for(j=0;j<width*2;j+=4)
-        {
-            unsigned char *pixel = rgb+rgb_offset+(j>>1)*3;
-            if (inv)
-            {
-                convert_yuv_to_rgb_pixel(raw[offset+j+1],raw[offset+j],raw[offset+j+2],pixel);
-                convert_yuv_to_rgb_pixel(raw[offset+j+3],raw[offset+j],raw[offset+j+2],pixel+3);
-            }
-            else
-            {
-                convert_yuv_to_rgb_pixel(raw[offset+j],raw[offset+j+1],raw[offset+j+3],pixel);
-                convert_yuv_to_rgb_pixel(raw[offset+j+2],raw[offset+j+1],raw[offset+j+3],pixel+3);
-            }
-        }
+        size = argbzise;
+        temp = std::unique_ptr<uint8_t[]>(new uint8_t[size]);
     }
+
+    libyuv::UYVYToARGB(raw,width*2,temp.get(),width*4,width,height);
+    libyuv::ARGBToRAW(temp.get(), width*4, rgb, width*3,width,height);
 }
 
 void convert_i420_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int width, int height)
@@ -118,7 +131,6 @@ void convert_i420_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int widt
     unsigned char * raw_u =  raw + width*height;
     unsigned char * raw_v =  raw_u + width*height/4;
     libyuv::I420ToRAW(raw, width, raw_u, width/2, raw_v, width/2, rgb, width*3, width, height);
-
 //    int i;
 
 //    #pragma omp parallel for shared(raw, rgb, raw_u, raw_v, width, height) private(i)
@@ -422,47 +434,47 @@ ProcessImage::ProcessImage(QWidget *parent)
 //        camera->StartStream();
 //    }
 
-//    auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::FlyCapture);
-//    //std::cout<<devices.size()<<std::endl;
-//    if (!devices.empty())
-//    {
-//        camera = deepcam.CreateCamera(TopGear::Camera::PointGrey, devices[0]);
-
-//        auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
-
-//        if (cc)
-//            cc->Flip(true, false);
-
-//        TopGear::IVideoStream::RegisterFrameCallback(*camera, &ProcessImage::onGetStereoFrame, this);
-//        TopGear::VideoFormat format;
-//        format.Height = 1080;
-//        format.Width = 1920;
-//        format.MaxRate = 20;
-//        prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
-//        prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
-//        frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
-//        frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
-//        auto index = camera->GetMatchedFormatIndex(format);
-//        camera->SetCurrentFormat(index);
-//        //cc->Flip(true, false);
-//        camera->StartStream();
-//    }
-
-    std::shared_ptr<TopGear::FileSource> source =
-            std::make_shared<TopGear::DirectorySource>("/home/nick/workspace/Libra-F/demo/file_imgs","jpg");
-
-    std::shared_ptr<TopGear::IGenericVCDevice> device =
-            std::make_shared<TopGear::ImageDevice>(source, TopGear::VideoFormat(1920, 1080, 30));
-
-    camera = deepcam.CreateCamera(TopGear::Camera::JpegSequence, device);
-    if (camera)
+    auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::FlyCapture);
+    std::cout<<devices.size()<<std::endl;
+    if (!devices.empty())
     {
-        auto & format = camera->GetCurrentFormat();
+        camera = deepcam.CreateCamera(TopGear::Camera::PointGrey, devices[0]);
+
+        auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
+
+        if (cc)
+            cc->Flip(true, false);
+
         TopGear::IVideoStream::RegisterFrameCallback(*camera, &ProcessImage::onGetStereoFrame, this);
+        TopGear::VideoFormat format;
+        format.Height = 1080;
+        format.Width = 1920;
+        format.MaxRate = 30;
+        prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+        prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
         frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
         frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+        auto index = camera->GetMatchedFormatIndex(format);
+        camera->SetCurrentFormat(index);
+        //cc->Flip(true, false);
         camera->StartStream();
     }
+
+//    std::shared_ptr<TopGear::FileSource> source =
+//            std::make_shared<TopGear::DirectorySource>("/home/nick/workspace/Libra-F/demo/file_imgs","jpg");
+
+//    std::shared_ptr<TopGear::IGenericVCDevice> device =
+//            std::make_shared<TopGear::ImageDevice>(source, TopGear::VideoFormat(1920, 1080, 30));
+
+//    camera = deepcam.CreateCamera(TopGear::Camera::JpegSequence, device);
+//    if (camera)
+//    {
+//        auto & format = camera->GetCurrentFormat();
+//        TopGear::IVideoStream::RegisterFrameCallback(*camera, &ProcessImage::onGetStereoFrame, this);
+//        frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+//        frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+//        camera->StartStream();
+//    }
 
 //    auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::DeepGlint);
 //    for(auto &d : devices)
@@ -583,8 +595,8 @@ void ProcessImage::onGetStereoFrame(TopGear::IVideoStream &sender, std::vector<T
     if (raw1)
     {
         //t = std::thread(&SaveJpg, std::ref(format), raw1, "1/"+std::to_string(frames[0]->GetFrameIndex())+".jpg");
-        //convert_yuyv_to_rgb_buffer(raw1, frame1->scanLine(0), format.Width, format.Height, memcmp(format.PixelFormat, "UYVY", 4)==0);
-        convert_i420_to_rgb_buffer(raw1, frame1->scanLine(0), format.Width, format.Height);
+        convert_yuyv_to_rgb_buffer(raw1, frame1->scanLine(0), format.Width, format.Height, memcmp(format.PixelFormat, "UYVY", 4)==0);
+        //convert_i420_to_rgb_buffer(raw1, frame1->scanLine(0), format.Width, format.Height);
     }
     frames[0]->UnlockBuffer();
     if (frames.size()>1)

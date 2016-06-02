@@ -23,7 +23,7 @@ namespace TopGear
 			uint8_t  **ppExtra = nullptr  // Receives a pointer to extra data.
 			) = 0;
 		virtual void UnlockBuffer() = 0;
-		virtual VideoFormat GetFormat() const = 0;
+        virtual const VideoFormat &GetFormat() const = 0;
         virtual uint64_t GetFrameIndex() const = 0;    //frame index, used to check frame drops
         virtual uint64_t GetTimestamp() const = 0;    //timestamp
 		virtual uint32_t GetLength() const = 0;      //length(bytes) of actual frame buffer
