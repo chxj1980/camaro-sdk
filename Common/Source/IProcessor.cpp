@@ -79,7 +79,10 @@ bool ProcessorFork::Process(IProcessable &sender, std::vector<IVideoFramePtr> so
     if (ipr)
         ipr->GetResult(source);
     for(size_t i = 0 ; i<processorList.size(); ++i)
-        pool.Submit(std::bind(&IProcessor::Process, processorList[i].get(), std::ref(sender), source), i);
+    {
+        auto f = pool.Submit(std::bind(&IProcessor::Process, processorList[i].get(), std::ref(sender), source), i);
+        f.valid()
+    }
     processing = false;
     return true;
 }

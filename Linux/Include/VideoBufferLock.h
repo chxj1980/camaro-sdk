@@ -28,7 +28,7 @@ namespace TopGear
                 return defaultStride*videoFormat.Height;
 			}
 
-            virtual VideoFormat GetFormat() const override
+            virtual const VideoFormat &GetFormat() const override
             {
                 return videoFormat;
             }
