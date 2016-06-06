@@ -3,7 +3,7 @@
 #include "ImageDevice.h"
 #include "IVideoFrame.h"
 #include "IVideoStream.h"
-#include "IProcessor.h"
+#include "IProcessable.h"
 
 #include <thread>
 #include <atomic>

@@ -1,7 +1,7 @@
 #pragma once
 #include "IVideoStream.h"
 #include "CameraProfile.h"
-#include "IProcessor.h"
+#include "IProcessable.h"
 
 #include <thread>
 #include <atomic>
