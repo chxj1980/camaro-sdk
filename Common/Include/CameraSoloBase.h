@@ -25,9 +25,10 @@ namespace TopGear
         {
             (void)source;
             PostProcess(frames);
-            Notify(frames);
+            auto vp = std::make_shared<std::vector<IVideoFramePtr>>(std::move(frames));
+            Notify(vp);
             if (fncb)
-                fncb(*this, frames);
+                fncb(*this, *vp);
         }
 	public:
 		virtual bool StartStream() override

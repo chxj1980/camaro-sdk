@@ -226,10 +226,10 @@ void CamaroDual::FrameWatcher()
 						}
 					}
 					//std::cout << " Frame " << mFrame->GetFrameIdx() << std::endl;
-					auto vector = std::vector<IVideoFramePtr>{ mFrame, sFrame };
+                    auto vector = std::shared_ptr<std::vector<IVideoFramePtr>>(new std::vector<IVideoFramePtr> { mFrame, sFrame } );
                     Notify(vector);
 					if (fnCb)
-                        fnCb(*this, vector);
+                        fnCb(*this, *vector);
 					frameVector[1].erase(frameVector[1].begin(), sit + 1);
 					frameVector[0].erase(frameVector[0].begin(), mit + 1);
 					found = true;

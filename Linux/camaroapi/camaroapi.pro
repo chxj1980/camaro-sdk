@@ -117,7 +117,6 @@ SOURCES += \
     ../../Common/Source/VideoFormat.cpp \
     ../../Common/Source/Fovea.cpp \
     ../../Common/Source/RetrievalMap.cpp \
-    ../../Common/Source/IProcessor.cpp \
     ../../Common/Source/PointGrey.cpp \
     ../../Common/Source/FlyCaptureReader.cpp \
     ../../Common/Source/FlyCaptureDevice.cpp \

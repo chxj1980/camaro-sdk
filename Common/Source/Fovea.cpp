@@ -26,10 +26,10 @@ void Fovea::FrameWatcher()
 
         if (frames[0] && frames[1] && keyStreamIndex==frameEx.first)    //Key frame here and no empty frame
         {
-            auto vector = std::vector<IVideoFramePtr> { frames[0], frames[1] };
+            auto vector = std::shared_ptr<std::vector<IVideoFramePtr>>(new std::vector<IVideoFramePtr> { frames[0], frames[1] } );
             Notify(vector);
             if (fnCb)
-                fnCb(*this, vector);
+                fnCb(*this, *vector);
         }
     }
 }

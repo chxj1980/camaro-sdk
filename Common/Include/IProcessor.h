@@ -15,7 +15,7 @@ namespace TopGear
 		virtual ~IProcessor() = default;
         //virtual bool Process(IProcessable &sender, std::vector<IVideoFramePtr> source) = 0;
         //virtual bool Process(T &source) = 0;
-        virtual bool Process(std::shared_ptr<T> &source) = 0;
+        virtual bool Process(std::shared_ptr<T> source) = 0;
         virtual bool IsRunning() const = 0;
         virtual bool Run() = 0;
         virtual bool Stop() = 0;
@@ -28,7 +28,7 @@ namespace TopGear
         virtual ~IProcessorResult() = default;
         //virtual bool GetResult(T &result) = 0;
         virtual std::shared_ptr<T> GetResult() = 0;
-        virtual void PostProcess(bool missingAny) = 0;
+        //virtual void PostProcess(bool missingAny) = 0;
     };
 
     template<typename T>
@@ -37,7 +37,7 @@ namespace TopGear
 	public:
 		virtual ~IProcessable() = default;
         virtual void Register(std::shared_ptr<IProcessor<T>> &processor) = 0;
-        virtual void Notify(T &payload) = 0;
+        virtual void Notify(std::shared_ptr<T> &payload) = 0;
     };
 
 
@@ -46,15 +46,14 @@ namespace TopGear
             : public IProcessable<T>
     {
     public:
-        explicit ProcessorContainer()
+        ProcessorContainer()
             :done(false)
         {}
         virtual ~ProcessorContainer();
 
         virtual void Register(std::shared_ptr<IProcessor<T>> &processor) override;
-        virtual void Notify(T &payload) override;
+        virtual void Notify(std::shared_ptr<T> &payload) override;
     private:
-        IProcessable &host;
         std::vector<std::pair<std::shared_ptr<IProcessor<T>>, std::thread>> processors;
         std::shared_ptr<T> parameter;
         std::atomic_bool done;
@@ -90,7 +89,7 @@ namespace TopGear
             return processorList;
         }
 
-        virtual bool Process(std::shared_ptr<T> source) override;
+        virtual bool Process(std::shared_ptr<P> source) override;
         virtual bool IsRunning() const override { return running; }
         virtual bool Run() override;
         virtual bool Stop() override;
@@ -115,7 +114,7 @@ namespace TopGear
         virtual std::shared_ptr<IProcessor<P>> &GetProcessor() override { return processor; }
         virtual std::shared_ptr<IProcessor<D>> &GetDescendant() override { return next; }
 
-        virtual bool Process(std::shared_ptr<T> source);
+        virtual bool Process(std::shared_ptr<P> source);
         virtual bool IsRunning() const override { return running; }
         virtual bool Run() override;
         virtual bool Stop() override;
@@ -149,7 +148,7 @@ namespace TopGear
     }
 
     template<typename T>
-    void ProcessorContainer<T>::Notify(T &payload)
+    void ProcessorContainer<T>::Notify(std::shared_ptr<T> &payload)
     {
         if (processors.empty())
             return;
@@ -184,7 +183,7 @@ namespace TopGear
     }
 
     template<typename P, typename D>
-    bool ProcessorFork<P, D>::Process(P &source)
+    bool ProcessorFork<P, D>::Process(std::shared_ptr<P> source)
     {
         if (!running)
             return false;
@@ -200,14 +199,16 @@ namespace TopGear
             ipr->GetResult(source);
         for(size_t i = 0 ; i<processorList.size(); ++i)
         {
-            auto f = pool.Submit(std::bind(&IProcessor<D>::Process, processorList[i].get(), std::ref(sender), source), i);
-            f.valid()
+            //auto f =
+            pool.Submit(std::bind(&IProcessor<D>::Process, processorList[i].get(), source), i);
+            //f.valid()
         }
         processing = false;
         return true;
     }
 
-    bool ProcessorFork::Run()
+    template<typename P, typename D>
+    bool ProcessorFork<P, D>::Run()
     {
         if (running)
             return true;
@@ -220,7 +221,8 @@ namespace TopGear
         return true;
     }
 
-    bool ProcessorFork::Stop()
+    template<typename P, typename D>
+    bool ProcessorFork<P, D>::Stop()
     {
         if (!running)
             return true;
@@ -239,29 +241,33 @@ namespace TopGear
         return suc;
     }
 
-    ProcessorNode::ProcessorNode(std::shared_ptr<IProcessor> &p) :
+    template<typename P, typename D>
+    ProcessorNode<P, D>::ProcessorNode(std::shared_ptr<IProcessor<P>> &p) :
         processor(p), running(false), processing(false)
     {}
 
-    void ProcessorNode::AddDescendant(std::shared_ptr<IProcessor> &p)
+    template<typename P, typename D>
+    void ProcessorNode<P, D>::AddDescendant(std::shared_ptr<IProcessor<D>> &p)
     {
         next = p;
     }
 
-    bool ProcessorNode::Process(IProcessable &sender, std::vector<IVideoFramePtr> source)
+    template<typename P, typename D>
+    bool ProcessorNode<P, D>::Process(std::shared_ptr<P> source)
     {
-        auto suc = processor->Process(sender, source);
+        auto suc = processor->Process(source);
         if (!suc)
             return false;
         if (next == nullptr)
             return true;
-        auto ipr =  std::dynamic_pointer_cast<IProcessorResult>(processor);
+        auto ipr =  std::dynamic_pointer_cast<IProcessorResult<D>>(processor);
         if (ipr)
             ipr->GetResult(source);
         return next->Process(source);
     }
 
-    bool ProcessorNode::Run()
+    template<typename P, typename D>
+    bool ProcessorNode<P, D>::Run()
     {
         auto suc = next->Run();
         if (!suc)
@@ -273,7 +279,8 @@ namespace TopGear
         return true;
     }
 
-    bool ProcessorNode::Stop()
+    template<typename P, typename D>
+    bool ProcessorNode<P, D>::Stop()
     {
         running = false;
         while (processing)

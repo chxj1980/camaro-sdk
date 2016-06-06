@@ -12,17 +12,17 @@ namespace TopGear
 {
     class CameraBase
             : public IVideoStream,
-              public IProcessable
+              public IProcessable<std::vector<IVideoFramePtr>>
 	{
 	protected:
 		explicit CameraBase(std::vector<std::shared_ptr<IVideoStream>> &vss,
 			CameraProfile &con = CameraProfile::NullObject())
-            : videoStreams(vss), config(con), container(this)
+            : videoStreams(vss), config(con)
 		{
 		}
 		explicit CameraBase(std::vector<std::shared_ptr<IVideoStream>> &&vss,
 			CameraProfile &con = CameraProfile::NullObject())
-            : videoStreams(vss), config(con), container(this)
+            : videoStreams(vss), config(con)
 		{
 		}
 		explicit CameraBase(CameraProfile &con = CameraProfile::NullObject())
@@ -30,13 +30,13 @@ namespace TopGear
 		{}
 		std::vector<std::shared_ptr<IVideoStream>> videoStreams;
 		CameraProfile &config;
-        ProcessorContainer container;
+        ProcessorContainer<std::vector<IVideoFramePtr>> container;
 	public:
-        virtual void Register(std::shared_ptr<IProcessor> &processor) override
+        virtual void Register(std::shared_ptr<IProcessor<std::vector<IVideoFramePtr>>> &processor) override
         {
             container.Register(processor);
         }
-        virtual void Notify(std::vector<IVideoFramePtr> &payload) override
+        virtual void Notify(std::shared_ptr<std::vector<IVideoFramePtr>> &payload) override
         {
             container.Notify(payload);
         }

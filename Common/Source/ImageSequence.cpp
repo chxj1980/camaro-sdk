@@ -11,7 +11,7 @@ using namespace TopGear;
 using namespace Linux;
 
 ImageSequence::ImageSequence(std::shared_ptr<ImageDevice> &device)
-    : imageDevice(device), container(this)
+    : imageDevice(device)
 {
     auto &format = device->GetFormat();
     formats.push_back(format);
@@ -186,10 +186,10 @@ void ImageSequence::Worker()
                                                                size));
                         framesRef[slot] = frame;
                         framesLock[slot] = true;
-                        std::vector<IVideoFramePtr> frames { frame };
-                        Notify(frames);
+                        auto vector = std::shared_ptr<std::vector<IVideoFramePtr>>(new std::vector<IVideoFramePtr> { frame } );
+                        Notify(vector);
                         if (fncb)
-                            fncb(*this, frames);
+                            fncb(*this, *vector);
                     }
                 }
             }
