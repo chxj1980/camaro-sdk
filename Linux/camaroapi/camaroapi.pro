@@ -94,7 +94,9 @@ HEADERS += \
     ../../Common/Include/PointGrey.h \
     ../../Common/Include/ImageDevice.h \
     ../../Common/Include/FileSource.h \
-    ../../Common/Include/ImageSequence.h
+    ../../Common/Include/ImageSequence.h \
+    ../../Common/Include/ProcessorBase.h \
+    ../../Common/Include/IProcessable.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \
