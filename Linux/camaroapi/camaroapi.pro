@@ -86,7 +86,6 @@ HEADERS += \
     ../../Common/Include/Logger.h \
     ../../Common/Include/CamaroISP.h \
     ../../Common/Include/Fovea.h \
-    ../../Common/Include/RetrievalMap.h \
     ../../Common/Include/ThreadPool.h \
     ../../Common/Include/FlyCaptureDevice.h \
     ../../Common/Include/FlyCaptureReader.h \
@@ -118,7 +117,6 @@ SOURCES += \
     ../../Common/Source/CamaroISP.cpp \
     ../../Common/Source/VideoFormat.cpp \
     ../../Common/Source/Fovea.cpp \
-    ../../Common/Source/RetrievalMap.cpp \
     ../../Common/Source/PointGrey.cpp \
     ../../Common/Source/FlyCaptureReader.cpp \
     ../../Common/Source/FlyCaptureDevice.cpp \
