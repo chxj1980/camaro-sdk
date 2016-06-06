@@ -13,7 +13,12 @@ public:
     ProcessorBase() :
         running(false), processing(false)
     {}
-    virtual ~ProcessorBase() = default;
+
+    virtual ~ProcessorBase()
+    {
+        Stop();
+    }
+
     virtual bool ProcessImp(T &source) = 0;
     virtual bool Process(std::shared_ptr<T> source) final
     {
