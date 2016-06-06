@@ -128,9 +128,10 @@ namespace TopGear
     template<typename T>
     ProcessorContainer<T>::~ProcessorContainer()
     {
-        done = true;
         std::unique_lock<std::mutex> lck(mtx);
+        done = true;
         cv.notify_all();
+        lck.unlock();
         for(auto &p : processors)
             if (p.second.joinable())
                 p.second.join();
@@ -160,10 +161,12 @@ namespace TopGear
     template<typename T>
     void ProcessorContainer<T>::ProcessWorker(int index)
     {
-        while (!done)
+        while (true)
         {
             std::unique_lock<std::mutex> lck(mtx);
             cv.wait(lck); //, [&]() { return !payload.empty();});
+            if (done)
+                return;
             auto source = parameter;
             lck.unlock();
             processors[index].first->Process(source);
