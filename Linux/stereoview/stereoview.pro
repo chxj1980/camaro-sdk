@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     SDL/src/thread/SDL_thread.c \
     SDL/src/timer/unix/SDL_systimer.c \
     SDL/src/timer/SDL_timer.c \
-    SDL/src/SDL_error.c
+    SDL/src/SDL_error.c \
+    convert_to_i420.cpp
 
 HEADERS  += processimage.h \
     ../apitest/FrameRateCounter.h \
@@ -48,7 +49,9 @@ HEADERS  += processimage.h \
     SDL/src/thread/SDL_thread_c.h \
     SDL/src/timer/SDL_systimer.h \
     SDL/src/timer/SDL_timer_c.h \
-    SDL/src/SDL_error_c.h
+    SDL/src/SDL_error_c.h \
+    convert_to_i420.h \
+    buffer_manager.h
 
 CONFIG += c++11
 

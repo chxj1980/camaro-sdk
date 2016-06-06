@@ -23,6 +23,8 @@
 #include <jpeglib.h>
 #include <thread>
 
+#include "convert_to_i420.h"
+
 #include <libyuv.h>
 
 #define NEED_GPSIMU 1
@@ -178,6 +180,8 @@ extern void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsig
 #endif
 
 #define RESYNC_NUM 100
+
+std::shared_ptr<ConvertToI420> converter;
 
 ProcessImage::ProcessImage(QWidget *parent)
     :QWidget(parent)
@@ -434,13 +438,27 @@ ProcessImage::ProcessImage(QWidget *parent)
 //        camera->StartStream();
 //    }
 
+    auto bm = std::make_shared<BufferManager<IVideoFrame, 2, 50>>(
+                std::array<uint32_t, 2> {1080*1920*3/2,1080*1920*3/2} );
+
+    converter = std::make_shared<ConvertToI420>(bm);
+    converter->Run();
+
     auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::FlyCapture);
     std::cout<<devices.size()<<std::endl;
     if (!devices.empty())
     {
         camera = deepcam.CreateCamera(TopGear::Camera::PointGrey, devices[0]);
 
+
         auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
+
+        auto processable = std::dynamic_pointer_cast<TopGear::IProcessable<std::vector<TopGear::IVideoFramePtr>>>(camera);
+
+        auto pc = std::static_pointer_cast<TopGear::IProcessor<std::vector<TopGear::IVideoFramePtr>>>(converter);
+
+        processable->Register(pc);
+
 
         if (cc)
             cc->Flip(true, false);
