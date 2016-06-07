@@ -1,6 +1,7 @@
 #include "FileSource.h"
 
 #include <fstream>
+#include <set>
 
 #ifdef __linux__
     #include <sys/types.h>
@@ -12,6 +13,7 @@ using namespace TopGear;
 
 DirectorySource::DirectorySource(const std::string &path, const std::string &extension)
 {
+    std::set<std::string> orderedList;
 #ifdef __linux__
     struct stat info;
     if( stat(path.c_str(), &info) != 0 )
@@ -40,10 +42,11 @@ DirectorySource::DirectorySource(const std::string &path, const std::string &ext
         if (pos+matchStr.size()!=name.size())
             continue;
 
-        fileList.emplace(path+"/"+name);
+        orderedList.emplace(path+"/"+name);
     }
     closedir(dp);
 #endif
+    fileList = std::vector<std::string>(orderedList.begin(), orderedList.end());
 }
 
 ListFileSource::ListFileSource(const std::string &filepath)
@@ -53,7 +56,7 @@ ListFileSource::ListFileSource(const std::string &filepath)
     while(fp.good())
     {
         std::getline(fp, fileVal);
-        fileList.emplace(fileVal);
+        fileList.emplace_back(fileVal);
     }
     fp.close();
 }

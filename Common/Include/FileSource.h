@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IGenericVCDevice.h"
-#include <set>
+#include <vector>
 #include <string>
 
 namespace TopGear
@@ -9,11 +9,11 @@ namespace TopGear
     class FileSource : public ISource
     {
     public:
-        std::set<std::string> &GetList() { return fileList; }
+        std::vector<std::string> &GetList() { return fileList; }
         virtual ~FileSource() = default;
     protected:
         FileSource() = default;
-        std::set<std::string> fileList;
+        std::vector<std::string> fileList;
     };
 
     class DirectorySource : public FileSource
