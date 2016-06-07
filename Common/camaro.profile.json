@@ -49,6 +49,13 @@
             "control-code": 6,
             "attribute": "rw",
             "type": "byte"
+        },
+        {
+            "control-name": "ShutterLimit",
+            "control-code": 7,
+            "attribute": "rw",
+            "type": "uint",
+            "big-endian" : true
         }
     ],
     "register-control-code": 4,
@@ -57,7 +64,7 @@
             "sensor-identifier" : "DGFA",
             "register-controls": [
                 {
-                    "control-name": "Exposure",
+                    "control-name": "Shutter",
                     "register-address": "0x3012",
                     "attribute": "rw"
                 },
