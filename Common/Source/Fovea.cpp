@@ -134,23 +134,40 @@ int Fovea::Flip(bool vertical, bool horizontal)
     return cc->Flip(vertical,horizontal);
 }
 
-int Fovea::GetExposure(uint32_t& val)
+
+int Fovea::GetShutter(uint32_t &val)
 {
     auto cc = std::dynamic_pointer_cast<TopGear::ICameraControl>(currentStream);
     if (cc==nullptr)
         return -1;
-    return cc->GetExposure(val);
+    return cc->GetShutter(val);
 }
 
-int Fovea::SetExposure(uint32_t val)
+int Fovea::SetShutter(uint32_t val)
 {
     auto cc = std::dynamic_pointer_cast<TopGear::ICameraControl>(currentStream);
     if (cc==nullptr)
         return -1;
-    return cc->SetExposure(val);
+    return cc->SetShutter(val);
 }
 
-int Fovea::GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB)
+int Fovea::GetExposure(bool &ae, float &ev)
+{
+    auto cc = std::dynamic_pointer_cast<TopGear::ICameraControl>(currentStream);
+    if (cc==nullptr)
+        return -1;
+    return cc->GetExposure(ae, ev);
+}
+
+int Fovea::SetExposure(bool ae, float ev)
+{
+    auto cc = std::dynamic_pointer_cast<TopGear::ICameraControl>(currentStream);
+    if (cc==nullptr)
+        return -1;
+    return cc->SetExposure(ae, ev);
+}
+
+int Fovea::GetGain(float& gainR, float& gainG, float& gainB)
 {
     auto cc = std::dynamic_pointer_cast<TopGear::ICameraControl>(currentStream);
     if (cc==nullptr)
@@ -158,7 +175,7 @@ int Fovea::GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB)
     return cc->GetGain(gainR, gainG, gainB);
 }
 
-int Fovea::SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB)
+int Fovea::SetGain(float gainR, float gainG, float gainB)
 {
     auto cc = std::dynamic_pointer_cast<TopGear::ICameraControl>(currentStream);
     if (cc==nullptr)

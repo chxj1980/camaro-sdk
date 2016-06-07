@@ -159,23 +159,55 @@ bool CamaroISP::GetControl(std::string name, IPropertyData &val)
     return false;
 }
 
+int CamaroISP::GetExposure(bool &ae, float &ev)
+{
+    ev = 1.0f;
+    auto result = -1;
+    try
+    {
+        PropertyData<uint8_t> data;
+        if (GetControl("AutoExposure", data))
+        {
+            ae = data.Payload;
+            result = 0;
+        }
+    }
+    catch (const std::out_of_range&)
+    {
+    }
+    return result;
+}
+
+int CamaroISP::SetExposure(bool ae, float ev)
+{
+    (void)ev;
+    auto result = -1;
+    try
+    {
+        if (SetControl("AutoExposure", PropertyData<uint8_t>(ae?1:0)))
+            result = 0;
+    }
+    catch (const std::out_of_range&)
+    {
+    }
+    return result;
+}
+
+//////////////////////////////////////////////////
+//    aptina specific
+//
+///////////////////////////////////////////////////
+
 /*
 * exposure time : val (multiple of 33.33us)
 */
 
-inline int CamaroISP::GetExposure(uint32_t& val)
+int CamaroISP::GetShutter(uint32_t& val)
 {
     auto result = -1;
     try
     {
-        PropertyData<uint8_t> ae;
-        result = GetControl("AutoExposure", ae);
-        if (result && ae.Payload != 0)
-        {
-            val = 0;
-            return true;
-        }
-        auto addrs = registerMap->at("Exposure").AddressArray;
+        auto addrs = registerMap->at("Shutter").AddressArray;
         if (addrs.size() != 1)
             return result;
         uint16_t data;
@@ -189,15 +221,22 @@ inline int CamaroISP::GetExposure(uint32_t& val)
     return result;
 }
 
-inline int CamaroISP::SetExposure(uint32_t val)
+int CamaroISP::SetShutter(uint32_t val)
 {
     auto result = -1;
     try
     {
-        result = SetControl("AutoExposure", PropertyData<uint8_t>(val==0?1:0));
-        if (val>0)
+        bool ae;
+        float ev;
+        auto hr = GetExposure(ae, ev);
+        if (hr>=0 && ae)    //AE enable
         {
-            auto addrs = registerMap->at("Exposure").AddressArray;
+            if (SetControl("ShutterLimit", PropertyData<uint32_t>(val)))
+                result = 0;
+        }
+        else    //Manual Exposure
+        {
+            auto addrs = registerMap->at("Shutter").AddressArray;
             auto data = uint16_t(val * 3.0f/100 + 0.5f);
             if (data == 0)
                 data = 1;
@@ -219,7 +258,7 @@ gain:   xxx.yyyyy
 default : 001.000000  (1x)
 the step size for yyyyy is 0.03125(1/32), while the step size of xxx is 1.
 */
-int CamaroISP::GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB)
+int CamaroISP::GetGain(float& gainR, float& gainG, float& gainB)
 {
     auto result = -1;
     uint16_t val[4];
@@ -229,9 +268,9 @@ int CamaroISP::GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB)
         if (addrs.size() != 4)
             return result;
         result = GetRegisters(addrs.data(), val, 4);
-        gainR = val[2];
-        gainB = val[3];
-        gainG = val[0];
+        gainR = (val[2]>>5)+(val[2]&0x1f)*0.03125f;
+        gainB = (val[3]>>5)+(val[3]&0x1f)*0.03125f;
+        gainG = (val[0]>>5)+(val[0]&0x1f)*0.03125f;
         //gainGb = val[1];
     }
     catch (const std::out_of_range&)
@@ -242,10 +281,22 @@ int CamaroISP::GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB)
     return result;
 }
 
-int CamaroISP::SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB)
+int CamaroISP::SetGain(float gainR, float gainG, float gainB)
 {
     //uint16_t regaddr[4]{ 0x3056,0x305C, 0x305A, 0x3058 };//AR0134 DG page 4
-    uint16_t val[4]{ gainG, gainG, gainR, gainB };
+    uint16_t r = (int(gainR)<<5);
+    gainR -= r;
+    r |= int(gainR/0.03125f)&0x1f;
+
+    uint16_t g = (int(gainG)<<5);
+    gainG -= g;
+    r |= int(gainG/0.03125f)&0x1f;
+
+    uint16_t b = (int(gainB)<<5);
+    gainB -= b;
+    b |= int(gainB/0.03125f)&0x1f;
+
+    uint16_t val[4] { g, g, r, b };
     //return SetRegisters(regaddr, val, 4);
     auto result = -1;
     try

@@ -50,10 +50,13 @@ namespace TopGear
 		const RegisterMap * registerMap = nullptr;
 	public:
 		virtual int Flip(bool vertical, bool horizontal) override;
-		virtual int GetExposure(uint32_t& val) override;
-		virtual int SetExposure(uint32_t val) override;
-		virtual int GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB) override;
-		virtual int SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB) override;
+        virtual int GetExposure(bool &ae, float &ev) override;
+        virtual int SetExposure(bool ae, float ev=1.0f) override;
+        virtual int GetShutter(uint32_t &val) override;
+        virtual int SetShutter(uint32_t val) override;
+        virtual int GetGain(float &gainR, float &gainG, float &gainB) override;
+        virtual int SetGain(float gainR, float gainG, float gainB) override;
+
 		Camaro(std::shared_ptr<IVideoStream> &vs, 
 			   std::shared_ptr<IExtensionAccess> &ex,
 			CameraProfile &con = CameraProfile::NullObject());

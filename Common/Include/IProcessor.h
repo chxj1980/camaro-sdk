@@ -6,9 +6,6 @@
 namespace TopGear
 {
     template<typename T>
-    class IProcessable;
-
-    template<typename T>
 	class IProcessor
 	{
 	public:

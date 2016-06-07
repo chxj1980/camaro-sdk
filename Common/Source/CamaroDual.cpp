@@ -30,29 +30,44 @@ int CamaroDual::Flip(bool vertical, bool horizontal)
 	return -1;
 }
 
-int CamaroDual::GetExposure(uint32_t& val)
+int CamaroDual::GetShutter(uint32_t &val)
 {
-	if (!masterCC)
-		return -1;
-	return masterCC->GetExposure(val);
+    if (!masterCC)
+        return -1;
+    return masterCC->GetShutter(val);
 }
 
-int CamaroDual::SetExposure(uint32_t val)
+int CamaroDual::SetShutter(uint32_t val)
 {
-	if (masterCC && slaveCC)
-		return masterCC->SetExposure(val) |
-			   slaveCC->SetExposure(val);
-	return -1;
+    if (masterCC && slaveCC)
+        return masterCC->SetExposure(val) |
+               slaveCC->SetExposure(val);
+    return -1;
 }
 
-int CamaroDual::GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB)
+int CamaroDual::GetExposure(bool &ae, float &ev)
+{
+    if (!masterCC)
+        return -1;
+    return masterCC->GetExposure(ae, ev);
+}
+
+int CamaroDual::SetExposure(bool ae, float ev)
+{
+    if (masterCC && slaveCC)
+        return masterCC->SetExposure(ae, ev) |
+               slaveCC->SetExposure(ae, ev);
+    return -1;
+}
+
+int CamaroDual::GetGain(float &gainR, float &gainG, float &gainB)
 {
 	if (!masterCC)
 		return -1;
 	return masterCC->GetGain(gainR, gainG, gainB);
 }
 
-int CamaroDual::SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB)
+int CamaroDual::SetGain(float gainR, float gainG, float gainB)
 {
 	if (masterCC && slaveCC)
 		return masterCC->SetGain(gainR, gainG, gainB) |

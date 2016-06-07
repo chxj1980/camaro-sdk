@@ -54,32 +54,72 @@ int PointGrey::Flip(bool vertical, bool horizontal)
     return 0;
 }
 
-int PointGrey::GetExposure(uint32_t& val)
+int PointGrey::GetExposure(bool &ae, float &ev)
 {
     auto &pg = pgsource->GetCameraSource();
     FlyCapture2::Property prop;
     prop.type = FlyCapture2::AUTO_EXPOSURE;
     pg.GetProperty(&prop);
-    val = (uint32_t)(prop.absValue*1000);
+    ae = prop.autoManualMode;
+    ev = prop.absValue;
     return 0;
 }
 
-//val equels EV*1000
-int PointGrey::SetExposure(uint32_t val)
+int PointGrey::SetExposure(bool ae, float ev)
 {
     auto &pg = pgsource->GetCameraSource();
     FlyCapture2::Property prop;
     prop.type = FlyCapture2::AUTO_EXPOSURE;
     prop.onOff = true;
     prop.onePush = false;
-    prop.autoManualMode = val==0;
+    prop.autoManualMode = ae;
+    prop.absControl = true;
+    prop.absValue = ev;
+    pg.SetProperty(&prop);
+
+    //enable auto shutter
+    prop.type = FlyCapture2::SHUTTER;
+    prop.onOff = true;
+    prop.onePush = false;
+    prop.autoManualMode = true;
+    prop.absControl = true;
+    prop.absValue = 1.0f;
+    pg.SetProperty(&prop);
+
+    return 0;
+}
+
+int PointGrey::GetShutter(uint32_t &val)
+{
+    auto &pg = pgsource->GetCameraSource();
+    FlyCapture2::Property prop;
+    prop.type = FlyCapture2::SHUTTER;
+    pg.GetProperty(&prop);
+    val = uint32_t(prop.absValue*1000);
+    return 0;
+}
+
+int PointGrey::SetShutter(uint32_t val)
+{
+    auto &pg = pgsource->GetCameraSource();
+    FlyCapture2::Property prop;
+
+    //Decide auto shutter switch by auto exposure
+    prop.type = FlyCapture2::AUTO_EXPOSURE;
+    pg.GetProperty(&prop);
+    auto autoShutter = prop.autoManualMode && val==0;
+
+    prop.type = FlyCapture2::SHUTTER;
+    prop.onOff = true;
+    prop.onePush = false;
+    prop.autoManualMode = autoShutter;
     prop.absControl = true;
     prop.absValue = val/1000.0f;
     pg.SetProperty(&prop);
     return 0;
 }
 
-int PointGrey::GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB)
+int PointGrey::GetGain(float& gainR, float& gainG, float& gainB)
 {
     (void)gainR;
     (void)gainG;
@@ -87,7 +127,7 @@ int PointGrey::GetGain(uint16_t& gainR, uint16_t& gainG, uint16_t& gainB)
     return 0;
 }
 
-int PointGrey::SetGain(uint16_t gainR, uint16_t gainG, uint16_t gainB)
+int PointGrey::SetGain(float gainR, float gainG, float gainB)
 {
     (void)gainR;
     (void)gainG;

@@ -24,7 +24,7 @@
 #include <thread>
 
 #include "convert_to_i420.h"
-
+#include "IProcessable.h"
 #include <libyuv.h>
 
 #define NEED_GPSIMU 1
@@ -451,7 +451,7 @@ ProcessImage::ProcessImage(QWidget *parent)
         camera = deepcam.CreateCamera(TopGear::Camera::PointGrey, devices[0]);
 
 
-        auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
+        cameraControl = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
 
         auto processable = std::dynamic_pointer_cast<TopGear::IProcessable<std::vector<TopGear::IVideoFramePtr>>>(camera);
 
@@ -460,8 +460,8 @@ ProcessImage::ProcessImage(QWidget *parent)
         processable->Register(pc);
 
 
-        if (cc)
-            cc->Flip(true, false);
+        if (cameraControl)
+            cameraControl->Flip(true, false);
 
         TopGear::IVideoStream::RegisterFrameCallback(*camera, &ProcessImage::onGetStereoFrame, this);
         TopGear::VideoFormat format;
@@ -994,43 +994,43 @@ void ProcessImage::handledeviceexception(int err)
 // gain value: 0 ~ 9.7
 void ProcessImage::getGain(float *fGainR, float *fGainG, float *fGainB)
 {
-    if (cameraControl == nullptr)
-        return;
+//    if (cameraControl == nullptr)
+//        return;
 
-    unsigned short gainR=0, gainG=0, gainB=0;
-    cameraControl->GetGain(gainR,gainG,gainB);
+//    unsigned short gainR=0, gainG=0, gainB=0;
+//    cameraControl->GetGain(gainR,gainG,gainB);
 
-    *fGainR = ((gainR & 0x00ff) >> 5 ) + (gainR & 0x001f) * 0.03125;
-    *fGainG = ((gainG & 0x00ff) >> 5 ) + (gainG & 0x001f) * 0.03125;
-    *fGainB = ((gainB & 0x00ff) >> 5 ) + (gainB & 0x001f) * 0.03125;
+//    *fGainR = ((gainR & 0x00ff) >> 5 ) + (gainR & 0x001f) * 0.03125;
+//    *fGainG = ((gainG & 0x00ff) >> 5 ) + (gainG & 0x001f) * 0.03125;
+//    *fGainB = ((gainB & 0x00ff) >> 5 ) + (gainB & 0x001f) * 0.03125;
 }
 
 // gain value: 0 ~ 9.7
 void ProcessImage::setGain(float fGainR, float fGainG, float fGainB)
 {
-    if (cameraControl == nullptr)
-        return;
-    unsigned short gainR, gainG, gainB;
+//    if (cameraControl == nullptr)
+//        return;
+//    unsigned short gainR, gainG, gainB;
 
-    gainR = (((int)fGainR) << 5);
-    int dGainR = (int)((fGainR - (int)fGainR + 0.01563) / 0.03125);
-    if (dGainR > 31)
-        dGainR = 31;
-    gainR += dGainR;
+//    gainR = (((int)fGainR) << 5);
+//    int dGainR = (int)((fGainR - (int)fGainR + 0.01563) / 0.03125);
+//    if (dGainR > 31)
+//        dGainR = 31;
+//    gainR += dGainR;
 
-    gainG = (((int)fGainG) << 5);
-    int dGainG = (int)((fGainG - (int)fGainG + 0.01563) / 0.03125);
-    if (dGainG > 31)
-        dGainG = 31;
-    gainG += dGainG;
+//    gainG = (((int)fGainG) << 5);
+//    int dGainG = (int)((fGainG - (int)fGainG + 0.01563) / 0.03125);
+//    if (dGainG > 31)
+//        dGainG = 31;
+//    gainG += dGainG;
 
-    gainB = (((int)fGainB) << 5);
-    int dGainB = (int)((fGainB - (int)fGainB + 0.01563) / 0.03125);
-    if (dGainB > 31)
-        dGainB = 31;
-    gainB += dGainB;
+//    gainB = (((int)fGainB) << 5);
+//    int dGainB = (int)((fGainB - (int)fGainB + 0.01563) / 0.03125);
+//    if (dGainB > 31)
+//        dGainB = 31;
+//    gainB += dGainB;
 
-    cameraControl->SetGain(gainR,gainG,gainB);
+//    cameraControl->SetGain(gainR,gainG,gainB);
 }
 
 void ProcessImage::onGainGet()
@@ -1134,6 +1134,7 @@ void ProcessImage::onAESet(int state)
         stereocam->set_registers(regaddr,regval, 10, 1);
         */
         bSetAE = true;
+
     }
     else {
         /*
@@ -1144,6 +1145,7 @@ void ProcessImage::onAESet(int state)
         */
         bSetAE = false;
     }
+    cameraControl->SetExposure(bSetAE);
 }
 
 void ProcessImage::onFramerateSet()
@@ -1190,22 +1192,22 @@ void ProcessImage::radioExpoChange()
 {
     if (sender() == radioBtnExp100)
     {
-        cameraControl->SetExposure(100);
+        cameraControl->SetShutter(10000);
     }
     else if (sender() == radioBtnExp200)
     {
-        cameraControl->SetExposure(200);
+        cameraControl->SetShutter(20000);
     }
     else if (sender() == radioBtnExp400)
     {
-        cameraControl->SetExposure(400);
+        cameraControl->SetShutter(40000);
     }
     else if (sender() == radioBtnExp800)
     {
-        cameraControl->SetExposure(800);
+        cameraControl->SetShutter(80000);
     }
     else if (sender() == radioBtnExp1200)
     {
-        cameraControl->SetExposure(1200);
+        cameraControl->SetShutter(120000);
     }
 }
