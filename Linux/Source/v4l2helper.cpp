@@ -18,7 +18,7 @@ using namespace Linux;
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
 #ifdef __ARM_NEON__
-void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsigned char* src, int num_bytes)
+void __attribute__ ((noinline)) TopGear::neonMemCopy_gas(unsigned char* dst, unsigned char* src, int num_bytes)
 {
     (void)dst;
     (void)src;
