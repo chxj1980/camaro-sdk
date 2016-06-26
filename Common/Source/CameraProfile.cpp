@@ -106,6 +106,13 @@ namespace TopGear
 				for (auto i = 0u; i < element.size(); ++i)
 					pair.second.AddressArray.emplace_back(uint16_t(std::stoul(element[i].asString(), nullptr, 0)));
 		}
+		element = value["bits"];
+		if (!element.isNull() && element.isObject())
+		{
+			auto names = element.getMemberNames();
+			for (auto i = 0u; i < element.size(); ++i)
+				pair.second.BitMap[names[i]] = element[i].asInt();
+		}
 		return pair;
 	}
 
@@ -170,13 +177,13 @@ namespace TopGear
 		return true;
 	}
 
-	const RegisterMap *CameraProfile::QueryRegisterMap(const std::string &identifier) const
+	std::pair<std::string, const RegisterMap *> CameraProfile::QueryRegisterMap(const std::string &identifier) const
 	{
 		for(auto &item : sensors)
 		{
 			if (identifier.find(item.first) != std::string::npos)
-				return &item.second;
+				return std::make_pair(item.first, (const RegisterMap *)(&item.second));
 		}
-		return nullptr;
+		return std::pair<std::string, const RegisterMap *>("", nullptr);
 	}
 }

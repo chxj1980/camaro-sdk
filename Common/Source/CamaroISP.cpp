@@ -2,6 +2,7 @@
 #include "CamaroISP.h"
 #include <thread>
 #include <array>
+#include <cmath>
 #include "VideoFrameEx.h"
 
 using namespace TopGear;
@@ -63,17 +64,20 @@ inline int CamaroISP::GetRegister(uint16_t regaddr, uint16_t &regval)
 
 int CamaroISP::Flip(bool vertical, bool horizontal)
 {
+    if (registerMap == nullptr)
+        return -1;
     uint16_t val = 0;
-    if (vertical)
-        val |= (1 << 15);
-    if (horizontal)
-        val |= (1 << 14);
     auto result = -1;
     try
     {
-        auto addrs = registerMap->at("Flip").AddressArray;
+        auto &flip = registerMap->at("Flip");
+        auto addrs = flip.AddressArray;
         if (addrs.size() != 1)
             return result;
+        if (vertical)
+            val |= (1 << flip.BitMap.at("v"));
+        if (horizontal)
+            val |= (1 << flip.BitMap.at("h"));
         result = SetRegister(addrs[0], val);
     }
     catch (const std::out_of_range&)
@@ -204,6 +208,8 @@ int CamaroISP::SetExposure(bool ae, float ev)
 
 int CamaroISP::GetShutter(uint32_t& val)
 {
+    if (registerMap == nullptr)
+        return -1;
     auto result = -1;
     try
     {
@@ -223,6 +229,8 @@ int CamaroISP::GetShutter(uint32_t& val)
 
 int CamaroISP::SetShutter(uint32_t val)
 {
+    if (registerMap == nullptr)
+        return -1;
     auto result = -1;
     try
     {
@@ -260,17 +268,31 @@ the step size for yyyyy is 0.03125(1/32), while the step size of xxx is 1.
 */
 int CamaroISP::GetGain(float& gainR, float& gainG, float& gainB)
 {
+    if (registerMap == nullptr)
+        return -1;
     auto result = -1;
     uint16_t val[4];
     try
     {
         auto addrs = registerMap->at("Gain").AddressArray;
-        if (addrs.size() != 4)
-            return result;
-        result = GetRegisters(addrs.data(), val, 4);
-        gainR = (val[2]>>5)+(val[2]&0x1f)*0.03125f;
-        gainB = (val[3]>>5)+(val[3]&0x1f)*0.03125f;
-        gainG = (val[0]>>5)+(val[0]&0x1f)*0.03125f;
+        if (sensorInfo == "DGFA")
+        {
+            if (addrs.size() != 4)
+                return -1;
+            result = GetRegisters(addrs.data(), val, 4);
+            gainR = (val[2]>>5)+(val[2]&0x1f)*0.03125f;
+            gainB = (val[3]>>5)+(val[3]&0x1f)*0.03125f;
+            gainG = (val[0]>>5)+(val[0]&0x1f)*0.03125f;
+        } 
+        else if (sensorInfo == "DGFS")
+        {
+            if (addrs.size() != 1)
+                return -1;
+            result = GetRegister(addrs[0], val[0]);
+            gainR = gainG = gainB = std::pow(10.0f, val[0]/3.0f);
+        }
+        else
+            return -1;
         //gainGb = val[1];
     }
     catch (const std::out_of_range&)
@@ -283,28 +305,47 @@ int CamaroISP::GetGain(float& gainR, float& gainG, float& gainB)
 
 int CamaroISP::SetGain(float gainR, float gainG, float gainB)
 {
-    //uint16_t regaddr[4]{ 0x3056,0x305C, 0x305A, 0x3058 };//AR0134 DG page 4
-    uint16_t r = (int(gainR)<<5);
-    gainR -= r;
-    r |= int(gainR/0.03125f)&0x1f;
+    if (registerMap == nullptr)
+        return -1;
 
-    uint16_t g = (int(gainG)<<5);
-    gainG -= g;
-    r |= int(gainG/0.03125f)&0x1f;
-
-    uint16_t b = (int(gainB)<<5);
-    gainB -= b;
-    b |= int(gainB/0.03125f)&0x1f;
-
-    uint16_t val[4] { g, g, r, b };
-    //return SetRegisters(regaddr, val, 4);
     auto result = -1;
     try
     {
         auto addrs = registerMap->at("Gain").AddressArray;
-        if (addrs.size() != 4)
-            return result;
-        result = SetRegisters(addrs.data(), val, 4);
+        if (sensorInfo == "DGFA")
+        {
+            if (addrs.size() != 4)
+                return -1;
+            //uint16_t regaddr[4]{ 0x3056,0x305C, 0x305A, 0x3058 };//AR0134 DG page 4
+            uint16_t r = (int(gainR)<<5);
+            gainR -= r;
+            r |= int(gainR/0.03125f)&0x1f;
+
+            uint16_t g = (int(gainG)<<5);
+            gainG -= g;
+            r |= int(gainG/0.03125f)&0x1f;
+
+            uint16_t b = (int(gainB)<<5);
+            gainB -= b;
+            b |= int(gainB/0.03125f)&0x1f;
+
+            uint16_t val[4] { g, g, r, b };
+            result = SetRegisters(addrs.data(), val, 4);
+        }
+        else if (sensorInfo == "DGFS")
+        {
+            if (addrs.size() != 1)
+                return -1;
+            //IMX291 DS page 80
+            if (gainR < 1)
+                gainR = 1;
+            uint16_t val = uint16_t(3*std::log10(gainR));
+            if (val > 0xf0)
+                val = 0xf0
+            result = SetRegister(addrs[0], val);
+        }
+        else
+            return -1;
     }
     catch (const std::out_of_range&)
     {
@@ -319,7 +360,11 @@ CamaroISP::CamaroISP(std::shared_ptr<IVideoStream>& vs,
 {
     PropertyData<std::string> info;
     if (CamaroISP::GetControl("DeviceInfo", info))
-        registerMap = config.QueryRegisterMap(info.Payload);
+    {
+        auto query = config.QueryRegisterMap(info.Payload);
+        sensorInfo = query.first;
+        registerMap = query.second;
+    }
     formats = pReader->GetAllFormats();
 
     Flip(false, false);

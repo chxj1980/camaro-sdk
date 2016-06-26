@@ -48,6 +48,7 @@ namespace TopGear
 		int header = 0;
 		int footer = 0;
 		const RegisterMap * registerMap = nullptr;
+		std::string sensorInfo;
 	public:
 		virtual int Flip(bool vertical, bool horizontal) override;
         virtual int GetExposure(bool &ae, float &ev) override;

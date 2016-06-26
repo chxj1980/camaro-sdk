@@ -112,6 +112,8 @@ void Camaro::PostProcess(std::vector<IVideoFramePtr> &frames)
 
 int Camaro::Flip(bool vertical, bool horizontal)
 {
+	if (registerMap==nullptr || sensorInfo!="DGFA")
+		return -1;
 	uint16_t val = 0;
 	if (vertical)
 		val |= (1 << 15);
@@ -253,6 +255,8 @@ int Camaro::SetExposure(bool ae, float ev)
 
 int Camaro::GetShutter(uint32_t& val)
 {
+	if (registerMap==nullptr || sensorInfo!="DGFA")
+		return -1;
 	auto result = -1;
 	try
 	{
@@ -272,6 +276,8 @@ int Camaro::GetShutter(uint32_t& val)
 
 int Camaro::SetShutter(uint32_t val)
 {
+	if (registerMap==nullptr || sensorInfo!="DGFA")
+		return -1;
 	auto result = -1;
 	try
 	{
@@ -308,6 +314,8 @@ the step size for yyyyy is 0.03125(1/32), while the step size of xxx is 1.
 */
 int Camaro::GetGain(float& gainR, float& gainG, float& gainB)
 {
+	if (registerMap==nullptr || sensorInfo!="DGFA")
+		return -1;
 	auto result = -1;
 	uint16_t val[4];
 	try
@@ -331,6 +339,8 @@ int Camaro::GetGain(float& gainR, float& gainG, float& gainB)
 
 int Camaro::SetGain(float gainR, float gainG, float gainB)
 {
+	if (registerMap==nullptr || sensorInfo!="DGFA")
+		return -1;
 	//uint16_t regaddr[4]{ 0x3056,0x305C, 0x305A, 0x3058 };//AR0134 DG page 4
     uint16_t r = (int(gainR)<<5);
     gainR -= r;
@@ -367,8 +377,11 @@ Camaro::Camaro(std::shared_ptr<IVideoStream>& vs,
 {
 	PropertyData<std::string> info;
 	if (Camaro::GetControl("DeviceInfo", info))
-		registerMap = config.QueryRegisterMap(info.Payload);
-
+	{
+        auto query = config.QueryRegisterMap(info.Payload);
+        sensorInfo = query.first;
+        registerMap = query.second;
+    }
 	ObtainExtendedLines();
     formats = pReader->GetAllFormats();
 	if (header != 0 || footer != 0)

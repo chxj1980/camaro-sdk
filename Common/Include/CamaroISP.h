@@ -40,6 +40,7 @@ namespace TopGear
         int currentFormatIndex = -1;
     private:
         const RegisterMap * registerMap = nullptr;
+        std::string sensorInfo;
         VideoFrameCallbackFn fncb = nullptr;
     public:
         virtual int Flip(bool vertical, bool horizontal) override;

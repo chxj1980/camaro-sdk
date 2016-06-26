@@ -81,12 +81,35 @@
                 {
                     "control-name": "Flip",
                     "register-address": "0x3040",
+                    "bits" : {
+                    	"v" : 15,
+                    	"h" : 14
+                    },
                     "attribute": "w"
                 },
                 {
                     "control-name": "EmbeddedData",
                     "register-address": "0x3064",
                     "attribute": "r"
+                }
+            ]
+        },
+        {
+            "sensor-identifier" : "DGFS",
+            "register-controls": [
+                {
+                    "control-name": "Gain",
+                    "register-address": "0x3014",
+                    "attribute": "rw"
+                },
+                {
+                    "control-name": "Flip",
+                    "register-address": "0x3007",
+                    "bits" : {
+                    	"v" : 0,
+                    	"h" : 1
+                    },
+                    "attribute": "w"
                 }
             ]
         }

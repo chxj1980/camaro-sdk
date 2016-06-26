@@ -33,6 +33,7 @@ namespace TopGear
 	{
 	public:
 		std::vector<uint16_t> AddressArray;
+		std::map<std::string, int> BitMap;
 		const std::string Attribute;
 		static std::pair<std::string, RegisterControl> Parse(Json::Value &value);
 	private:
