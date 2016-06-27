@@ -110,8 +110,9 @@ namespace TopGear
 		if (!element.isNull() && element.isObject())
 		{
 			auto names = element.getMemberNames();
-			for (auto i = 0u; i < element.size(); ++i)
-				pair.second.BitMap[names[i]] = element[i].asInt();
+            auto i = 0;
+            for (auto &bitval : element)
+                pair.second.BitMap[names[i++]] = bitval.asInt();
 		}
 		return pair;
 	}
@@ -136,7 +137,7 @@ namespace TopGear
 		auto it = NameMap.find(root["camera-name"].asString());
 		if (it == NameMap.end())
 			return false;
-		auto result = Repository.emplace(it->second, CameraProfile(registerCode));
+        auto result = Repository.emplace(it->second, CameraProfile(registerCode));
 		if (result.second == false)
 			return false;
 		auto &config = (result.first)->second;

@@ -341,7 +341,7 @@ int CamaroISP::SetGain(float gainR, float gainG, float gainB)
                 gainR = 1;
             uint16_t val = uint16_t(3*std::log10(gainR));
             if (val > 0xf0)
-                val = 0xf0
+                val = 0xf0;
             result = SetRegister(addrs[0], val);
         }
         else

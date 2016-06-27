@@ -51,7 +51,7 @@ namespace TopGear
 		const uint8_t RegisterCode;
 		//const size_t RegisterHash;
 		std::map<std::string, XuControl> XuControls;
-		const RegisterMap *QueryRegisterMap(const std::string &identifier) const;
+        std::pair<std::string, const RegisterMap *> QueryRegisterMap(const std::string &identifier) const;
 
 		static std::map<Camera, CameraProfile> Repository;
 		static bool Parse(std::istream &stream);
