@@ -13,7 +13,8 @@ namespace TopGear
          :  public CameraBase,
             public IMultiVideoStream,
             public TopGear::ICameraControl,
-            public IDeviceControl
+            public IDeviceControl,
+            public IWatch
     {
     protected:
         int currentStreamIndex = 0;
@@ -22,6 +23,9 @@ namespace TopGear
         void OnWideAngleFrame(IVideoStream &source, std::vector<IVideoFramePtr> &frames);
         void OnTelephotoFrame(IVideoStream &source, std::vector<IVideoFramePtr> &frames);
         VideoFrameCallbackFn fnCb = nullptr;
+        TimeoutCallbackFn tcb = nullptr;
+        std::chrono::seconds interval;
+        WatchDog watchdog;
     private:
         std::thread frameWatchThread;
         bool threadOn = false;
@@ -55,6 +59,8 @@ namespace TopGear
         virtual bool SetCurrentFormat(uint32_t formatIndex) override;
         virtual void RegisterFrameCallback(const VideoFrameCallbackFn& fn) override;
         virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override;
+
+        virtual void RegisterTimeoutCallback(const TimeoutCallbackFn &fn, std::chrono::seconds timeout) override;
 
         virtual const std::vector<std::shared_ptr<IVideoStream>> &GetStreams() const override;
         virtual bool SelectStream(int index) override;

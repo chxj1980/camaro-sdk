@@ -3,7 +3,9 @@
 
 namespace TopGear
 {
-	class CameraSoloBase: public CameraBase
+    class CameraSoloBase:
+            public CameraBase,
+            public IWatch
 	{
 	protected:
 		explicit CameraSoloBase(std::shared_ptr<IVideoStream> &vs, CameraProfile &con = CameraProfile::NullObject())
@@ -19,11 +21,16 @@ namespace TopGear
         }
 
 		std::shared_ptr<IVideoStream> pReader;
-        VideoFrameCallbackFn fncb;
+        VideoFrameCallbackFn fncb = nullptr;
+        TimeoutCallbackFn tcb = nullptr;
+        std::chrono::seconds interval;
+        WatchDog watchdog;
     private:
         void OnFrame(IVideoStream &source, std::vector<IVideoFramePtr> &frames)
         {
             (void)source;
+            if (tcb)
+                watchdog.Feed();
             PostProcess(frames);
             auto vp = std::make_shared<std::vector<IVideoFramePtr>>(std::move(frames));
             Notify(vp);
@@ -33,10 +40,14 @@ namespace TopGear
 	public:
 		virtual bool StartStream() override
 		{
+            if (tcb)
+                watchdog.Start(interval, std::bind(tcb, std::ref(*this)));
 			return pReader->StartStream();
 		}
 		virtual bool StopStream() override
 		{
+            if (tcb)
+                watchdog.Stop();
 			return pReader->StopStream();
 		}
 		virtual bool IsStreaming() const override
@@ -51,6 +62,12 @@ namespace TopGear
         virtual void RegisterFrameCallback(IVideoFrameCallback* pCB) override
         {
             fncb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
+        }
+
+        virtual void RegisterTimeoutCallback(const TimeoutCallbackFn &fn, std::chrono::seconds timeout) override
+        {
+            tcb = fn;
+            interval = std::move(timeout);
         }
 
 		virtual ~CameraSoloBase()

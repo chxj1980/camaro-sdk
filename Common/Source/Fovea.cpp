@@ -26,6 +26,8 @@ void Fovea::FrameWatcher()
 
         if (frames[0] && frames[1] && keyStreamIndex==frameEx.first)    //Key frame here and no empty frame
         {
+            if (tcb)
+                watchdog.Feed();
             auto vector = std::shared_ptr<std::vector<IVideoFramePtr>>(new std::vector<IVideoFramePtr> { frames[0], frames[1] } );
             Notify(vector);
             if (fnCb)
@@ -110,12 +112,18 @@ void Fovea::StartStreams()
         }
         item->StartStream();
     }
+
+    if (tcb)
+        watchdog.Start(interval, std::bind(tcb, std::ref(*this)));
+
     frameWatchThread = std::thread(&Fovea::FrameWatcher, this);
     threadOn = frameWatchThread.joinable();
 }
 
 void Fovea::StopStreams()
 {
+    if (tcb)
+        watchdog.Stop();
     for(auto &item : videoStreams)
         item->StopStream();
     if (frameWatchThread.joinable())
@@ -287,5 +295,11 @@ void Fovea::RegisterFrameCallback(const VideoFrameCallbackFn& fn)
 void Fovea::RegisterFrameCallback(IVideoFrameCallback* pCB)
 {
     fnCb = std::bind(&IVideoFrameCallback::OnFrame, pCB, std::placeholders::_1, std::placeholders::_2);
+}
+
+void Fovea::RegisterTimeoutCallback(const TimeoutCallbackFn &fn, std::chrono::seconds timeout)
+{
+    tcb = fn;
+    interval = std::move(timeout);
 }
 

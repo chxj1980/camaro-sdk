@@ -14,12 +14,22 @@
 #endif
 #include <vector>
 #include <functional>
+#include <chrono>
 
 namespace TopGear
 {
 	class IVideoStream;
 
-	typedef std::function<void(IVideoStream &, std::vector<IVideoFramePtr> &)> VideoFrameCallbackFn;
+    typedef std::function<void(IVideoStream &, std::vector<IVideoFramePtr> &)> VideoFrameCallbackFn;
+
+    typedef std::function<void(IVideoStream &)> TimeoutCallbackFn;
+
+    class IWatch
+    {
+    public:
+        virtual ~IWatch() = default;
+        virtual void RegisterTimeoutCallback(const TimeoutCallbackFn &fn, std::chrono::seconds timeout) = 0;
+    };
 
 	DEPRECATED(class IVideoFrameCallback);
 
@@ -53,6 +63,7 @@ namespace TopGear
 		virtual const VideoFormat &GetCurrentFormat() const = 0;
 		virtual bool SetCurrentFormat(uint32_t formatIndex) = 0;
 		virtual void RegisterFrameCallback(const VideoFrameCallbackFn &fn) = 0;
+
 		DEPRECATED(virtual void RegisterFrameCallback(IVideoFrameCallback *pCB)) = 0;
 
 		template<class Fn, class T>
@@ -63,7 +74,7 @@ namespace TopGear
 		}
 
 		template<class Fn>
-		static void RegisterFrameCallback(IVideoStream &stream, Fn fn)
+        static void RegisterFrameCallback(IVideoStream &stream, Fn&& fn)
 		{
 			static_assert(is_function_pointer<Fn>::value, "RegisterFrameCallback need a function as parameter");
 			stream.RegisterFrameCallback(std::bind(fn, std::placeholders::_1, std::placeholders::_2));

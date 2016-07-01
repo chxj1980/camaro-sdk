@@ -95,7 +95,8 @@ HEADERS += \
     ../../Common/Include/FileSource.h \
     ../../Common/Include/ImageSequence.h \
     ../../Common/Include/ProcessorBase.h \
-    ../../Common/Include/IProcessable.h
+    ../../Common/Include/IProcessable.h \
+    ../../Common/Include/WatchDog.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \
