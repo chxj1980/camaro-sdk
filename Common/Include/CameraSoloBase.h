@@ -1,5 +1,6 @@
 #pragma once
 #include "CameraBase.h"
+#include "WatchDog.h"
 
 namespace TopGear
 {

@@ -6,6 +6,7 @@
 #include "BufferQueue.h"
 #include "ILowlevelControl.h"
 #include "IMultiVideoStream.h"
+#include "WatchDog.h"
 
 namespace TopGear
 {
