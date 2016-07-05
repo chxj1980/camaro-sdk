@@ -97,7 +97,8 @@ HEADERS += \
     ../../Common/Include/ProcessorBase.h \
     ../../Common/Include/IProcessable.h \
     ../../Common/Include/WatchDog.h \
-    ../../Common/Include/IMobile.h
+    ../../Common/Include/IMobile.h \
+    ../../Common/Include/CamaroMovidius.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \
@@ -123,4 +124,5 @@ SOURCES += \
     ../../Common/Source/FlyCaptureReader.cpp \
     ../../Common/Source/FlyCaptureDevice.cpp \
     ../../Common/Source/FileSource.cpp \
-    ../../Common/Source/ImageSequence.cpp
+    ../../Common/Source/ImageSequence.cpp \
+    ../../Common/Source/CamaroMovidius.cpp

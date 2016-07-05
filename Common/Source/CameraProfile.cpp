@@ -7,7 +7,8 @@ namespace TopGear
 		{ "StandardUVC", Camera::StandardUVC },
 		{ "Camaro", Camera::Camaro },
 		{ "CamaroDual", Camera::CamaroDual },
-		{ "ImpalaE", Camera::ImpalaE }
+        { "ImpalaE", Camera::ImpalaE },
+        { "CamaroMovidius", Camera::CamaroMovidius },
 	};
 
 	const float CameraProfile::Version = 1.0f;

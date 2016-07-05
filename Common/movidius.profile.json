@@ -1,0 +1,61 @@
+{
+    "profile-version" : "1.0",
+    "camera-name": "CamaroMovidius",
+    "camera-version": "1.0",
+    "xu-controls": [
+        {
+            "control-name": "DeviceInfo",
+            "control-code": 2,
+            "attribute": "r",
+            "type": "string"
+        },
+        {
+            "control-name": "Resync",
+            "control-code": 5,
+            "attribute": "rw",
+            "type": "ushort",
+            "big-endian" : true,
+            "payloads": [
+                {
+                    "attribute": "w",
+                    "prefix": [ 1 ]
+                },
+                {
+                    "attribute": "r",
+                    "prefix": 1
+                }
+            ]
+        },
+        {
+            "control-name": "AutoExposure",
+            "control-code": 6,
+            "attribute": "rw",
+            "type": "byte"
+        },
+        {
+            "control-name": "ShutterLimit",
+            "control-code": 7,
+            "attribute": "rw",
+            "type": "uint",
+            "big-endian" : true
+        },
+        {
+            "control-name": "MaxRate",
+            "control-code": 8,
+            "attribute": "rw",
+            "type": "byte"
+        },
+        {
+            "control-name": "Flip",
+            "control-code": 9,
+            "attribute": "rw",
+            "type": "byte"
+        }
+    ],
+    "register-control-code": 4,
+    "sensors" : [
+        {
+            "sensor-identifier" : "DGMO"
+        }
+    ]
+}

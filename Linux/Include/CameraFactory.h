@@ -8,6 +8,7 @@
 #include "StandardUVC.h"
 #include "Camaro.h"
 #include "CamaroISP.h"
+#include "CamaroMovidius.h"
 #include "ImpalaE.h"
 #include "Fovea.h"
 #include "ExtensionAccess.h"
@@ -109,6 +110,21 @@ namespace TopGear
             if (it!=CameraProfile::Repository.end())
                 return std::make_shared<CamaroISP>(reader, ex, it->second);
             return std::make_shared<CamaroISP>(reader, ex);
+        }
+
+        template <>
+        template <>
+        inline std::shared_ptr<IVideoStream> CameraFactory<CamaroMovidius>::
+        CreateInstance<IGenericVCDevicePtr>(IGenericVCDevicePtr& device)
+        {
+            std::shared_ptr<IVideoStream> reader;
+            std::shared_ptr<IExtensionAccess> ex;
+            if (!GetUVCStream(device,reader,ex))
+                return {};
+            auto it = CameraProfile::Repository.find(Camera::CamaroMovidius);
+            if (it!=CameraProfile::Repository.end())
+                return std::make_shared<CamaroMovidius>(reader, ex, it->second);
+            return std::make_shared<CamaroMovidius>(reader, ex);
         }
 
 #ifdef SUPPORT_POINTGREY

@@ -58,6 +58,7 @@ namespace TopGear
 		StandardUVC,
 		Camaro,
         CamaroISP,
+        CamaroMovidius,
 		CamaroDual,
 		ImpalaE,
         Fovea,

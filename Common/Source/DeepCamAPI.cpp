@@ -245,6 +245,11 @@ namespace TopGear
             if (vs)
                 Logger::Write(spdlog::level::info, "CamaroISP camera created");
             break;
+        case Camera::CamaroMovidius:
+            vs = CameraFactory<CamaroMovidius>::CreateInstance(source);
+            if (vs)
+                Logger::Write(spdlog::level::info, "CamaroMovidius camera created");
+            break;
         case Camera::ImpalaE:
             vs = CameraFactory<ImpalaE>::CreateInstance(source);
             if (vs)
