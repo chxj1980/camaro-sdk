@@ -89,9 +89,9 @@ namespace TopGear
 						return false;
 			}
 
-			if (sizeof(T) < len - prefixLen)
+            if (sizeof(T) > len - prefixLen)
 				return false;
-			std::memcpy(&prop->Payload, data.get() + prefixLen, len);
+            std::memcpy(&prop->Payload, data.get() + prefixLen, sizeof(T));
 			if (bigendian)
 				ConvertOrder(prop->Payload);
 			return true;
