@@ -1,7 +1,7 @@
 /*
- * ConvertYUYVToI420.cpp
+ * convert_to_i420.cpp
  *
- *  Created on: May 10, 2016
+ *  Created on: Jun 7, 2016
  *      Author: nick
  */
 
@@ -15,8 +15,8 @@
 
 using namespace TopGear::Linux;
 
-//namespace LibraF
-//{
+namespace LibraF
+{
 
 ConvertToI420::ConvertToI420(FrameManagerPtr &manager)
 	:frameManager(manager)
@@ -101,4 +101,4 @@ std::shared_ptr<std::vector<IVideoFramePtr>>  ConvertToI420::GetResult()
     return result;
 }
 
-//} /* namespace LibraF */
+} /* namespace LibraF */

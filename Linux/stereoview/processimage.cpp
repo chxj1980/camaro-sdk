@@ -17,6 +17,7 @@
 #include "IVideoStream.h"
 #include "IDeviceControl.h"
 #include "IMultiVideoStream.h"
+#include "IMobile.h"
 #include "FileSource.h"
 #include "ImageDevice.h"
 
@@ -124,8 +125,13 @@ void convert_yuyv_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int widt
         temp = std::unique_ptr<uint8_t[]>(new uint8_t[size]);
     }
 
-    libyuv::UYVYToARGB(raw,width*2,temp.get(),width*4,width,height);
+    libyuv::YUY2ToARGB(raw,width*2,temp.get(),width*4,width,height);
+
+    //libyuv::UYVYToARGB(raw,width*2,temp.get(),width*4,width,height);
     libyuv::ARGBToRAW(temp.get(), width*4, rgb, width*3,width,height);
+
+ //   libyuv::UYVYToARGB(raw,width*2,temp.get(),width*4,width,height);
+ //   libyuv::ARGBToRGB24(temp.get(), width*4, rgb, width*3,width,height);
 }
 
 void convert_i420_to_rgb_buffer(unsigned char *raw, unsigned char *rgb, int width, int height)
@@ -181,7 +187,15 @@ extern void __attribute__ ((noinline)) neonMemCopy_gas(unsigned char* dst, unsig
 
 #define RESYNC_NUM 100
 
-std::shared_ptr<ConvertToI420> converter;
+std::shared_ptr<LibraF::ConvertToI420> converter;
+
+std::shared_ptr<TopGear::IMobile> motionSync;
+
+void TimeoutCallback(TopGear::IVideoStream &source)
+{
+    (void)source;
+    std::cout<<"Timeout Callback Invoked!"<<std::endl;
+}
 
 ProcessImage::ProcessImage(QWidget *parent)
     :QWidget(parent)
@@ -438,45 +452,49 @@ ProcessImage::ProcessImage(QWidget *parent)
 //        camera->StartStream();
 //    }
 
-    auto bm = std::make_shared<BufferManager<IVideoFrame, 2, 50>>(
-                std::array<uint32_t, 2> {1080*1920*3/2,1080*1920*3/2} );
+//    auto bm = std::make_shared<LibraF::BufferManager<IVideoFrame, 2, 50>>(
+//                std::array<uint32_t, 2> {1080*1920*3/2,1080*1920*3/2} );
 
-    converter = std::make_shared<ConvertToI420>(bm);
-    converter->Run();
+//    converter = std::make_shared<LibraF::ConvertToI420>(bm);
+//    converter->Run();
 
-    auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::FlyCapture);
-    std::cout<<devices.size()<<std::endl;
-    if (!devices.empty())
-    {
-        camera = deepcam.CreateCamera(TopGear::Camera::PointGrey, devices[0]);
+//PointGrey Camera
+//    auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::FlyCapture);
+//    std::cout<<devices.size()<<std::endl;
+//    if (!devices.empty())
+//    {
+//        camera = deepcam.CreateCamera(TopGear::Camera::PointGrey, devices[0]);
 
+//        cameraControl = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
 
-        cameraControl = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
+////        auto processable = std::dynamic_pointer_cast<TopGear::IProcessable<std::vector<TopGear::IVideoFramePtr>>>(camera);
 
-        auto processable = std::dynamic_pointer_cast<TopGear::IProcessable<std::vector<TopGear::IVideoFramePtr>>>(camera);
+////        auto pc = std::static_pointer_cast<TopGear::IProcessor<std::vector<TopGear::IVideoFramePtr>>>(converter);
 
-        auto pc = std::static_pointer_cast<TopGear::IProcessor<std::vector<TopGear::IVideoFramePtr>>>(converter);
+////        processable->Register(pc);
 
-        processable->Register(pc);
+//        auto watcher = std::dynamic_pointer_cast<TopGear::IWatch>(camera);
 
+//        if (watcher)
+//            watcher->RegisterTimeoutCallback(TimeoutCallback, std::chrono::seconds(1));
 
-        if (cameraControl)
-            cameraControl->Flip(true, false);
+//        if (cameraControl)
+//            cameraControl->Flip(true, false);
 
-        TopGear::IVideoStream::RegisterFrameCallback(*camera, &ProcessImage::onGetStereoFrame, this);
-        TopGear::VideoFormat format;
-        format.Height = 1080;
-        format.Width = 1920;
-        format.MaxRate = 30;
-        prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
-        prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
-        frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
-        frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
-        auto index = camera->GetMatchedFormatIndex(format);
-        camera->SetCurrentFormat(index);
-        //cc->Flip(true, false);
-        camera->StartStream();
-    }
+//        TopGear::IVideoStream::RegisterFrameCallback(*camera, &ProcessImage::onGetStereoFrame, this);
+//        TopGear::VideoFormat format;
+//        format.Height = 1080;
+//        format.Width = 1920;
+//        format.MaxRate = 30;
+//        prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+//        prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+//        frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+//        frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+//        auto index = camera->GetMatchedFormatIndex(format);
+//        camera->SetCurrentFormat(index);
+//        //cc->Flip(true, false);
+//        camera->StartStream();
+//    }
 
 //    std::shared_ptr<TopGear::FileSource> source =
 //            std::make_shared<TopGear::DirectorySource>("/home/nick/workspace/Libra-F/demo/file_imgs","jpg");
@@ -494,42 +512,58 @@ ProcessImage::ProcessImage(QWidget *parent)
 //        camera->StartStream();
 //    }
 
-//    auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::DeepGlint);
-//    for(auto &d : devices)
-//        std::cout<<d->GetDeviceInfo()<<std::endl;
+//CamaroISP
+    auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::DeepGlint);
+    for(auto &d : devices)
+        std::cout<<d->GetDeviceInfo()<<std::endl;
 //    qDebug("Devices:  %d",devices.size());
-//    if (!devices.empty())
-//    {
-//        camera = deepcam.CreateCamera(TopGear::Camera::Fovea, devices);
+    if (!devices.empty())
+    {
+        camera = deepcam.CreateCamera(TopGear::Camera::Fovea, devices);
+        //camera = deepcam.CreateCamera(TopGear::Camera::CamaroISP, devices[0]);
 //        //camera = deepcam.CreateCamera(TopGear::Camera::StandardUVC, devices[0]);
 //        //TopGear::PropertyData<std::vector<float>> data;
-//        if (camera)
-//        {
-//            auto mv = TopGear::DeepCamAPI::QueryInterface<TopGear::IMultiVideoStream>(camera);
-//            auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
+        if (camera)
+        {
+//            auto dc = std::dynamic_pointer_cast<IDeviceControl>(camera);
+//            if (dc)
+//            {
+//                PropertyData<uint16_t> val;
+//                dc->SetControl("Resync", PropertyData<uint16_t>(888));
+//                auto res = dc->GetControl("Resync", val);
+//                std::cout<<"Read SyncTag: "<<res<<" "<<val.Payload<<std::endl;
+//            }
 
-//            mv->SelectStream(0);
+            motionSync = std::dynamic_pointer_cast<TopGear::IMobile>(camera);
 
-//            cc->Flip(true, false);
+            auto mv = TopGear::DeepCamAPI::QueryInterface<TopGear::IMultiVideoStream>(camera);
+            auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
+            if (mv)
+                mv->SelectStream(0);
 
-//            TopGear::IVideoStream::RegisterFrameCallback(*camera,
-//                                                         &ProcessImage::onGetStereoFrame, this);
-//            TopGear::VideoFormat format {};
-//            format.Height = 1080;
-//            format.Width = 1920;
-//            format.MaxRate =15;
-//            prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
-//            prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
-//            frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
-//            frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
-//            auto index = camera->GetMatchedFormatIndex(format);
-//            camera->SetCurrentFormat(index);
-//            mv->SelectStream(1);
-//            cc->Flip(true, false);
-//            camera->SetCurrentFormat(index);
-//            camera->StartStream();
-//        }
-//    }
+            cc->Flip(true, true);
+
+            TopGear::IVideoStream::RegisterFrameCallback(*camera,
+                                                        &ProcessImage::onGetStereoFrame, this);
+            TopGear::VideoFormat format {};
+            format.Height = 1080;
+            format.Width = 1920;
+            format.MaxRate = 30;
+            prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+            prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+            frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+            frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+            auto index = camera->GetMatchedFormatIndex(format);
+            camera->SetCurrentFormat(index);
+            if (mv)
+            {
+                mv->SelectStream(1);
+                cc->Flip(true, false);
+                camera->SetCurrentFormat(index);
+            }
+            camera->StartStream();
+      }
+    }
 
     timer = nullptr;
 
@@ -553,6 +587,8 @@ void ProcessImage::ontimer()
     int drops = dropcount.load(std::memory_order_relaxed);
     dropcount = 0;
     lblFramerate->setText(QString("fps:%1  framedrops:%2").arg((int)fc.GetFrameRate()).arg(drops));
+    if (motionSync)
+        motionSync->SyncTag();
 }
 
 std::mutex mtx;
@@ -563,6 +599,17 @@ void ProcessImage::onGetStereoFrame(TopGear::IVideoStream &sender, std::vector<T
     if (frames.size()==0 || frames.size()>2)
         return;
     //qDebug("frameidx:  %d",frames[0]->GetFrameIdx());
+    if (motionSync)
+        std::cout<<"Is Steady:"<<motionSync->IsSteady()<<std::endl;
+
+//    auto dc = std::dynamic_pointer_cast<IDeviceControl>(camera);
+//    if (dc)
+//    {
+//        PropertyData<uint16_t> val;
+//        auto res = dc->GetControl("Resync", val);
+//        std::cout<<"Read SyncTag: "<<res<<" "<<val.Payload<<std::endl;
+//    }
+
     static uint64_t lastIdx = UINT64_MAX;
     auto currentIdx = frames[0]->GetFrameIndex();
 //    timeval tm = frames[0]->GetTimestamp();

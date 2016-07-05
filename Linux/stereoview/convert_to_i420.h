@@ -1,7 +1,7 @@
 /*
  * ConvertYUYVToI420.h
  *
- *  Created on: May 10, 2016
+ *  Created on: Jun 7, 2016
  *      Author: nick
  */
 
@@ -14,8 +14,8 @@
 
 using namespace TopGear;
 
-//namespace LibraF
-//{
+namespace LibraF
+{
 
 
 class ConvertToI420
@@ -34,4 +34,4 @@ protected:
 	void ColorConvert(uint8_t *source, uint8_t *i420, const VideoFormat &format);
 };
 
-//} /* namespace LibraF */
+} /* namespace LibraF */

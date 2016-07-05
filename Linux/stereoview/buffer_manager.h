@@ -17,8 +17,8 @@
 #include <chrono>
 #include <iterator>
 
-//namespace LibraF
-//{
+namespace LibraF
+{
 
 template<typename T, std::size_t DIMENSION, std::size_t BUFFER_NUM>
 class BufferManager
@@ -182,6 +182,6 @@ std::pair<uint64_t, std::vector<std::shared_ptr<T>>> BufferManager<T, DIMENSION,
 	return std::make_pair(it->first, std::move(vector));
 }
 
-//} /* namespace LibraF */
+} /* namespace LibraF */
 
 #endif /* SRC_PROCESSOR_BUFFER_MANAGER_H_ */
