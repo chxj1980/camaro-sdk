@@ -167,13 +167,15 @@ namespace TopGear
 				auto map = element[i]["register-controls"];
 				if (id.isNull())
 					continue;
+                RegisterMap rm;
 				for (auto j = 0u; j < map.size(); ++j)
 				{
 					auto pair = RegisterControl::Parse(map[j]);
 					if (pair.first.empty())
 						continue;
-					config.sensors[name].emplace(pair.first, pair.second);
+                    rm.emplace(pair.first, pair.second);
 				}
+                config.sensors.emplace(name, std::move(rm));
 			}
 		}
 		return true;
