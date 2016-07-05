@@ -25,7 +25,7 @@ namespace TopGear
 		explicit PropertyData(const T &t) : Payload(t) {}
 		explicit PropertyData(T &&t) : Payload(t) {}
 
-		~PropertyData() override {}
+        virtual ~PropertyData() = default;
 
 		size_t GetTypeHash() const override
 		{

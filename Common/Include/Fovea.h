@@ -7,6 +7,7 @@
 #include "ILowlevelControl.h"
 #include "IMultiVideoStream.h"
 #include "WatchDog.h"
+#include "IMobile.h"
 
 namespace TopGear
 {
@@ -15,7 +16,8 @@ namespace TopGear
             public IMultiVideoStream,
             public TopGear::ICameraControl,
             public IDeviceControl,
-            public IWatch
+            public IWatch,
+            public IMobile
     {
     protected:
         int currentStreamIndex = 0;
@@ -31,6 +33,7 @@ namespace TopGear
         std::thread frameWatchThread;
         bool threadOn = false;
         int keyStreamIndex = -1;
+        std::atomic_ushort syncTag;
         BufferQueue<std::pair<int, IVideoFramePtr>> frameBuffer;
         void FrameWatcher();
         void PushFrame(int index, IVideoFramePtr &frame);
@@ -69,6 +72,9 @@ namespace TopGear
         virtual int GetCurrentStream(std::shared_ptr<IVideoStream> &current) override;
         virtual void StartStreams() override;
         virtual void StopStreams() override;
+
+        virtual void SyncTag() override;
+        virtual bool IsSteady() override;
     };
 }
 

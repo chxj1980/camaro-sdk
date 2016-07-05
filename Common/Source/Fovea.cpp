@@ -4,6 +4,7 @@
 using namespace TopGear;
 
 Fovea::Fovea(std::shared_ptr<IVideoStream> &wideangle, std::shared_ptr<IVideoStream> &telephoto)
+    :syncTag(0)
 {
     videoStreams.push_back(wideangle);
     videoStreams.push_back(telephoto);
@@ -215,7 +216,7 @@ bool Fovea::SetControl(std::string name, IPropertyData &val)
 {
     auto dc = std::dynamic_pointer_cast<IDeviceControl>(currentStream);
     if (dc==nullptr)
-        return -1;
+        return false;
     return dc->SetControl(name, val);
 }
 
@@ -223,7 +224,7 @@ bool Fovea::SetControl(std::string name, IPropertyData &&val)
 {
     auto dc = std::dynamic_pointer_cast<IDeviceControl>(currentStream);
     if (dc==nullptr)
-        return -1;
+        return false;
     return dc->SetControl(name, val);
 }
 
@@ -231,7 +232,7 @@ bool Fovea::GetControl(std::string name, IPropertyData &val)
 {
     auto dc = std::dynamic_pointer_cast<IDeviceControl>(currentStream);
     if (dc==nullptr)
-        return -1;
+        return false;
     return dc->GetControl(name, val);
 }
 
@@ -301,5 +302,24 @@ void Fovea::RegisterTimeoutCallback(const TimeoutCallbackFn &fn, std::chrono::se
 {
     tcb = fn;
     interval = std::move(timeout);
+}
+
+void Fovea::SyncTag()
+{
+    auto dc = std::dynamic_pointer_cast<IDeviceControl>(videoStreams[1]);
+    if (dc==nullptr)
+        return;
+    dc->SetControl("Resync", PropertyData<uint16_t>(++syncTag));
+}
+
+bool Fovea::IsSteady()
+{
+    auto dc = std::dynamic_pointer_cast<IDeviceControl>(videoStreams[1]);
+    if (dc==nullptr)
+        return false;
+    PropertyData<uint16_t> val;
+    if (!dc->GetControl("Resync", val))
+        return false;
+    return val.Payload == syncTag.load();
 }
 
