@@ -178,7 +178,7 @@ CamaroMovidius::CamaroMovidius(std::shared_ptr<IVideoStream>& vs,
     auto builtinFormats = pReader->GetAllFormats();
     for(auto &item : builtinFormats)
     {
-        for(auto rate=5;rate<=30;rate+=5)
+        for(auto rate=10;rate<=30;rate+=5)
         {
             VideoFormat format(item);
             format.MaxRate = rate;
@@ -244,12 +244,15 @@ const VideoFormat &CamaroMovidius::GetCurrentFormat() const
 
 bool CamaroMovidius::SetCurrentFormat(uint32_t formatIndex)
 {
-    auto &format = GetCurrentFormat();
-    auto index = pReader->GetMatchedFormatIndex(format);
+    auto &format = formats[formatIndex];
+    VideoFormat builtin(format);
+    builtin.MaxRate = 0;
+    auto index = pReader->GetMatchedFormatIndex(builtin);
     if (index<0)
         return false;
     if (!pReader->SetCurrentFormat(index))
         return false;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); //Need to wait, Movidius bug
     if (!SetControl("MaxRate", PropertyData<uint8_t>(format.MaxRate)))
         return false;
     currentFormatIndex = formatIndex;

@@ -315,6 +315,8 @@ void VideoSourceReader::EnumerateFormats(uint32_t handle)
                 memcpy(format.PixelFormat, &fmt.pixelformat, 4);
                 videoFormats.emplace_back(format);
                 frameval.index++;
+                if (frameval.type!=V4L2_FRMIVAL_TYPE_DISCRETE)
+                    break;
             }
             fsize.index++;
         }

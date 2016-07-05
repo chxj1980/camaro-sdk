@@ -48,6 +48,8 @@ void Fovea::PushFrame(int index, IVideoFramePtr &frame)
 void Fovea::OnWideAngleFrame(IVideoStream &source, std::vector<IVideoFramePtr> &frames)
 {
     (void)source;
+    if (!threadOn)
+        return;
     if (frames.size() != 1)
         return;
     PushFrame(0, frames[0]);
@@ -56,6 +58,8 @@ void Fovea::OnWideAngleFrame(IVideoStream &source, std::vector<IVideoFramePtr> &
 void Fovea::OnTelephotoFrame(IVideoStream &source, std::vector<IVideoFramePtr> &frames)
 {
     (void)source;
+    if (!threadOn)
+        return;
     if (frames.size() != 1)
         return;
     PushFrame(1, frames[0]);
@@ -125,14 +129,14 @@ void Fovea::StopStreams()
 {
     if (tcb)
         watchdog.Stop();
-    for(auto &item : videoStreams)
-        item->StopStream();
     if (frameWatchThread.joinable())
     {
         frameBuffer.Discard();
         frameWatchThread.join();
     }
     threadOn = false;
+    for(auto &item : videoStreams)
+        item->StopStream();
 }
 
 int Fovea::Flip(bool vertical, bool horizontal)
