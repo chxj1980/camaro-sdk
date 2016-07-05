@@ -73,7 +73,8 @@ namespace TopGear
         virtual void StartStreams() override;
         virtual void StopStreams() override;
 
-        virtual void SyncTag() override;
+        virtual void StartMove() override;
+        virtual void StopMove() override;
         virtual bool IsSteady() override;
     };
 }

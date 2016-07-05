@@ -6,7 +6,8 @@ namespace TopGear
     {
     public:
         virtual ~IMobile() = default;
-        virtual void SyncTag() = 0;
+        virtual void StartMove()  = 0;
+        virtual void StopMove()  = 0;
         virtual bool IsSteady() = 0;
     };
 }

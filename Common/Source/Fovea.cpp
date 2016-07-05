@@ -129,12 +129,12 @@ void Fovea::StopStreams()
 {
     if (tcb)
         watchdog.Stop();
+    threadOn = false;
     if (frameWatchThread.joinable())
     {
         frameBuffer.Discard();
         frameWatchThread.join();
     }
-    threadOn = false;
     for(auto &item : videoStreams)
         item->StopStream();
 }
@@ -308,12 +308,17 @@ void Fovea::RegisterTimeoutCallback(const TimeoutCallbackFn &fn, std::chrono::se
     interval = std::move(timeout);
 }
 
-void Fovea::SyncTag()
+void Fovea::StartMove()
+{
+    ++syncTag;
+}
+
+void Fovea::StopMove()
 {
     auto dc = std::dynamic_pointer_cast<IDeviceControl>(videoStreams[1]);
     if (dc==nullptr)
         return;
-    dc->SetControl("Resync", PropertyData<uint16_t>(++syncTag));
+    dc->SetControl("Resync", PropertyData<uint16_t>(syncTag.load()));
 }
 
 bool Fovea::IsSteady()
