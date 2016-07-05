@@ -307,7 +307,20 @@ namespace TopGear
                 vss.push_back(CreateCamera(Camera::JpegSequence, source[0]));
 #endif
             else
-                vss.push_back(CreateCamera(Camera::CamaroISP, source[0]));
+            {
+                auto res = false;
+                auto it = CameraProfile::Repository.find(Camera::CamaroMovidius);
+                if (it != CameraProfile::Repository.end())
+                {
+                    auto sensor = it->second.QueryRegisterMap(source[0]->GetDeviceInfo());
+                    if (sensor.second) //supported sensor found
+                        res = true;
+                }
+                if (res)
+                    vss.push_back(CreateCamera(Camera::CamaroMovidius, source[0]));
+                else
+                    vss.push_back(CreateCamera(Camera::CamaroISP, source[0]));
+            }
 
             if (std::dynamic_pointer_cast<StandardVCDevice>(source[1]))
                 vss.push_back(CreateCamera(Camera::StandardUVC, source[1]));
@@ -320,7 +333,20 @@ namespace TopGear
                 vss.push_back(CreateCamera(Camera::JpegSequence, source[1]));
 #endif
             else
-                vss.push_back(CreateCamera(Camera::CamaroISP, source[1]));
+            {
+                auto res = false;
+                auto it = CameraProfile::Repository.find(Camera::CamaroMovidius);
+                if (it != CameraProfile::Repository.end())
+                {
+                    auto sensor = it->second.QueryRegisterMap(source[1]->GetDeviceInfo());
+                    if (sensor.second) //supported sensor found
+                        res = true;
+                }
+                if (res)
+                    vss.push_back(CreateCamera(Camera::CamaroMovidius, source[1]));
+                else
+                    vss.push_back(CreateCamera(Camera::CamaroISP, source[1]));
+            }
 
             vs = CameraFactory<Fovea>::CreateInstance(vss);
             if (vs)
