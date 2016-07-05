@@ -9,7 +9,7 @@ using namespace TopGear;
 
 int CamaroMovidius::Flip(bool vertical, bool horizontal)
 {
-    return SetControl("Flip", PropertyData<uint8_t>((vertical?0x01:0x00)|(horizontal?0x10:0x00)));
+    return SetControl("Flip", PropertyData<uint8_t>((vertical?0x01:0x00)|(horizontal?0x02:0x00)));
 }
 
 bool CamaroMovidius::SetControl(std::string name, IPropertyData &&val)
