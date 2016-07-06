@@ -514,12 +514,29 @@ ProcessImage::ProcessImage(QWidget *parent)
 
 //CamaroISP
     auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::DeepGlint);
+
+    std::vector<TopGear::IGenericVCDevicePtr> foveaDevices;
+
     for(auto &d : devices)
+    {
+        std::string info = d->GetDeviceInfo();
+        if (info.substr(info.size()-1)=="0")
+           foveaDevices.emplace_back(d);
         std::cout<<d->GetDeviceInfo()<<std::endl;
+    }
+
+    for(auto &d : devices)
+    {
+        std::string info = d->GetDeviceInfo();
+        if (info.substr(info.size()-1)=="1")
+           foveaDevices.emplace_back(d);
+        std::cout<<d->GetDeviceInfo()<<std::endl;
+    }
+
 //    qDebug("Devices:  %d",devices.size());
     if (!devices.empty())
     {
-        camera = deepcam.CreateCamera(TopGear::Camera::Fovea, devices);
+        camera = deepcam.CreateCamera(TopGear::Camera::Fovea, foveaDevices);
         //camera = deepcam.CreateCamera(TopGear::Camera::CamaroISP, devices[0]);
 //        //camera = deepcam.CreateCamera(TopGear::Camera::StandardUVC, devices[0]);
 //        //TopGear::PropertyData<std::vector<float>> data;
@@ -541,14 +558,14 @@ ProcessImage::ProcessImage(QWidget *parent)
             if (mv)
                 mv->SelectStream(0);
 
-            cc->Flip(true, true);
+            cc->Flip(true, false);
 
             TopGear::IVideoStream::RegisterFrameCallback(*camera,
                                                         &ProcessImage::onGetStereoFrame, this);
             TopGear::VideoFormat format {};
             format.Height = 1080;
             format.Width = 1920;
-            format.MaxRate = 30;
+            format.MaxRate = 10;
             prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
@@ -588,7 +605,10 @@ void ProcessImage::ontimer()
     dropcount = 0;
     lblFramerate->setText(QString("fps:%1  framedrops:%2").arg((int)fc.GetFrameRate()).arg(drops));
     if (motionSync)
-        motionSync->SyncTag();
+    {
+        motionSync->StartMove();
+        motionSync->StopMove();
+    }
 }
 
 std::mutex mtx;
