@@ -1,20 +1,17 @@
 #pragma once
 #include "CameraBase.h"
 #include "WatchDog.h"
-#include "IMobile.h"
-#include "IDeviceControl.h"
 
 namespace TopGear
 {
     class CameraSoloBase:
             public CameraBase,
-            public IWatch,
-            public IMobile
+            public IWatch
 
 	{
 	protected:
 		explicit CameraSoloBase(std::shared_ptr<IVideoStream> &vs, CameraProfile &con = CameraProfile::NullObject())
-            :CameraBase(con), pReader(vs), syncTag(0)
+            :CameraBase(con), pReader(vs)
 		{
 			videoStreams.emplace_back(vs);
             pReader->RegisterFrameCallback(std::bind(&CameraSoloBase::OnFrame, this, std::placeholders::_1, std::placeholders::_2));
@@ -30,7 +27,6 @@ namespace TopGear
         TimeoutCallbackFn tcb = nullptr;
         std::chrono::seconds interval;
         WatchDog watchdog;
-        std::atomic_ushort syncTag;
     private:
         void OnFrame(IVideoStream &source, std::vector<IVideoFramePtr> &frames)
         {
@@ -74,30 +70,6 @@ namespace TopGear
         {
             tcb = fn;
             interval = std::move(timeout);
-        }
-
-        virtual void StartMove() override
-        {
-            ++syncTag;
-        }
-
-        virtual void StopMove() override
-        {
-            auto dc = dynamic_cast<IDeviceControl *>(this);
-            if (dc==nullptr)
-                return;
-            dc->SetControl("Resync", PropertyData<uint16_t>(syncTag.load()));
-        }
-
-        virtual bool IsSteady() override
-        {
-            auto dc = dynamic_cast<IDeviceControl *>(this);
-            if (dc==nullptr)
-                return false;
-            PropertyData<uint16_t> val;
-            if (!dc->GetControl("Resync", val))
-                return false;
-            return val.Payload == syncTag.load();
         }
 
         virtual ~CameraSoloBase() = default;

@@ -356,7 +356,7 @@ int CamaroISP::SetGain(float gainR, float gainG, float gainB)
 CamaroISP::CamaroISP(std::shared_ptr<IVideoStream>& vs,
     std::shared_ptr<IExtensionAccess>& ex,
     CameraProfile &con)
-    : CameraSoloBase(vs, con), extensionAdapter(ex)
+    : CameraSoloBase(vs, con), extensionAdapter(ex), syncTag(0)
 {
     PropertyData<std::string> info;
     if (CamaroISP::GetControl("DeviceInfo", info))
@@ -403,4 +403,22 @@ bool CamaroISP::SetCurrentFormat(uint32_t formatIndex)
         return false;
     currentFormatIndex = formatIndex;
     return true;
+}
+
+void CamaroISP::StartMove()
+{
+    ++syncTag;
+}
+
+void CamaroISP::StopMove()
+{
+    SetControl("Resync", PropertyData<uint16_t>(syncTag.load()));
+}
+
+bool CamaroISP::IsSteady()
+{
+    PropertyData<uint16_t> val;
+    if (!GetControl("Resync", val))
+        return false;
+    return val.Payload == syncTag.load();
 }
