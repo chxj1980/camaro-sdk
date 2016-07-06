@@ -29,6 +29,8 @@ namespace TopGear
                 {
                     if (cv.wait_for(ul, sec)==std::cv_status::timeout)
                     {
+                        if (first)
+                            continue;
                         running = false;
                         fn();
                         break;
@@ -41,7 +43,7 @@ namespace TopGear
         {
             if (running)
             {
-                //std::unique_lock<std::mutex> ul(mtx);
+                std::unique_lock<std::mutex> ul(mtx);
                 running = false;
                 cv.notify_one();
             }
@@ -53,7 +55,8 @@ namespace TopGear
         {
             if (!running)
                 return;
-            //std::unique_lock<std::mutex> ul(mtx);
+            std::unique_lock<std::mutex> ul(mtx);
+            first = false;
             cv.notify_one();
         }
 
@@ -62,6 +65,7 @@ namespace TopGear
         std::mutex mtx;
         std::condition_variable cv;
         bool running = false;
+        bool first = true;
     };
 }
 
