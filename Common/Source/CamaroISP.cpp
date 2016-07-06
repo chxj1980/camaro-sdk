@@ -419,6 +419,6 @@ bool CamaroISP::IsSteady()
 {
     PropertyData<uint16_t> val;
     if (!GetControl("Resync", val))
-        return false;
+        return true;
     return val.Payload == syncTag.load();
 }

@@ -325,10 +325,10 @@ bool Fovea::IsSteady()
 {
     auto dc = std::dynamic_pointer_cast<IDeviceControl>(videoStreams[1]);
     if (dc==nullptr)
-        return false;
+        return true;
     PropertyData<uint16_t> val;
     if (!dc->GetControl("Resync", val))
-        return false;
+        return true;
     return val.Payload == syncTag.load();
 }
 
