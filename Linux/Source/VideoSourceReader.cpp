@@ -82,7 +82,7 @@ void VideoSourceReader::EnumerateStreams(const LSource &one)
     std::vector<SourcePair> sources;
     v4l2_capability cap;
 
-    auto businfo = one.GetCapability().bus_info;
+    auto &businfo = one.GetCapability().bus_info;
 
     v4l2Helper::EnumVideoDeviceSources(sources);
     for(auto &i: sources)
@@ -101,7 +101,7 @@ void VideoSourceReader::Initmmap(uint32_t handle)
     auto it = streams.find(handle);
     if (it ==streams.end())
         return;
-    auto mbuffers = (it->second).mbuffers;
+    auto &mbuffers = (it->second).mbuffers;
 
     //request buffer
     v4l2_requestbuffers req;
@@ -198,7 +198,7 @@ void VideoSourceReader::Uninitmmap(uint32_t handle)
 
 std::shared_ptr<IVideoFrame> VideoSourceReader::RequestFrame(int handle, int &index) //DQBUF
 {
-    auto mbuffers = streams[handle].mbuffers;
+    auto &mbuffers = streams[handle].mbuffers;
 
     v4l2_buffer queue_buf;
     std::memset(&queue_buf,0,sizeof(queue_buf));
@@ -413,7 +413,7 @@ bool VideoSourceReader::IsStreaming(uint32_t handle)
 void VideoSourceReader::OnReadWorker(uint32_t handle)
 {
     int index = -1;
-    auto framesRef = streams[handle].framesRef;
+    auto &framesRef = streams[handle].framesRef;
 #ifdef ASYNC_INVOKE
     std::future<void> result;
 #endif
@@ -469,5 +469,5 @@ void VideoSourceReader::RegisterReaderCallback(uint32_t handle, const ReaderCall
     auto it = streams.find(handle);
     if (it ==streams.end())
         return;
-    (it->second).fncb = fn;
+    it->second.fncb = fn;
 }

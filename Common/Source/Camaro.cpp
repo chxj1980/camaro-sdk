@@ -297,7 +297,7 @@ int Camaro::SetShutter(uint32_t val)
                 data = 1;
             if (addrs.size() != 1)
                 return result;
-            result = SetRegister(addrs[0], val);
+            result = SetRegister(addrs[0], (uint16_t) val);
         }
 	}
 	catch (const std::out_of_range&)
@@ -350,7 +350,7 @@ int Camaro::SetGain(float gainR, float gainG, float gainB)
     gainG -= g;
     r |= int(gainG/0.03125f)&0x1f;
 
-    uint16_t b = (int(gainB)<<5);
+    uint16_t b = (uint16_t) (int(gainB) << 5);
     gainB -= b;
     b |= int(gainB/0.03125f)&0x1f;
 
