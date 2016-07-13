@@ -98,7 +98,8 @@ HEADERS += \
     ../../Common/Include/IProcessable.h \
     ../../Common/Include/WatchDog.h \
     ../../Common/Include/IMobile.h \
-    ../../Common/Include/CamaroMovidius.h
+    ../../Common/Include/CamaroMovidius.h \
+    ../../Common/Include/MobileChecker.h
 
 SOURCES += \
     ../../Common/Source/Camaro.cpp \

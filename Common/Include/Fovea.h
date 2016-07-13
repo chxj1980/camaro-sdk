@@ -7,7 +7,7 @@
 #include "ILowlevelControl.h"
 #include "IMultiVideoStream.h"
 #include "WatchDog.h"
-#include "IMobile.h"
+#include "MobileChecker.h"
 
 namespace TopGear
 {

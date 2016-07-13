@@ -310,25 +310,23 @@ void Fovea::RegisterTimeoutCallback(const TimeoutCallbackFn &fn, std::chrono::se
 
 void Fovea::StartMove()
 {
-    ++syncTag;
+    auto mobile = std::dynamic_pointer_cast<IMobile>(videoStreams[1]);
+    if (mobile)
+        mobile->StartMove();
 }
 
 void Fovea::StopMove()
 {
-    auto dc = std::dynamic_pointer_cast<IDeviceControl>(videoStreams[1]);
-    if (dc==nullptr)
-        return;
-    dc->SetControl("Resync", PropertyData<uint16_t>(syncTag.load()));
+    auto mobile = std::dynamic_pointer_cast<IMobile>(videoStreams[1]);
+    if (mobile)
+        mobile->StopMove();
 }
 
 bool Fovea::IsSteady()
 {
-    auto dc = std::dynamic_pointer_cast<IDeviceControl>(videoStreams[1]);
-    if (dc==nullptr)
-        return true;
-    PropertyData<uint16_t> val;
-    if (!dc->GetControl("Resync", val))
-        return true;
-    return val.Payload == syncTag.load();
+    auto mobile = std::dynamic_pointer_cast<IMobile>(videoStreams[1]);
+    if (mobile)
+        return mobile->IsSteady();
+    return true;
 }
 

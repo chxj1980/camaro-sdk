@@ -1,13 +1,14 @@
 #pragma once
 #include "CameraBase.h"
 #include "WatchDog.h"
+#include "MobileChecker.h"
 
 namespace TopGear
 {
     class CameraSoloBase:
             public CameraBase,
-            public IWatch
-
+            public IWatch,
+            public IMobile
 	{
 	protected:
 		explicit CameraSoloBase(std::shared_ptr<IVideoStream> &vs, CameraProfile &con = CameraProfile::NullObject())
@@ -27,10 +28,12 @@ namespace TopGear
         TimeoutCallbackFn tcb = nullptr;
         std::chrono::seconds interval;
         WatchDog watchdog;
+        MobileChecker checker;
     private:
         void OnFrame(IVideoStream &source, std::vector<IVideoFramePtr> &frames)
         {
             (void)source;
+            checker.EndLatency();
             if (tcb)
                 watchdog.Feed();
             PostProcess(frames);
@@ -39,12 +42,15 @@ namespace TopGear
             if (fncb)
                 fncb(*this, *vp);
         }
+
 	public:
 		virtual bool StartStream() override
 		{
             if (tcb)
                 watchdog.Start(interval, std::bind(tcb, std::ref(*this)));
-			return pReader->StartStream();
+            auto res = pReader->StartStream();
+            checker.BeginLatency();
+            return res;
 		}
 		virtual bool StopStream() override
 		{
@@ -70,6 +76,19 @@ namespace TopGear
         {
             tcb = fn;
             interval = std::move(timeout);
+        }
+
+        virtual void StartMove() override
+        {
+            checker.StartMove();
+        }
+        virtual void StopMove() override
+        {
+            checker.StopMove();
+        }
+        virtual bool IsSteady() override
+        {
+            return checker.IsSteady();
         }
 
         virtual ~CameraSoloBase() = default;
