@@ -14,6 +14,7 @@
 #include <linux/videodev2.h>
 #include <linux/uvcvideo.h>
 #include <linux/usb/video.h>
+#include <map>
 
 namespace TopGear
 {
@@ -30,6 +31,10 @@ namespace TopGear
                     std::chrono::milliseconds waitTime = std::chrono::milliseconds(0));
             static std::shared_ptr<ExtensionInfo> GetXUFromBusInfo(
                     const v4l2_capability &cap);
+            ~v4l2Helper();
+        private:
+            static v4l2Helper &Instance();
+            std::map<std::string, int> handleMap;
         };
     }
 }

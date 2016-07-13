@@ -7,6 +7,7 @@
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <memory>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -34,6 +35,20 @@ void __attribute__ ((noinline)) TopGear::neonMemCopy_gas(unsigned char* dst, uns
 }
 #endif
 
+v4l2Helper::~v4l2Helper()
+{
+    for(auto& item : handleMap)
+        ::close(item.second);
+}
+
+v4l2Helper &v4l2Helper::Instance()
+{
+    static std::unique_ptr<v4l2Helper> instance;
+    if (instance==nullptr)
+        instance.reset(new v4l2Helper);
+    return *instance;
+}
+
 void v4l2Helper::EnumVideoDeviceSources(std::vector<SourcePair> &sources,
                                         std::chrono::milliseconds waitTime)
 {
@@ -43,20 +58,26 @@ void v4l2Helper::EnumVideoDeviceSources(std::vector<SourcePair> &sources,
         std::ostringstream ss;
         ss<<"/dev/video"<<i;
         auto dev = ss.str();
-        auto fd = ::open(dev.c_str(), O_RDWR|O_NONBLOCK, 0);
-        if(fd==-1)
-            continue;
-        v4l2_capability cap;
-        std::memset(&cap,0,sizeof(cap));
-        ioctl(fd, VIDIOC_QUERYCAP, &cap);
-
-        if(!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ||
-           !(cap.capabilities & V4L2_CAP_STREAMING))
+        if (Instance().handleMap.find(dev)==Instance().handleMap.end())
         {
-            ::close(fd);
-            continue;
+            auto fd = ::open(dev.c_str(), O_RDWR|O_NONBLOCK, 0);
+            if(fd==-1)
+                continue;
+            v4l2_capability cap;
+            std::memset(&cap,0,sizeof(cap));
+            ioctl(fd, VIDIOC_QUERYCAP, &cap);
+
+            if(!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) ||
+                    !(cap.capabilities & V4L2_CAP_STREAMING))
+            {
+                ::close(fd);
+                continue;
+            }
+            sources.push_back(std::make_pair(dev,fd));
+            Instance().handleMap[dev] = fd;
         }
-        sources.push_back(std::make_pair(dev,fd));
+        else
+            sources.push_back(std::make_pair(dev, Instance().handleMap[dev]));
     }
     if (sources.size()>0)
         std::this_thread::sleep_for(waitTime);
