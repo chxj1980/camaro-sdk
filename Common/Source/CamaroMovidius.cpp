@@ -111,9 +111,11 @@ int CamaroMovidius::SetExposure(bool ae, float ev)
 {
     (void)ev;
     auto result = -1;
+    float val = ev*128;
+    uint8_t ev_int = (val>255)?255:(val<2?2:val);
     try
     {
-        if (SetControl("AutoExposure", PropertyData<uint8_t>(ae?1:0)))
+        if (SetControl("AutoExposure", PropertyData<uint8_t>(ae?ev_int:0)))
             result = 0;
     }
     catch (const std::out_of_range&)
@@ -124,10 +126,10 @@ int CamaroMovidius::SetExposure(bool ae, float ev)
 
 int CamaroMovidius::GetShutter(uint32_t& val)
 {
-    PropertyData<uint32_t> result;
+    PropertyData<int32_t> result;
     if (!GetControl("ShutterLimit", result))
         return -1;
-    val = result.Payload;
+    val = uint32_t(result.Payload);
     return 0;
 }
 
@@ -139,7 +141,7 @@ int CamaroMovidius::SetShutter(uint32_t val)
     auto hr = GetExposure(ae, ev);
     if (hr>=0 && ae)    //AE enable
     {
-        if (SetControl("ShutterLimit", PropertyData<uint32_t>(val)))
+        if (SetControl("ShutterLimit", PropertyData<int32_t>(int32_t(val))))
             result = 0;
     }
     else    //Manual Exposure

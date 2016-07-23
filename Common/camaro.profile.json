@@ -54,7 +54,7 @@
             "control-name": "ShutterLimit",
             "control-code": 7,
             "attribute": "rw",
-            "type": "uint",
+            "type": "int",
             "big-endian" : true
         }
     ],
