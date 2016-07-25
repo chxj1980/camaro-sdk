@@ -173,6 +173,8 @@ int CamaroISP::GetExposure(bool &ae, float &ev)
         if (GetControl("AutoExposure", data))
         {
             ae = data.Payload;
+            if (data.Payload>1)
+                ev = data.Payload/128.0;
             result = 0;
         }
     }
@@ -186,7 +188,7 @@ int CamaroISP::SetExposure(bool ae, float ev)
 {
     auto result = -1;
     float val = ev*128;
-    uint8_t ev_int = (val>255)?255:(val<2?2:val);
+    uint8_t ev_int = uint8_t((val>255)?255:(val<2?2:val));
     try
     {
         if (SetControl("AutoExposure", PropertyData<uint8_t>(ae?ev_int:0)))
