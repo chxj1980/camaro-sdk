@@ -17,14 +17,16 @@ namespace TopGear
 		const size_t TypeHash;
 		const std::string Attribute;
 		const bool IsBigEndian;
+        const int DefaultVal;
 		std::map<std::string, std::pair<bool, std::vector<uint8_t>>> Payloads;
 		static std::pair<std::string, XuControl> Parse(Json::Value &value);
 	private:
-		explicit XuControl(uint8_t code, size_t hash, const std::string &attr,bool be)
+        explicit XuControl(uint8_t code, size_t hash, const std::string &attr,bool be, int dval=0)
 			: Code(code),
 			TypeHash(hash),
 			Attribute(attr),
-			IsBigEndian(be)
+            IsBigEndian(be),
+            DefaultVal(dval)
 		{
 		}
 	};

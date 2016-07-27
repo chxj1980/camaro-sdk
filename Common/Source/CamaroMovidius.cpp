@@ -151,6 +151,34 @@ int CamaroMovidius::SetShutter(uint32_t val)
     return result;
 }
 
+int CamaroMovidius::GetIris(float &ratio)
+{
+    ratio = 0;
+    auto it = config.XuControls.find("Iris");
+    if (it == config.XuControls.end())
+        return -1;
+    auto dval = it->second.DefaultVal>>8;
+    if (dval==0)
+        return -1;
+    PropertyData<uint16_t> result;
+    if (!GetControl("Iris", result))
+        return -1;
+    ratio = (result.Payload>>8)*1.0f/dval;
+    return 0;
+}
+
+int CamaroMovidius::SetIris(float ratio)
+{
+    if (ratio<0 || ratio>1.0f)
+        return -1;
+    auto it = config.XuControls.find("Iris");
+    if (it == config.XuControls.end())
+        return -1;
+    auto val = uint16_t(it->second.DefaultVal);
+    val = uint16_t((int((val>>8)*ratio)<<8)|(val&0xff));
+    return SetControl("Iris", PropertyData<uint16_t>(val))?0:-1;
+}
+
 int CamaroMovidius::GetGain(float& gainR, float& gainG, float& gainB)
 {
     (void)gainR;

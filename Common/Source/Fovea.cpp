@@ -195,6 +195,22 @@ int Fovea::SetGain(float gainR, float gainG, float gainB)
     return cc->SetGain(gainR, gainG, gainB);
 }
 
+int Fovea::GetIris(float &ratio)
+{
+    auto cc = std::dynamic_pointer_cast<TopGear::ICameraControl>(currentStream);
+    if (cc==nullptr)
+        return -1;
+    return cc->GetIris(ratio);
+}
+
+int Fovea::SetIris(float ratio)
+{
+    auto cc = std::dynamic_pointer_cast<TopGear::ICameraControl>(currentStream);
+    if (cc==nullptr)
+        return -1;
+    return cc->SetIris(ratio);
+}
+
 bool Fovea::StartStream()
 {
     StartStreams();

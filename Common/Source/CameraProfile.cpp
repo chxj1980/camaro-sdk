@@ -56,7 +56,12 @@ namespace TopGear
 		auto be = false;
 		if (element.isBool())
 			be = element.asBool();
-		auto pair = std::make_pair(name, XuControl(code, hash, attrs,be));
+        element = value["default"];
+        auto dval = 0;
+        if (element.isInt())
+            dval = element.asInt();
+
+        auto pair = std::make_pair(name, XuControl(code, hash, attrs, be, dval));
 		
 		element = value["payloads"];
 		if (!element.isNull())

@@ -21,6 +21,8 @@ namespace TopGear
         virtual int GetExposure(bool &ae, float &ev) = 0;
         virtual int SetExposure(bool ae, float ev = 1.0f) = 0;
 
+        virtual int GetIris(float &ratio) = 0;
+        virtual int SetIris(float ratio) = 0;
 
         virtual int GetGain(float &gainR, float &gainG, float &gainB) = 0;
         virtual int SetGain(float gainR, float gainG, float gainB) = 0;

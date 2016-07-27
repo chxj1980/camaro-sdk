@@ -49,6 +49,8 @@ namespace TopGear
         virtual int SetShutter(uint32_t val) override;
         virtual int GetGain(float &gainR, float &gainG, float &gainB) override;
         virtual int SetGain(float gainR, float gainG, float gainB) override;
+        virtual int GetIris(float &ratio) override { ratio=0; return -1; }
+        virtual int SetIris(float ratio) override { (void)ratio; return -1; }
 
         CamaroISP(std::shared_ptr<IVideoStream> &vs,
                std::shared_ptr<IExtensionAccess> &ex,

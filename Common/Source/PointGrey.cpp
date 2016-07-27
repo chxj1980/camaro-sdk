@@ -134,3 +134,15 @@ int PointGrey::SetGain(float gainR, float gainG, float gainB)
     (void)gainB;
     return 0;
 }
+
+int PointGrey::GetIris(float &ratio)
+{
+    ratio = 0;
+    return -1;
+}
+
+int PointGrey::SetIris(float ratio)
+{
+    (void)ratio;
+    return -1;
+}

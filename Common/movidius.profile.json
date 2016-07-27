@@ -50,6 +50,14 @@
             "control-code": 9,
             "attribute": "rw",
             "type": "byte"
+        },
+        {
+            "control-name": "Iris",
+            "control-code": 10,
+            "attribute": "w",
+            "type": "ushort",
+            "default" : 12919
+            //0x3277
         }
     ],
     "register-control-code": 4,
