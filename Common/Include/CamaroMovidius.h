@@ -26,10 +26,13 @@ namespace TopGear
         virtual bool GetControl(std::string name, IPropertyData &val) override;
 
     protected:
+        virtual void PostProcess(std::vector<IVideoFramePtr> &frames) override;
         ExtensionAccessAdapter extensionAdapter;
         std::vector<VideoFormat> formats;
         int currentFormatIndex = -1;
     private:
+        std::atomic_bool moving;
+        std::atomic_bool movingSet;
         std::string sensorInfo;
         VideoFrameCallbackFn fncb = nullptr;
     public:
@@ -40,6 +43,10 @@ namespace TopGear
         virtual int SetShutter(uint32_t val) override;
         virtual int GetGain(float &gainR, float &gainG, float &gainB) override;
         virtual int SetGain(float gainR, float gainG, float gainB) override;
+
+        virtual void StartMove() override;
+        virtual void StopMove() override;
+        virtual bool IsSteady() override;
 
         CamaroMovidius(std::shared_ptr<IVideoStream> &vs,
                std::shared_ptr<IExtensionAccess> &ex,

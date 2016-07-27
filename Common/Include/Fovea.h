@@ -32,8 +32,7 @@ namespace TopGear
     private:
         std::thread frameWatchThread;
         bool threadOn = false;
-        int keyStreamIndex = -1;
-        std::atomic_ushort syncTag;
+        int keyStreamIndex = 0;
         BufferQueue<std::pair<int, IVideoFramePtr>> frameBuffer;
         void FrameWatcher();
         void PushFrame(int index, IVideoFramePtr &frame);

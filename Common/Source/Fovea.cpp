@@ -4,7 +4,6 @@
 using namespace TopGear;
 
 Fovea::Fovea(std::shared_ptr<IVideoStream> &wideangle, std::shared_ptr<IVideoStream> &telephoto)
-    :syncTag(0)
 {
     videoStreams.push_back(wideangle);
     videoStreams.push_back(telephoto);
@@ -274,21 +273,21 @@ bool Fovea::SetCurrentFormat(uint32_t formatIndex)
     if  (!currentStream->SetCurrentFormat(formatIndex))
         return false;
 
-    //Update keyStreamIndex with higher-rate stream
-    int rate=0;
-    int index=0;
-    auto i = 0;
-    for(auto &stream : videoStreams)
-    {
-        auto &format = stream->GetCurrentFormat();
-        if (format!= VideoFormat::Null && format.MaxRate>rate)
-        {
-            rate = format.MaxRate;
-            index = i;
-        }
-        ++i;
-    }
-    keyStreamIndex = index;
+//    //Update keyStreamIndex with higher-rate stream
+//    int rate=0;
+//    int index=0;
+//    auto i = 0;
+//    for(auto &stream : videoStreams)
+//    {
+//        auto &format = stream->GetCurrentFormat();
+//        if (format!= VideoFormat::Null && format.MaxRate>rate)
+//        {
+//            rate = format.MaxRate;
+//            index = i;
+//        }
+//        ++i;
+//    }
+//    keyStreamIndex = index;
     return true;
 }
 

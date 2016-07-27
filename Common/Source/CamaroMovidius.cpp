@@ -170,7 +170,8 @@ int CamaroMovidius::SetGain(float gainR, float gainG, float gainB)
 CamaroMovidius::CamaroMovidius(std::shared_ptr<IVideoStream>& vs,
                                std::shared_ptr<IExtensionAccess>& ex,
                                CameraProfile &con)
-    : CameraSoloBase(vs, con), extensionAdapter(ex)
+    : CameraSoloBase(vs, con), extensionAdapter(ex),
+      moving(false), movingSet(false)
 {
     PropertyData<std::string> info;
     if (CamaroMovidius::GetControl("DeviceInfo", info))
@@ -260,5 +261,35 @@ bool CamaroMovidius::SetCurrentFormat(uint32_t formatIndex)
         return false;
     currentFormatIndex = formatIndex;
     return true;
+}
+
+void CamaroMovidius::PostProcess(std::vector<IVideoFramePtr> &frames)
+{
+    (void)frames;
+    movingSet = false;
+}
+
+void CamaroMovidius::StartMove()
+{
+    if (SetControl("Resync", PropertyData<uint16_t>(0)))
+    {
+        moving = true;
+        movingSet = true;
+    }
+}
+
+void CamaroMovidius::StopMove()
+{
+    if (SetControl("Resync", PropertyData<uint16_t>(2)))
+    {
+        moving = false;
+        movingSet = true;
+    }
+}
+
+bool CamaroMovidius::IsSteady()
+{
+    //Determine steady state if frame arrival after StopMove() invoke
+    return (!movingSet && !moving);
 }
 
