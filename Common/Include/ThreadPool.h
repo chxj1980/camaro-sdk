@@ -87,7 +87,7 @@ namespace TopGear
             while(!done)
             {
                 std::pair<FunctionWrapper,size_t> task;
-                if (queue.Pop_NoWait(task))
+                if (queue.Pop(task))
                 {
                     task.first();
                     //Remove task token from list
@@ -100,7 +100,7 @@ namespace TopGear
                         }
                 }
                 else
-                    std::this_thread::yield();
+                    break;
             }
         }
 
@@ -122,6 +122,8 @@ namespace TopGear
         ~ThreadPool()
         {
             done = true;
+            for(auto &t:threads)
+                queue.Discard();
         }
 
         void AddThread()
