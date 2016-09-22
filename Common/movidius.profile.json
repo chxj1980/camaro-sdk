@@ -4,6 +4,12 @@
     "camera-version": "1.0",
     "xu-controls": [
         {
+            "control-name": "IRCut",
+            "control-code": 1,
+            "attribute": "rw",
+            "type": "byte"
+        },
+        {
             "control-name": "DeviceInfo",
             "control-code": 2,
             "attribute": "r",
