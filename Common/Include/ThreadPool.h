@@ -123,7 +123,8 @@ namespace TopGear
         {
             done = true;
             for(auto &t:threads)
-                queue.Discard();
+                if (t.joinable())
+                    queue.Discard();
         }
 
         void AddThread()
