@@ -64,6 +64,13 @@
             "type": "ushort",
             "default" : 12919
             //0x3277
+        },
+        {
+            "control-name": "MaxGain",
+            "control-code": 11,
+            "attribute": "rw",
+            "type": "ushort",
+            "big-endian" : true
         }
     ],
     "register-control-code": 4,
