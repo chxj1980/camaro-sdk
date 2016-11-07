@@ -24,7 +24,7 @@ namespace TopGear
         virtual bool SetControl(std::string name, IPropertyData &val) override;
         virtual bool SetControl(std::string name, IPropertyData &&val) override;
         virtual bool GetControl(std::string name, IPropertyData &val) override;
-
+        virtual bool StartStream() override;
     protected:
         virtual void PostProcess(std::vector<IVideoFramePtr> &frames) override;
         ExtensionAccessAdapter extensionAdapter;
@@ -36,6 +36,7 @@ namespace TopGear
         std::string sensorInfo;
         int64_t tmOffset = 0;
         VideoFrameCallbackFn fncb = nullptr;
+        bool firstFrame = true;
     public:
         virtual int Flip(bool vertical, bool horizontal) override;
         virtual int GetExposure(bool &ae, float &ev) override;

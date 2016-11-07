@@ -291,9 +291,21 @@ bool CamaroMovidius::SetCurrentFormat(uint32_t formatIndex)
     return true;
 }
 
+bool CamaroMovidius::StartStream()
+{
+	firstFrame = true;
+	CameraSoloBase::StartStream();
+}
+
 void CamaroMovidius::PostProcess(std::vector<IVideoFramePtr> &frames)
 {
 	movingSet = false;
+	if (firstFrame)
+	{
+		frames.clear();
+		firstFrame = false;
+		return;
+	}
     if (frames.size() != 1)
 	    return;
 	auto frame = frames[0];

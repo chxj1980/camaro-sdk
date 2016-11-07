@@ -37,6 +37,8 @@ namespace TopGear
             if (tcb)
                 watchdog.Feed();
             PostProcess(frames);
+            if (frames.empty())
+                return;
             auto vp = std::make_shared<std::vector<IVideoFramePtr>>(std::move(frames));
             Notify(vp);
             if (fncb)
