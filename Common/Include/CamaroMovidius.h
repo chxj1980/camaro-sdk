@@ -34,6 +34,7 @@ namespace TopGear
         std::atomic_bool moving;
         std::atomic_bool movingSet;
         std::string sensorInfo;
+        int64_t tmOffset = 0;
         VideoFrameCallbackFn fncb = nullptr;
     public:
         virtual int Flip(bool vertical, bool horizontal) override;

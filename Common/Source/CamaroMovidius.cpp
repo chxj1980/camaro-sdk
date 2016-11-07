@@ -293,8 +293,29 @@ bool CamaroMovidius::SetCurrentFormat(uint32_t formatIndex)
 
 void CamaroMovidius::PostProcess(std::vector<IVideoFramePtr> &frames)
 {
-    (void)frames;
-    movingSet = false;
+	movingSet = false;
+    if (frames.size() != 1)
+	    return;
+	auto frame = frames[0];
+    uint8_t *pData;
+	uint32_t stride;
+	if (frame->LockBuffer(&pData, &stride) != 0)
+		return;
+	uint8_t checksum=0;
+	for(int i=0;i<8;++i)
+		checksum += pData[i];
+	if (checksum == 0)
+	{
+		uint64_t tm = (*(uint64_t*)pData & 0x00FFFFFFFFFFFFFFULL);
+		if (tmOffset==0)
+			tmOffset = frame->GetTimestamp() - tm;
+		IVideoFramePtr ex = std::make_shared<VideoFrameEx>(frame, 0, 
+			stride, frame->GetFormat().Width, frame->GetFormat().Height, 
+			0, 0, 0, 0, tm+tmOffset);
+		frames.clear();
+		frames.emplace_back(ex);
+	}
+	frame->UnlockBuffer();
 }
 
 void CamaroMovidius::StartMove()
