@@ -512,75 +512,109 @@ ProcessImage::ProcessImage(QWidget *parent)
 //        camera->StartStream();
 //    }
 
-//CamaroISP
+    //CamaroMoidius
     auto devices = deepcam.EnumerateDevices(TopGear::DeviceCategory::DeepGlint);
-
-    std::vector<TopGear::IGenericVCDevicePtr> foveaDevices;
-
-    for(auto &d : devices)
-    {
-        std::string info = d->GetDeviceInfo();
-        if (info.substr(info.size()-1)=="0")
-           foveaDevices.emplace_back(d);
-        std::cout<<d->GetDeviceInfo()<<std::endl;
-    }
-
-    for(auto &d : devices)
-    {
-        std::string info = d->GetDeviceInfo();
-        if (info.substr(info.size()-1)=="1")
-           foveaDevices.emplace_back(d);
-        std::cout<<d->GetDeviceInfo()<<std::endl;
-    }
-
-//    qDebug("Devices:  %d",devices.size());
     if (!devices.empty())
     {
-        camera = deepcam.CreateCamera(TopGear::Camera::Fovea, foveaDevices);
-        //camera = deepcam.CreateCamera(TopGear::Camera::CamaroISP, devices[0]);
-//        //camera = deepcam.CreateCamera(TopGear::Camera::StandardUVC, devices[0]);
-//        //TopGear::PropertyData<std::vector<float>> data;
+        camera = deepcam.CreateCamera(TopGear::Camera::CamaroMovidius, devices[0]);
         if (camera)
         {
-//            auto dc = std::dynamic_pointer_cast<IDeviceControl>(camera);
-//            if (dc)
-//            {
-//                PropertyData<uint16_t> val;
-//                dc->SetControl("Resync", PropertyData<uint16_t>(888));
-//                auto res = dc->GetControl("Resync", val);
-//                std::cout<<"Read SyncTag: "<<res<<" "<<val.Payload<<std::endl;
-//            }
-
-            motionSync = std::dynamic_pointer_cast<TopGear::IMobile>(camera);
-
-            auto mv = TopGear::DeepCamAPI::QueryInterface<TopGear::IMultiVideoStream>(camera);
             auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
-            if (mv)
-                mv->SelectStream(0);
-
-            cc->Flip(true, false);
-
+            cc->Flip(true, false);  //Function for flip and mirror image
             TopGear::IVideoStream::RegisterFrameCallback(*camera,
                                                         &ProcessImage::onGetStereoFrame, this);
             TopGear::VideoFormat format {};
             format.Height = 1080;
             format.Width = 1920;
-            format.MaxRate = 10;
+            format.MaxRate = 30;
+
+            //Obtain index for the format that match in camera
+            auto index = camera->GetMatchedFormatIndex(format);
+            //Set format
+            camera->SetCurrentFormat(index);
+
             prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
             frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
             frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
-            auto index = camera->GetMatchedFormatIndex(format);
-            camera->SetCurrentFormat(index);
-            if (mv)
-            {
-                mv->SelectStream(1);
-                cc->Flip(true, false);
-                camera->SetCurrentFormat(index);
-            }
+
+            //Demo for accessing XU defined in movidius.profile.json
+            uint16_t max_gain;
+            bool result = TopGear::IDeviceControl::GetProperty<uint16_t>(camera, "MaxGain", max_gain);
+            //When result true, it means successfully accessing MaxGain; otherwise, unsupporting or failed
+            if (result)
+                result = TopGear::IDeviceControl::SetProperty<uint16_t>(camera, "MaxGain", max_gain);
+
+            
             camera->StartStream();
-      }
+        }
     }
+
+    //Fovea
+//     for(auto &d : devices)
+//     {
+//         std::string info = d->GetDeviceInfo();
+//         if (info.substr(info.size()-1)=="0")
+//            foveaDevices.emplace_back(d);
+//         std::cout<<d->GetDeviceInfo()<<std::endl;
+//     }
+
+//     for(auto &d : devices)
+//     {
+//         std::string info = d->GetDeviceInfo();
+//         if (info.substr(info.size()-1)=="1")
+//            foveaDevices.emplace_back(d);
+//         std::cout<<d->GetDeviceInfo()<<std::endl;
+//     }
+
+// //    qDebug("Devices:  %d",devices.size());
+//     if (!devices.empty())
+//     {
+//         camera = deepcam.CreateCamera(TopGear::Camera::Fovea, foveaDevices);
+//         //camera = deepcam.CreateCamera(TopGear::Camera::CamaroISP, devices[0]);
+// //        //camera = deepcam.CreateCamera(TopGear::Camera::StandardUVC, devices[0]);
+// //        //TopGear::PropertyData<std::vector<float>> data;
+//         if (camera)
+//         {
+// //            auto dc = std::dynamic_pointer_cast<IDeviceControl>(camera);
+// //            if (dc)
+// //            {
+// //                PropertyData<uint16_t> val;
+// //                dc->SetControl("Resync", PropertyData<uint16_t>(888));
+// //                auto res = dc->GetControl("Resync", val);
+// //                std::cout<<"Read SyncTag: "<<res<<" "<<val.Payload<<std::endl;
+// //            }
+
+//             motionSync = std::dynamic_pointer_cast<TopGear::IMobile>(camera);
+
+//             auto mv = TopGear::DeepCamAPI::QueryInterface<TopGear::IMultiVideoStream>(camera);
+//             auto cc = TopGear::DeepCamAPI::QueryInterface<TopGear::ICameraControl>(camera);
+//             if (mv)
+//                 mv->SelectStream(0);
+
+//             cc->Flip(true, false);
+
+//             TopGear::IVideoStream::RegisterFrameCallback(*camera,
+//                                                         &ProcessImage::onGetStereoFrame, this);
+//             TopGear::VideoFormat format {};
+//             format.Height = 1080;
+//             format.Width = 1920;
+//             format.MaxRate = 10;
+//             prgb1 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+//             prgb2 = std::unique_ptr<uchar[]>(new uchar[format.Height*format.Width*3]);
+//             frame1 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+//             frame2 = std::unique_ptr<QImage>(new QImage(format.Width, format.Height, QImage::Format_RGB888));
+//             auto index = camera->GetMatchedFormatIndex(format);
+//             camera->SetCurrentFormat(index);
+//             if (mv)
+//             {
+//                 mv->SelectStream(1);
+//                 cc->Flip(true, false);
+//                 camera->SetCurrentFormat(index);
+//             }
+//             camera->StartStream();
+//       }
+//     }
 
     timer = nullptr;
 
