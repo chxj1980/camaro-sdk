@@ -37,10 +37,14 @@ OPTION( SUPPORT_JPEG_SEQUENCE "Support JPEG Sequence as Virtual Camera (Need tur
 if (NOT SUPPORT_JPEG_SEQUENCE)
 	list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/FileSource.cpp)
 	list(REMOVE_ITEM DIR_SRCS ${PROJECT_SOURCE_DIR}/Common/Source/ImageSequence.cpp)
-endif (NOT SUPPORT_JPEG_SEQUENCE)
+endif(NOT SUPPORT_JPEG_SEQUENCE)
 
+add_library(${PROJECT_NAME} STATIC ${DIR_SRCS} ${DIR_LINUX_SRCS})
 
-add_library(DeepCamera STATIC ${DIR_SRCS} ${DIR_LINUX_SRCS})
+if (SUPPORT_JPEG_SEQUENCE)
+	target_link_libraries(${PROJECT_NAME} turbojpeg)
+endif (SUPPORT_JPEG_SEQUENCE)
+
 
 OPTION( USE_V4L2_USER_POINTER "Use V4L2 User Pointer Buffer Mode" OFF )
 
@@ -80,7 +84,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -Wno-strict-aliasing")
 
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/lib" CACHE PATH "Directory for install" FORCE)
 
-install(TARGETS DeepCamera DESTINATION ${LIB_DEST})
+install(TARGETS ${PROJECT_NAME} DESTINATION ${LIB_DEST})
 
 message("Build configuration: ${CMAKE_BUILD_TYPE}")
 message("Done.")
