@@ -69,15 +69,17 @@ namespace TopGear
 		template<class Fn, class T>
 		static void RegisterFrameCallback(IVideoStream &stream, Fn&& fn, T *ptr)
 		{
-			static_assert(std::is_member_function_pointer<Fn>::value, "RegisterFrameCallback need a member function as parameter");
+			static_assert(std::is_member_function_pointer<Fn>::value, 
+				"RegisterFrameCallback need a member function as parameter");
 			stream.RegisterFrameCallback(std::bind(fn, ptr, std::placeholders::_1, std::placeholders::_2));
 		}
 
 		template<class Fn>
         static void RegisterFrameCallback(IVideoStream &stream, Fn&& fn)
 		{
-			static_assert(is_function_pointer<Fn>::value, "RegisterFrameCallback need a function as parameter");
-			stream.RegisterFrameCallback(std::bind(fn, std::placeholders::_1, std::placeholders::_2));
+			static_assert(is_function_pointer<Fn>::value||std::is_same<VideoFrameCallbackFn, Fn>::value, 
+				"RegisterFrameCallback need a function or function object as parameter");
+			stream.RegisterFrameCallback(fn);
 		}
 	};
 }
