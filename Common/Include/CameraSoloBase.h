@@ -82,16 +82,20 @@ namespace TopGear
 
         virtual void StartMove() override
         {
-            checker.StartMove();
+            //checker.StartMove();
+            if (tcb)
+                watchdog.Stop();
         }
         virtual void StopMove() override
         {
-            checker.StopMove();
+            if (tcb)
+                watchdog.Start(interval, std::bind(tcb, std::ref(*this)));
+            //checker.StopMove();
         }
-        virtual bool IsSteady() override
-        {
-            return checker.IsSteady();
-        }
+        // virtual bool IsSteady() override
+        // {
+        //     return checker.IsSteady();
+        // }
 
         virtual ~CameraSoloBase() = default;
 	};

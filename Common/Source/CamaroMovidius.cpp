@@ -337,6 +337,7 @@ void CamaroMovidius::StartMove()
         moving = true;
         movingSet = true;
     }
+    CameraSoloBase::StartMove();
 }
 
 void CamaroMovidius::StopMove()
@@ -346,6 +347,7 @@ void CamaroMovidius::StopMove()
         moving = false;
         movingSet = true;
     }
+    CameraSoloBase::StopMove();
 }
 
 bool CamaroMovidius::IsSteady()
