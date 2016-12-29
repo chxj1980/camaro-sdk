@@ -17,7 +17,7 @@ namespace TopGear
             public IMultiVideoStream,
             public TopGear::ICameraControl,
             public IDeviceControl,
-            public IIrisControl
+            public IIrisControl,
             public IWatch,
             public IMobile
     {

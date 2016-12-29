@@ -92,10 +92,10 @@ namespace TopGear
                 watchdog.Start(interval, std::bind(tcb, std::ref(*this)));
             //checker.StopMove();
         }
-        // virtual bool IsSteady() override
-        // {
-        //     return checker.IsSteady();
-        // }
+        virtual bool IsSteady() override
+        {
+            return true;
+        }
 
         virtual ~CameraSoloBase() = default;
 	};
