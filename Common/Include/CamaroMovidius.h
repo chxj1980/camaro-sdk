@@ -3,6 +3,7 @@
 #include "IExtensionAccess.h"
 #include "ICameraControl.h"
 #include "IDeviceControl.h"
+#include "IIrisControl.h"
 #include "CameraSoloBase.h"
 #include "ExtensionAccessAdapter.h"
 
@@ -11,7 +12,8 @@ namespace TopGear
     class CamaroMovidius
         : public CameraSoloBase,
         public TopGear::ICameraControl,
-        public IDeviceControl
+        public IDeviceControl,
+        public IIrisControl
     {
     public:
         virtual int GetOptimizedFormatIndex(VideoFormat& format, const char* fourcc="") override;
@@ -37,6 +39,7 @@ namespace TopGear
         int64_t tmOffset = 0;
         VideoFrameCallbackFn fncb = nullptr;
         bool firstFrame = true;
+        int irisOffset = 0;
     public:
         virtual int Flip(bool vertical, bool horizontal) override;
         virtual int GetExposure(bool &ae, float &ev) override;
@@ -45,8 +48,10 @@ namespace TopGear
         virtual int SetShutter(uint32_t val) override;
         virtual int GetGain(float &gainR, float &gainG, float &gainB) override;
         virtual int SetGain(float gainR, float gainG, float gainB) override;
+
         virtual int GetIris(float &ratio) override;
         virtual int SetIris(float ratio) override;
+        virtual int SetIrisOffset(int offset) override;
 
         virtual void StartMove() override;
         virtual void StopMove() override;

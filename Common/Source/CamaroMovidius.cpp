@@ -157,7 +157,7 @@ int CamaroMovidius::GetIris(float &ratio)
     auto it = config.XuControls.find("Iris");
     if (it == config.XuControls.end())
         return -1;
-    auto dval = it->second.DefaultVal>>8;
+    auto dval = (it->second.DefaultVal>>8)+irisOffset;
     if (dval==0)
         return -1;
     PropertyData<uint16_t> result;
@@ -175,8 +175,14 @@ int CamaroMovidius::SetIris(float ratio)
     if (it == config.XuControls.end())
         return -1;
     auto val = uint16_t(it->second.DefaultVal);
-    val = uint16_t((int((val>>8)*ratio)<<8)|(val&0xff));
+    val = uint16_t((int(((val>>8)+irisOffset)*ratio)<<8)|(val&0xff));
     return SetControl("Iris", PropertyData<uint16_t>(val))?0:-1;
+}
+
+int CamaroMovidius::SetIrisOffset(int offset)
+{
+	irisOffset = offset;
+	return 0;
 }
 
 int CamaroMovidius::GetGain(float& gainR, float& gainG, float& gainB)

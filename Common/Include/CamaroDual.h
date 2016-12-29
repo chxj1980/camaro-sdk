@@ -48,8 +48,6 @@ namespace TopGear
         virtual int SetShutter(uint32_t val) override;
         virtual int GetGain(float &gainR, float &gainG, float &gainB) override;
         virtual int SetGain(float gainR, float gainG, float gainB) override;
-        virtual int GetIris(float &ratio) override { ratio=0; return -1; }
-        virtual int SetIris(float ratio) override { (void)ratio; return -1; }
 
 		virtual bool SetControl(std::string name, IPropertyData &val) override;
 		virtual bool SetControl(std::string name, IPropertyData &&val) override;

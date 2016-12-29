@@ -6,6 +6,7 @@
 #include "BufferQueue.h"
 #include "ILowlevelControl.h"
 #include "IMultiVideoStream.h"
+#include "IIrisControl.h"
 #include "WatchDog.h"
 #include "MobileChecker.h"
 
@@ -16,6 +17,7 @@ namespace TopGear
             public IMultiVideoStream,
             public TopGear::ICameraControl,
             public IDeviceControl,
+            public IIrisControl
             public IWatch,
             public IMobile
     {
@@ -46,8 +48,10 @@ namespace TopGear
         virtual int SetShutter(uint32_t val) override;
         virtual int GetGain(float &gainR, float &gainG, float &gainB) override;
         virtual int SetGain(float gainR, float gainG, float gainB) override;
+
         virtual int GetIris(float &ratio) override;
         virtual int SetIris(float ratio) override;
+        virtual int SetIrisOffset(int offset) override;
 
         virtual bool SetControl(std::string name, IPropertyData &val) override;
         virtual bool SetControl(std::string name, IPropertyData &&val) override;

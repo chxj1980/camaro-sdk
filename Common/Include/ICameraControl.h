@@ -4,11 +4,10 @@
 
 namespace TopGear
 {
-	class ICameraControl
+    class ICameraControl
 	{
 	public:
 		virtual ~ICameraControl() = default; // make dtor virtual
-        
 		virtual int Flip(bool vertical, bool horizontal) = 0;
 
         //Shutter control in micro-seconds
@@ -20,9 +19,6 @@ namespace TopGear
         //Some camera could be unsupported
         virtual int GetExposure(bool &ae, float &ev) = 0;
         virtual int SetExposure(bool ae, float ev = 1.0f) = 0;
-
-        virtual int GetIris(float &ratio) = 0;
-        virtual int SetIris(float ratio) = 0;
 
         virtual int GetGain(float &gainR, float &gainG, float &gainB) = 0;
         virtual int SetGain(float gainR, float gainG, float gainB) = 0;
