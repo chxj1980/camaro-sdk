@@ -182,6 +182,15 @@ int CamaroMovidius::SetIris(float ratio)
 
 int CamaroMovidius::SetIrisOffset(int offset)
 {
+    auto it = config.XuControls.find("Iris");
+    if (it == config.XuControls.end())
+        return -1;
+    auto val = uint16_t(it->second.DefaultVal);
+
+	int dst_val = (int) (val & 0xff) + offset;
+	if (dst_val < 0 || dst_val > 0xff)
+		return -1;
+
 	irisOffset = offset;
 	return 0;
 }
@@ -320,20 +329,20 @@ void CamaroMovidius::PostProcess(std::vector<IVideoFramePtr> &frames)
 	uint32_t stride;
 	if (frame->LockBuffer(&pData, &stride) != 0)
 		return;
-	uint8_t checksum=0;
-	for(int i=0;i<8;++i)
-		checksum += pData[i];
-	if (checksum == 0)
-	{
-		uint64_t tm = (*(uint64_t*)pData & 0x00FFFFFFFFFFFFFFULL);
-		if (tmOffset==0)
-			tmOffset = frame->GetTimestamp() - tm;
-		IVideoFramePtr ex = std::make_shared<VideoFrameEx>(frame, 0, 
-			stride, frame->GetFormat().Width, frame->GetFormat().Height, 
-			0, 0, 0, 0, tm+tmOffset);
-		frames.clear();
-		frames.emplace_back(ex);
-	}
+//	uint8_t checksum=0;
+//	for(int i=0;i<8;++i)
+//		checksum += pData[i];
+//	if (checksum == 0)
+//	{
+//		uint64_t tm = (*(uint64_t*)pData & 0x00FFFFFFFFFFFFFFULL);
+//		if (tmOffset==0)
+//			tmOffset = frame->GetTimestamp() - tm;
+//		IVideoFramePtr ex = std::make_shared<VideoFrameEx>(frame, 0,
+//			stride, frame->GetFormat().Width, frame->GetFormat().Height,
+//			0, 0, 0, 0, tm+tmOffset);
+//		frames.clear();
+//		frames.emplace_back(ex);
+//	}
 	frame->UnlockBuffer();
 }
 
