@@ -9,7 +9,8 @@ using namespace TopGear;
 
 int CamaroMovidius::Flip(bool vertical, bool horizontal)
 {
-    return SetControl("Flip", PropertyData<uint8_t>((vertical?0x01:0x00)|(horizontal?0x02:0x00)));
+    auto result = SetControl("Flip", PropertyData<uint8_t>((vertical?0x01:0x00)|(horizontal?0x02:0x00)));
+    return result ? 0:-1;
 }
 
 bool CamaroMovidius::SetControl(std::string name, IPropertyData &&val)
@@ -157,7 +158,7 @@ int CamaroMovidius::GetIris(float &ratio)
     auto it = config.XuControls.find("Iris");
     if (it == config.XuControls.end())
         return -1;
-    auto dval = (it->second.DefaultVal>>8)+irisOffset;
+    auto dval = it->second.DefaultVal>>8;
     if (dval==0)
         return -1;
     PropertyData<uint16_t> result;
@@ -175,7 +176,7 @@ int CamaroMovidius::SetIris(float ratio)
     if (it == config.XuControls.end())
         return -1;
     auto val = uint16_t(it->second.DefaultVal);
-    val = uint16_t((int(((val>>8)+irisOffset)*ratio)<<8)|(val&0xff));
+    val = uint16_t((int((val>>8)*ratio)<<8)|((val&0xff)+irisOffset));
     return SetControl("Iris", PropertyData<uint16_t>(val))?0:-1;
 }
 
